@@ -1,5 +1,5 @@
 // src/pages/WebsiteDetailPage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
@@ -11,7 +11,6 @@ import {
 } from '../services/websites.js';
 import '../styles/global.css';
 
-// Chip 组件（纯展示）
 const Chip = ({ label, value }) => (
   <span
     style={{
@@ -40,7 +39,9 @@ export function WebsiteDetailPage() {
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeToggling, setLikeToggling] = useState(false);
 
-  // 加载网站详情和点赞状态
+  // 使用 ref 作为额外的锁定标志，防止并发点击
+  const isLikingRef = useRef(false);
+
   useEffect(() => {
     const loadWebsite = async () => {
       try {
@@ -55,7 +56,6 @@ export function WebsiteDetailPage() {
         setWebsite(data);
         setLikeCount(data.like_count || 0);
 
-        // 如果用户已登录，检查是否已点赞
         if (user) {
           const liked = await hasLikedWebsite(id, user.id);
           setLikedByUser(liked);
@@ -76,15 +76,18 @@ export function WebsiteDetailPage() {
     }
   }, [id, user]);
 
-  // 点赞/取消点赞切换
-  const handleLikeToggle = async () => {
+  const handleLikeToggle = useCallback(async () => {
+    // 双重检查：状态锁和 ref 锁
+    if (likeToggling || isLikingRef.current) return;
     if (!user) return;
-    if (likeToggling) return;
 
+    isLikingRef.current = true;
     setLikeToggling(true);
+
     try {
       if (likedByUser) {
         await unlikeWebsite(id, user.id);
+        // 成功减少点赞数，并反转状态
         setLikeCount((prev) => prev - 1);
         setLikedByUser(false);
       } else {
@@ -94,10 +97,12 @@ export function WebsiteDetailPage() {
       }
     } catch (err) {
       console.error('点赞操作失败:', err);
+      // 发生错误时，不更新状态，保持原样
     } finally {
+      isLikingRef.current = false;
       setLikeToggling(false);
     }
-  };
+  }, [id, user, likedByUser, likeToggling]);
 
   const handleDelete = async () => {
     if (!website) return;
@@ -194,7 +199,6 @@ export function WebsiteDetailPage() {
         boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
       }}
     >
-      {/* Breadcrumb */}
       <div style={{ marginBottom: '20px' }}>
         <Link
           to="/"
@@ -213,7 +217,6 @@ export function WebsiteDetailPage() {
         <span style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>详情</span>
       </div>
 
-      {/* 标题 */}
       <h1
         style={{
           fontFamily: 'var(--ym-font-display)',
@@ -236,7 +239,6 @@ export function WebsiteDetailPage() {
         }}
       />
 
-      {/* Meta 信息 */}
       <div
         style={{
           display: 'flex',
@@ -250,7 +252,6 @@ export function WebsiteDetailPage() {
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
       </div>
 
-      {/* 详情描述 —— 修复换行符丢失问题 */}
       <div
         style={{
           padding: '16px 20px',
@@ -260,14 +261,13 @@ export function WebsiteDetailPage() {
           fontSize: '15px',
           color: 'var(--ym-text-primary)',
           lineHeight: 1.6,
-          whiteSpace: 'pre-wrap',      // 保留换行符
-          wordBreak: 'break-word',     // 防止长文本溢出
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
         }}
       >
         {website.description || '暂无详情'}
       </div>
 
-      {/* 点赞区域 */}
       <div
         style={{
           display: 'flex',
@@ -318,7 +318,6 @@ export function WebsiteDetailPage() {
         )}
       </div>
 
-      {/* 操作按钮 */}
       <div
         style={{
           display: 'flex',
