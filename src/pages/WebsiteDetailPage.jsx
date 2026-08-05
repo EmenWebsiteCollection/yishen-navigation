@@ -94,7 +94,6 @@ export function WebsiteDetailPage() {
       }
     } catch (err) {
       console.error('点赞操作失败:', err);
-      // 可选：显示错误提示
     } finally {
       setLikeToggling(false);
     }
@@ -251,7 +250,7 @@ export function WebsiteDetailPage() {
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
       </div>
 
-      {/* 详情描述 */}
+      {/* 详情描述 —— 修复换行符丢失问题 */}
       <div
         style={{
           padding: '16px 20px',
@@ -261,6 +260,8 @@ export function WebsiteDetailPage() {
           fontSize: '15px',
           color: 'var(--ym-text-primary)',
           lineHeight: 1.6,
+          whiteSpace: 'pre-wrap',      // 保留换行符
+          wordBreak: 'break-word',     // 防止长文本溢出
         }}
       >
         {website.description || '暂无详情'}
