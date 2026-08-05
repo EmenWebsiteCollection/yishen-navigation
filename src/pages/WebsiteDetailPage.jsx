@@ -1,5 +1,5 @@
 // src/pages/WebsiteDetailPage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
@@ -9,6 +9,11 @@ import {
   unlikeWebsite,
   hasLikedWebsite,
 } from '../services/websites.js';
+import {
+  getCommentsByWebsite,
+  createComment,
+  deleteComment,
+} from '../services/comments.js';
 import '../styles/global.css';
 
 const Chip = ({ label, value }) => (
@@ -27,18 +32,100 @@ const Chip = ({ label, value }) => (
   </span>
 );
 
+// ---------- 评论卡片组件（已调整） ----------
+const CommentCard = ({ comment, currentUserId, onDelete }) => {
+  const isOwner = currentUserId && comment.user_id === currentUserId;
+
+  return (
+    <div
+      style={{
+        padding: '14px 18px',
+        backgroundColor: 'var(--ym-bg-card)',
+        border: '1px solid var(--ym-border)',
+        borderRadius: 'var(--ym-radius-sm)',
+        marginBottom: '12px',
+      }}
+    >
+      {/* 用户名（前缀“用户：”） */}
+      <div
+        style={{
+          fontWeight: '500',
+          color: 'var(--ym-text-primary)',
+          marginBottom: '4px',
+        }}
+      >
+        用户：{comment.username}
+      </div>
+
+      {/* 评论内容（保留换行） */}
+      <div
+        style={{
+          color: 'var(--ym-text-secondary)',
+          lineHeight: 1.6,
+          wordBreak: 'break-word',
+          whiteSpace: 'pre-wrap',
+          marginBottom: '8px',
+        }}
+      >
+        {comment.content}
+      </div>
+
+      {/* 底部：日期（左） + 删除按钮（右） */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '13px',
+          color: 'var(--ym-text-muted)',
+        }}
+      >
+        <span>{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
+        {isOwner && (
+          <button
+            onClick={() => onDelete(comment.id)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--ym-danger)',
+              cursor: 'pointer',
+              fontSize: '13px',
+              transition: 'color var(--ym-transition)',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ym-danger-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ym-danger)')}
+          >
+            删除
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export function WebsiteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  // ----- 网站详情状态 -----
   const [website, setWebsite] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // ----- 点赞状态 -----
   const [likeCount, setLikeCount] = useState(0);
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeToggling, setLikeToggling] = useState(false);
 
+  // ----- 评论状态 -----
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [commentsError, setCommentsError] = useState(null);
+  const [commentContent, setCommentContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // ----- 加载详情 -----
   useEffect(() => {
     const loadWebsite = async () => {
       try {
@@ -73,6 +160,27 @@ export function WebsiteDetailPage() {
     }
   }, [id, user]);
 
+  // ----- 加载评论 -----
+  const loadComments = useCallback(async () => {
+    if (!id) return;
+    setLoadingComments(true);
+    setCommentsError(null);
+    try {
+      const data = await getCommentsByWebsite(id);
+      setComments(data);
+    } catch (err) {
+      console.error('加载评论失败:', err);
+      setCommentsError('评论加载失败');
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
+
+  // ----- 点赞切换 -----
   const handleLikeToggle = async () => {
     if (!user || likeToggling) return;
     setLikeToggling(true);
@@ -93,6 +201,57 @@ export function WebsiteDetailPage() {
     }
   };
 
+  // ----- 发表评论（含换行符限制） -----
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    const trimmed = commentContent.trim();
+    if (!trimmed) {
+      alert('评论不能为空');
+      return;
+    }
+    // 限制换行符数量（最多 10 个）
+    const newlineCount = (trimmed.match(/\n/g) || []).length;
+    if (newlineCount > 10) {
+      alert('评论中的换行不能超过 10 个');
+      return;
+    }
+    if (trimmed.length > 1000) {
+      alert('评论不能超过 1000 字');
+      return;
+    }
+    if (!user) {
+      alert('请先登录');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createComment(id, user.id, trimmed);
+      setCommentContent('');
+      await loadComments(); // 重新加载评论
+    } catch (err) {
+      console.error('发表评论失败:', err);
+      alert('发表评论失败，请稍后重试');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ----- 删除评论 -----
+  const handleDeleteComment = async (commentId) => {
+    const confirmed = window.confirm('确认删除该评论吗？');
+    if (!confirmed) return;
+    try {
+      await deleteComment(commentId);
+      // 本地移除该评论
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (err) {
+      console.error('删除评论失败:', err);
+      alert('删除失败，请重试');
+    }
+  };
+
+  // ----- 删除网站 -----
   const handleDelete = async () => {
     if (!website) return;
     const confirmed = window.confirm(
@@ -110,6 +269,7 @@ export function WebsiteDetailPage() {
     }
   };
 
+  // ---------- 渲染 ----------
   if (loading) {
     return <div style={{ textAlign: 'center', marginTop: '60px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
   }
@@ -179,7 +339,7 @@ export function WebsiteDetailPage() {
   return (
     <div
       style={{
-        maxWidth: '640px',
+        maxWidth: '720px',
         margin: '40px auto',
         padding: '32px 28px',
         backgroundColor: 'var(--ym-bg-card)',
@@ -188,6 +348,7 @@ export function WebsiteDetailPage() {
         boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
       }}
     >
+      {/* ---------- 面包屑 ---------- */}
       <div style={{ marginBottom: '20px' }}>
         <Link
           to="/"
@@ -206,6 +367,7 @@ export function WebsiteDetailPage() {
         <span style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>详情</span>
       </div>
 
+      {/* ---------- 标题 ---------- */}
       <h1
         style={{
           fontFamily: 'var(--ym-font-display)',
@@ -228,6 +390,7 @@ export function WebsiteDetailPage() {
         }}
       />
 
+      {/* ---------- Meta ---------- */}
       <div
         style={{
           display: 'flex',
@@ -241,6 +404,7 @@ export function WebsiteDetailPage() {
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
       </div>
 
+      {/* ---------- 详情描述 ---------- */}
       <div
         style={{
           padding: '16px 20px',
@@ -257,12 +421,13 @@ export function WebsiteDetailPage() {
         {website.description || '暂无详情'}
       </div>
 
+      {/* ---------- 点赞区域 ---------- */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '16px',
-          marginBottom: '24px',
+          marginBottom: '32px',
           flexWrap: 'wrap',
         }}
       >
@@ -307,12 +472,114 @@ export function WebsiteDetailPage() {
         )}
       </div>
 
+      {/* ========================================================= */}
+      {/* ---------- 评论区域（已调整） ---------- */}
+      <div style={{ marginTop: '20px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '16px' }}>
+          💬 评论（{comments.length}）
+        </h3>
+
+        {/* 评论列表 */}
+        {loadingComments ? (
+          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>加载评论...</div>
+        ) : commentsError ? (
+          <div style={{ color: 'var(--ym-danger)', fontSize: '14px' }}>评论加载失败</div>
+        ) : comments.length === 0 ? (
+          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
+            暂无评论，成为第一个评论的人吧。
+          </div>
+        ) : (
+          <div style={{ marginBottom: '20px' }}>
+            {comments.map((comment) => (
+              <CommentCard
+                key={comment.id}
+                comment={comment}
+                currentUserId={user?.id}
+                onDelete={handleDeleteComment}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 发表评论表单 */}
+        {user ? (
+          <form onSubmit={handleCommentSubmit} style={{ marginTop: '12px' }}>
+            <textarea
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              placeholder="写评论...（换行最多 10 行）"
+              rows="3"
+              disabled={submitting}
+              maxLength="1000"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--ym-border)',
+                borderRadius: 'var(--ym-radius-sm)',
+                fontSize: '15px',
+                backgroundColor: 'var(--ym-bg-card)',
+                color: 'var(--ym-text-primary)',
+                resize: 'vertical',
+                fontFamily: 'var(--ym-font-body)',
+                transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
+                marginBottom: '10px',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{
+                  padding: '8px 24px',
+                  backgroundColor: 'var(--ym-accent)',
+                  color: 'var(--ym-accent-text-on)',
+                  border: 'none',
+                  borderRadius: 'var(--ym-radius-sm)',
+                  fontSize: '15px',
+                  fontWeight: '500',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  opacity: submitting ? 0.6 : 1,
+                  transition: 'background-color var(--ym-transition)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!submitting) e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!submitting) e.currentTarget.style.backgroundColor = 'var(--ym-accent)';
+                }}
+              >
+                {submitting ? '发表评论...' : '发表评论'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', marginTop: '8px' }}>
+            登录后即可发表评论
+          </div>
+        )}
+      </div>
+      {/* ---------- 评论区域结束 ---------- */}
+      {/* ========================================================= */}
+
+      {/* ---------- 操作按钮 ---------- */}
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           gap: '12px',
           alignItems: 'center',
+          marginTop: '32px',
+          borderTop: '1px solid var(--ym-border)',
+          paddingTop: '24px',
         }}
       >
         <button
