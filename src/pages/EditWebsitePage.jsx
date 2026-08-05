@@ -9,6 +9,7 @@ export function EditWebsitePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export function EditWebsitePage() {
           setError('您没有权限编辑此网站');
           return;
         }
+        setUrl(data.url);
         setTitle(data.title);
         setDescription(data.description || '');
       } catch (err) {
@@ -56,9 +58,24 @@ export function EditWebsitePage() {
       setError('标题不能为空');
       return;
     }
+    if (!url.trim()) {
+      setError('URL 不能为空');
+      return;
+    }
+    // 简单 URL 格式校验
+    try {
+      new URL(url.trim());
+    } catch (_) {
+      setError('请输入有效的 URL（包含协议，如 https://）。');
+      return;
+    }
     setSaving(true);
     try {
-      await updateWebsite(id, { title: title.trim(), description: description.trim() || '' });
+      await updateWebsite(id, { 
+        url: url.trim(), 
+        title: title.trim(), 
+        description: description.trim() || '' 
+      });
       setMessage('✅ 保存成功！');
       setTimeout(() => navigate(`/website/${id}`), 1500);
     } catch (err) {
@@ -118,6 +135,46 @@ export function EditWebsitePage() {
         编辑网站
       </h2>
       <form onSubmit={handleSubmit}>
+        {/* URL 输入框（新增） */}
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="edit-url" style={{
+            display: 'block',
+            fontSize: '13px',
+            color: 'var(--ym-text-secondary)',
+            marginBottom: '4px',
+            fontWeight: '500',
+          }}>
+            URL
+          </label>
+          <input
+            id="edit-url"
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            required
+            placeholder="https://example.com"
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid var(--ym-border)',
+              borderRadius: 'var(--ym-radius-sm)',
+              fontSize: '15px',
+              backgroundColor: 'var(--ym-bg-card)',
+              color: 'var(--ym-text-primary)',
+              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'var(--ym-border)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          />
+        </div>
+
+        {/* 标题输入框 */}
         <div style={{ marginBottom: '16px' }}>
           <label htmlFor="edit-title" style={{
             display: 'block',
@@ -154,6 +211,8 @@ export function EditWebsitePage() {
             }}
           />
         </div>
+
+        {/* 详情输入框 */}
         <div style={{ marginBottom: '20px' }}>
           <label htmlFor="edit-desc" style={{
             display: 'block',
@@ -191,6 +250,7 @@ export function EditWebsitePage() {
             }}
           />
         </div>
+
         {message && (
           <div style={{
             padding: '12px 16px',

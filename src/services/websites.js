@@ -34,7 +34,6 @@ export const createWebsite = async (url, title, description, userId) => {
 };
 
 export const getWebsites = async () => {
-  // 先获取所有网站基本信息
   const { data: websites, error } = await supabase
     .from('websites')
     .select(`
@@ -51,7 +50,6 @@ export const getWebsites = async () => {
 
   if (error) throw error;
 
-  // 对每个网站查询点赞数（若表不存在则返回0）
   const websitesWithLikes = await Promise.all(
     websites.map(async (item) => {
       let likeCount = 0;
@@ -62,7 +60,6 @@ export const getWebsites = async () => {
           .eq('website_id', item.id);
         likeCount = count || 0;
       } catch (e) {
-        // 忽略点赞表不存在错误
         console.warn('点赞表未就绪，忽略点赞数据');
       }
       return {
@@ -75,12 +72,11 @@ export const getWebsites = async () => {
         user_id: item.user_id,
         username: item.profiles?.username || '用户',
         like_count: likeCount,
-        liked_by_user: false, // 前端会单独填充
+        liked_by_user: false,
       };
     })
   );
 
-  // 按点赞数降序
   websitesWithLikes.sort((a, b) => b.like_count - a.like_count);
   return websitesWithLikes;
 };
@@ -131,20 +127,38 @@ export const getWebsiteById = async (id) => {
   };
 };
 
+// ========== 修改 updateWebsite ==========
 export const updateWebsite = async (id, data) => {
-  const { title, description } = data;
+  const { url, title, description } = data;
   if (!title || title.trim() === '') {
     throw new Error('标题不能为空');
   }
+  if (!url || url.trim() === '') {
+    throw new Error('URL 不能为空');
+  }
+  const trimmedUrl = url.trim();
+  const trimmedTitle = title.trim();
+  const trimmedDesc = description?.trim() || null;
+
+  // 如果 URL 发生变化，检查是否与其他网站重复（排除自身）
+  const current = await getWebsiteById(id);
+  if (!current) throw new Error('网站不存在');
+  if (trimmedUrl !== current.url) {
+    const exists = await checkUrlExists(trimmedUrl);
+    if (exists) throw new Error('该网址已存在，无法重复创建。');
+  }
+
   const { data: updated, error } = await supabase
     .from('websites')
     .update({ 
-      title: title.trim(), 
-      description: description?.trim() || null,
+      url: trimmedUrl,
+      title: trimmedTitle, 
+      description: trimmedDesc,
     })
     .eq('id', id)
     .select()
     .single();
+
   if (error) throw error;
   return updated;
 };
@@ -157,7 +171,7 @@ export const deleteWebsite = async (id) => {
   if (error) throw error;
 };
 
-// ========== 新增点赞相关函数 ==========
+// ========== 点赞相关函数 ==========
 export const getWebsiteLikeCount = async (websiteId) => {
   try {
     const { count, error } = await supabase
