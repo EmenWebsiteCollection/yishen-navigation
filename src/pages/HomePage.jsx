@@ -2,13 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { getWebsites } from '../services/websites.js';
+import { getWebsites, likeWebsite, unlikeWebsite } from '../services/websites.js';
 import { logout } from '../services/auth.js';
+import { supabase } from '../services/supabase.js';
 import { LoginPage } from './LoginPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
 import '../styles/global.css';
 
-// Logo 组件（纯展示）
+// Logo 组件
 const Logo = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
     <div style={{
@@ -39,7 +40,7 @@ const Logo = () => (
   </div>
 );
 
-// Skeleton Card（纯展示）
+// Skeleton 卡片
 const SkeletonCard = () => (
   <div style={{
     padding: '16px 20px',
@@ -71,12 +72,31 @@ export function HomePage() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
 
+  // 加载网站列表和点赞状态
   useEffect(() => {
     const loadWebsites = async () => {
       try {
         setLoading(true);
         setError(null);
         const data = await getWebsites();
+
+        // 如果用户已登录，获取当前用户的点赞列表
+        if (user) {
+          try {
+            const { data: likes, error: likeError } = await supabase
+              .from('website_likes')
+              .select('website_id')
+              .eq('user_id', user.id);
+            if (!likeError && likes) {
+              const likedIds = new Set(likes.map(l => l.website_id));
+              data.forEach(site => {
+                site.liked_by_user = likedIds.has(site.id);
+              });
+            }
+          } catch (likeErr) {
+            console.warn('获取点赞状态失败:', likeErr);
+          }
+        }
         setWebsites(data);
       } catch (err) {
         setError('加载网站列表失败，请稍后重试。');
@@ -86,7 +106,7 @@ export function HomePage() {
       }
     };
     loadWebsites();
-  }, []);
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -127,6 +147,32 @@ export function HomePage() {
       setShowRegisterModal(false);
       setModalClosing(false);
     }, 180);
+  };
+
+  // 点赞切换
+  const handleLikeToggle = async (websiteId, currentLiked) => {
+    if (!user) return;
+    try {
+      if (currentLiked) {
+        await unlikeWebsite(websiteId, user.id);
+      } else {
+        await likeWebsite(websiteId, user.id);
+      }
+      // 更新本地状态
+      setWebsites(prev =>
+        prev.map(site =>
+          site.id === websiteId
+            ? {
+                ...site,
+                like_count: currentLiked ? site.like_count - 1 : site.like_count + 1,
+                liked_by_user: !currentLiked,
+              }
+            : site
+        )
+      );
+    } catch (err) {
+      console.error('点赞操作失败:', err);
+    }
   };
 
   if (authLoading) {
@@ -311,7 +357,6 @@ export function HomePage() {
                   if (line) line.style.transform = 'scaleY(0)';
                 }}
               >
-                {/* 左侧竖线（装饰） */}
                 <div className="card-line" style={{
                   position: 'absolute',
                   left: '0',
@@ -324,7 +369,6 @@ export function HomePage() {
                   transformOrigin: 'center',
                   transition: 'transform var(--ym-transition)',
                 }} />
-                {/* 编号（两位数字） */}
                 <div style={{
                   position: 'absolute',
                   left: '8px',
@@ -370,11 +414,37 @@ export function HomePage() {
                   </div>
                 </div>
                 <div style={{
-                  fontSize: '13px',
-                  color: 'var(--ym-text-muted)',
-                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  flexWrap: 'wrap',
                 }}>
-                  {site.created_at ? new Date(site.created_at).toLocaleDateString('zh-CN') : ''}
+                  <div style={{
+                    fontSize: '13px',
+                    color: 'var(--ym-text-muted)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    ❤️ {site.like_count || 0}
+                  </div>
+                  {user && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLikeToggle(site.id, site.liked_by_user || false);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: site.liked_by_user ? 'var(--ym-success)' : 'var(--ym-text-secondary)',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: site.liked_by_user ? 'bold' : 'normal',
+                        transition: 'color var(--ym-transition)',
+                      }}
+                    >
+                      {site.liked_by_user ? '♥ 已赞' : '♡ 点赞'}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
