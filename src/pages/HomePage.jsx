@@ -1,5 +1,5 @@
 // src/pages/HomePage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getWebsites, likeWebsite, unlikeWebsite } from '../services/websites.js';
@@ -9,7 +9,6 @@ import { LoginPage } from './LoginPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
 import '../styles/global.css';
 
-// Logo 组件
 const Logo = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
     <div style={{
@@ -40,7 +39,6 @@ const Logo = () => (
   </div>
 );
 
-// Skeleton 卡片
 const SkeletonCard = () => (
   <div style={{
     padding: '16px 20px',
@@ -72,7 +70,11 @@ export function HomePage() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
 
-  // 加载网站列表和点赞状态
+  // 用于存储每个网站的点赞状态（ref 副本，避免 state 延迟）
+  const likedRefs = useRef({});
+  // 用于存储每个网站的点赞请求锁定
+  const likingRefs = useRef({});
+
   useEffect(() => {
     const loadWebsites = async () => {
       try {
@@ -80,7 +82,6 @@ export function HomePage() {
         setError(null);
         const data = await getWebsites();
 
-        // 如果用户已登录，获取当前用户的点赞列表
         if (user) {
           try {
             const { data: likes, error: likeError } = await supabase
@@ -91,11 +92,19 @@ export function HomePage() {
               const likedIds = new Set(likes.map(l => l.website_id));
               data.forEach(site => {
                 site.liked_by_user = likedIds.has(site.id);
+                // 初始化 ref
+                likedRefs.current[site.id] = likedIds.has(site.id);
+                likingRefs.current[site.id] = false;
               });
             }
           } catch (likeErr) {
             console.warn('获取点赞状态失败:', likeErr);
           }
+        } else {
+          data.forEach(site => {
+            likedRefs.current[site.id] = false;
+            likingRefs.current[site.id] = false;
+          });
         }
         setWebsites(data);
       } catch (err) {
@@ -149,29 +158,52 @@ export function HomePage() {
     }, 180);
   };
 
-  // 点赞切换
+  // 点赞切换（带乐观更新和回滚）
   const handleLikeToggle = async (websiteId, currentLiked) => {
     if (!user) return;
+    // 防止并发点击
+    if (likingRefs.current[websiteId]) return;
+
+    const newLiked = !currentLiked;
+    // 乐观更新 state
+    setWebsites(prev =>
+      prev.map(site =>
+        site.id === websiteId
+          ? {
+              ...site,
+              like_count: newLiked ? site.like_count + 1 : site.like_count - 1,
+              liked_by_user: newLiked,
+            }
+          : site
+      )
+    );
+    // 更新 ref
+    likedRefs.current[websiteId] = newLiked;
+    likingRefs.current[websiteId] = true;
+
     try {
-      if (currentLiked) {
-        await unlikeWebsite(websiteId, user.id);
-      } else {
+      if (newLiked) {
         await likeWebsite(websiteId, user.id);
+      } else {
+        await unlikeWebsite(websiteId, user.id);
       }
-      // 更新本地状态
+    } catch (err) {
+      console.error('点赞操作失败:', err);
+      // 回滚 state
       setWebsites(prev =>
         prev.map(site =>
           site.id === websiteId
             ? {
                 ...site,
-                like_count: currentLiked ? site.like_count - 1 : site.like_count + 1,
-                liked_by_user: !currentLiked,
+                like_count: currentLiked ? site.like_count + 1 : site.like_count - 1,
+                liked_by_user: currentLiked,
               }
             : site
         )
       );
-    } catch (err) {
-      console.error('点赞操作失败:', err);
+      likedRefs.current[websiteId] = currentLiked;
+    } finally {
+      likingRefs.current[websiteId] = false;
     }
   };
 
@@ -181,7 +213,6 @@ export function HomePage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      {/* Navbar */}
       <nav style={{
         padding: '16px 24px',
         backgroundColor: 'var(--ym-bg-card)',
@@ -289,7 +320,6 @@ export function HomePage() {
         </div>
       </nav>
 
-      {/* 网站列表 */}
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
         {loading ? (
           <div style={{ display: 'grid', gap: '12px' }}>
@@ -432,14 +462,16 @@ export function HomePage() {
                         e.stopPropagation();
                         handleLikeToggle(site.id, site.liked_by_user || false);
                       }}
+                      disabled={likingRefs.current[site.id] || false}
                       style={{
                         background: 'none',
                         border: 'none',
                         color: site.liked_by_user ? 'var(--ym-success)' : 'var(--ym-text-secondary)',
-                        cursor: 'pointer',
+                        cursor: likingRefs.current[site.id] ? 'not-allowed' : 'pointer',
                         fontSize: '14px',
                         fontWeight: site.liked_by_user ? 'bold' : 'normal',
                         transition: 'color var(--ym-transition)',
+                        opacity: likingRefs.current[site.id] ? 0.5 : 1,
                       }}
                     >
                       {site.liked_by_user ? '♥ 已赞' : '♡ 点赞'}

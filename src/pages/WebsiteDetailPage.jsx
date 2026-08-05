@@ -1,5 +1,5 @@
 // src/pages/WebsiteDetailPage.jsx
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
@@ -39,9 +39,6 @@ export function WebsiteDetailPage() {
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeToggling, setLikeToggling] = useState(false);
 
-  // 使用 ref 作为额外的锁定标志，防止并发点击
-  const isLikingRef = useRef(false);
-
   useEffect(() => {
     const loadWebsite = async () => {
       try {
@@ -76,18 +73,12 @@ export function WebsiteDetailPage() {
     }
   }, [id, user]);
 
-  const handleLikeToggle = useCallback(async () => {
-    // 双重检查：状态锁和 ref 锁
-    if (likeToggling || isLikingRef.current) return;
-    if (!user) return;
-
-    isLikingRef.current = true;
+  const handleLikeToggle = async () => {
+    if (!user || likeToggling) return;
     setLikeToggling(true);
-
     try {
       if (likedByUser) {
         await unlikeWebsite(id, user.id);
-        // 成功减少点赞数，并反转状态
         setLikeCount((prev) => prev - 1);
         setLikedByUser(false);
       } else {
@@ -97,12 +88,10 @@ export function WebsiteDetailPage() {
       }
     } catch (err) {
       console.error('点赞操作失败:', err);
-      // 发生错误时，不更新状态，保持原样
     } finally {
-      isLikingRef.current = false;
       setLikeToggling(false);
     }
-  }, [id, user, likedByUser, likeToggling]);
+  };
 
   const handleDelete = async () => {
     if (!website) return;
