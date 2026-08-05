@@ -1,0 +1,46 @@
+/* src/styles/global.css */
+@import './tokens.css';
+@import './animations.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--ym-bg-page);
+  font-family: var(--ym-font-body);
+  color: var(--ym-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ym-bg-subtle);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ym-border-strong);
+  border-radius: 4px;
+}
