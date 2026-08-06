@@ -1,6 +1,6 @@
 // src/pages/HomePage.jsx
 import React, { useEffect, useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getWebsites, likeWebsite, unlikeWebsite } from '../services/websites.js';
 import { logout } from '../services/auth.js';
@@ -8,6 +8,8 @@ import { supabase } from '../services/supabase.js';
 import { LoginPage } from './LoginPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
 import '../styles/global.css';
+
+const PAGE_SIZE = 10;
 
 const Logo = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -63,6 +65,7 @@ const SkeletonCard = () => (
 export function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [websites, setWebsites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,52 +73,59 @@ export function HomePage() {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
 
-  // 用于存储每个网站的点赞状态（ref 副本，避免 state 延迟）
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
   const likedRefs = useRef({});
-  // 用于存储每个网站的点赞请求锁定
   const likingRefs = useRef({});
 
-  useEffect(() => {
-    const loadWebsites = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getWebsites();
+  const loadWebsites = async (page) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { websites: data, total } = await getWebsites(page, PAGE_SIZE);
+      setTotalItems(total);
+      setTotalPages(Math.ceil(total / PAGE_SIZE) || 1);
 
-        if (user) {
-          try {
-            const { data: likes, error: likeError } = await supabase
-              .from('website_likes')
-              .select('website_id')
-              .eq('user_id', user.id);
-            if (!likeError && likes) {
-              const likedIds = new Set(likes.map(l => l.website_id));
-              data.forEach(site => {
-                site.liked_by_user = likedIds.has(site.id);
-                // 初始化 ref
-                likedRefs.current[site.id] = likedIds.has(site.id);
-                likingRefs.current[site.id] = false;
-              });
-            }
-          } catch (likeErr) {
-            console.warn('获取点赞状态失败:', likeErr);
+      if (user) {
+        try {
+          const { data: likes, error: likeError } = await supabase
+            .from('website_likes')
+            .select('website_id')
+            .eq('user_id', user.id);
+          if (!likeError && likes) {
+            const likedIds = new Set(likes.map(l => l.website_id));
+            data.forEach(site => {
+              site.liked_by_user = likedIds.has(site.id);
+              likedRefs.current[site.id] = likedIds.has(site.id);
+              likingRefs.current[site.id] = false;
+            });
           }
-        } else {
-          data.forEach(site => {
-            likedRefs.current[site.id] = false;
-            likingRefs.current[site.id] = false;
-          });
+        } catch (likeErr) {
+          console.warn('获取点赞状态失败:', likeErr);
         }
-        setWebsites(data);
-      } catch (err) {
-        setError('加载网站列表失败，请稍后重试。');
-        console.error('加载网站列表错误:', err);
-      } finally {
-        setLoading(false);
+      } else {
+        data.forEach(site => {
+          likedRefs.current[site.id] = false;
+          likingRefs.current[site.id] = false;
+        });
       }
-    };
-    loadWebsites();
-  }, [user]);
+      setWebsites(data);
+    } catch (err) {
+      setError('加载网站列表失败，请稍后重试。');
+      console.error('加载网站列表错误:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    if (page > 0) {
+      loadWebsites(page);
+    }
+  }, [searchParams, user]);
 
   const handleLogout = async () => {
     try {
@@ -158,14 +168,11 @@ export function HomePage() {
     }, 180);
   };
 
-  // 点赞切换（带乐观更新和回滚）
   const handleLikeToggle = async (websiteId, currentLiked) => {
     if (!user) return;
-    // 防止并发点击
     if (likingRefs.current[websiteId]) return;
 
     const newLiked = !currentLiked;
-    // 乐观更新 state
     setWebsites(prev =>
       prev.map(site =>
         site.id === websiteId
@@ -177,7 +184,6 @@ export function HomePage() {
           : site
       )
     );
-    // 更新 ref
     likedRefs.current[websiteId] = newLiked;
     likingRefs.current[websiteId] = true;
 
@@ -189,7 +195,6 @@ export function HomePage() {
       }
     } catch (err) {
       console.error('点赞操作失败:', err);
-      // 回滚 state
       setWebsites(prev =>
         prev.map(site =>
           site.id === websiteId
@@ -205,6 +210,41 @@ export function HomePage() {
     } finally {
       likingRefs.current[websiteId] = false;
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage === currentPage || newPage < 1 || newPage > totalPages) return;
+    setSearchParams({ page: newPage });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getPaginationRange = () => {
+    const current = currentPage;
+    const total = totalPages;
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+        range.push(i);
+      }
+    }
+
+    let l;
+    range.forEach((i) => {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push('...');
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    });
+
+    return rangeWithDots;
   };
 
   if (authLoading) {
@@ -323,7 +363,7 @@ export function HomePage() {
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
         {loading ? (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
           <div style={{
@@ -354,133 +394,254 @@ export function HomePage() {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {websites.map((site, index) => (
-              <div
-                key={site.id}
-                onClick={() => navigate(`/website/${site.id}`)}
-                style={{
-                  position: 'relative',
-                  padding: '16px 20px',
-                  border: '1px solid var(--ym-border)',
-                  borderRadius: 'var(--ym-radius-md)',
-                  backgroundColor: 'var(--ym-bg-card)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  transition: 'transform var(--ym-transition), border-color var(--ym-transition)',
-                  paddingLeft: 'calc(20px + 12px)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateX(4px)';
-                  e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-                  const line = e.currentTarget.querySelector('.card-line');
-                  if (line) line.style.transform = 'scaleY(1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateX(0)';
-                  e.currentTarget.style.borderColor = 'var(--ym-border)';
-                  const line = e.currentTarget.querySelector('.card-line');
-                  if (line) line.style.transform = 'scaleY(0)';
-                }}
-              >
-                <div className="card-line" style={{
-                  position: 'absolute',
-                  left: '0',
-                  top: '6px',
-                  width: '3px',
-                  height: 'calc(100% - 12px)',
-                  backgroundColor: 'var(--ym-border-strong)',
-                  borderRadius: '2px',
-                  transform: 'scaleY(0)',
-                  transformOrigin: 'center',
-                  transition: 'transform var(--ym-transition)',
-                }} />
-                <div style={{
-                  position: 'absolute',
-                  left: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontFamily: 'var(--ym-font-display)',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  color: 'var(--ym-text-muted)',
-                  letterSpacing: '0.5px',
-                  lineHeight: 1,
-                }}>
-                  {String(index + 1).padStart(2, '0')}
-                </div>
-
-                <div style={{ flex: 1, minWidth: '200px', paddingLeft: '4px' }}>
+          <>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {websites.map((site, index) => (
+                <div
+                  key={site.id}
+                  onClick={() => navigate(`/website/${site.id}`)}
+                  style={{
+                    position: 'relative',
+                    padding: '16px 20px',
+                    border: '1px solid var(--ym-border)',
+                    borderRadius: 'var(--ym-radius-md)',
+                    backgroundColor: 'var(--ym-bg-card)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    transition: 'transform var(--ym-transition), border-color var(--ym-transition)',
+                    paddingLeft: 'calc(20px + 12px)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                    e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                    const line = e.currentTarget.querySelector('.card-line');
+                    if (line) line.style.transform = 'scaleY(1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateX(0)';
+                    e.currentTarget.style.borderColor = 'var(--ym-border)';
+                    const line = e.currentTarget.querySelector('.card-line');
+                    if (line) line.style.transform = 'scaleY(0)';
+                  }}
+                >
+                  <div className="card-line" style={{
+                    position: 'absolute',
+                    left: '0',
+                    top: '6px',
+                    width: '3px',
+                    height: 'calc(100% - 12px)',
+                    backgroundColor: 'var(--ym-border-strong)',
+                    borderRadius: '2px',
+                    transform: 'scaleY(0)',
+                    transformOrigin: 'center',
+                    transition: 'transform var(--ym-transition)',
+                  }} />
                   <div style={{
-                    fontSize: '16px',
+                    position: 'absolute',
+                    left: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontFamily: 'var(--ym-font-display)',
+                    fontSize: '13px',
                     fontWeight: '500',
-                    color: 'var(--ym-text-primary)',
-                    marginBottom: '4px',
+                    color: 'var(--ym-text-muted)',
+                    letterSpacing: '0.5px',
+                    lineHeight: 1,
+                  }}>
+                    {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: '200px', paddingLeft: '4px' }}>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      color: 'var(--ym-text-primary)',
+                      marginBottom: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      flexWrap: 'wrap',
+                    }}>
+                      {site.title}
+                      <span style={{
+                        fontSize: '12px',
+                        color: 'var(--ym-text-muted)',
+                        fontWeight: '400',
+                      }}>↗</span>
+                    </div>
+                    <div style={{
+                      fontSize: '13px',
+                      color: 'var(--ym-text-secondary)',
+                      display: 'flex',
+                      gap: '16px',
+                      flexWrap: 'wrap',
+                    }}>
+                      <span>📎 {site.url}</span>
+                      <span>👤 {site.username}</span>
+                    </div>
+                  </div>
+                  <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: '12px',
                     flexWrap: 'wrap',
                   }}>
-                    {site.title}
-                    <span style={{
-                      fontSize: '12px',
+                    <div style={{
+                      fontSize: '13px',
                       color: 'var(--ym-text-muted)',
-                      fontWeight: '400',
-                    }}>↗</span>
-                  </div>
-                  <div style={{
-                    fontSize: '13px',
-                    color: 'var(--ym-text-secondary)',
-                    display: 'flex',
-                    gap: '16px',
-                    flexWrap: 'wrap',
-                  }}>
-                    <span>📎 {site.url}</span>
-                    <span>👤 {site.username}</span>
+                      whiteSpace: 'nowrap',
+                    }}>
+                      ❤️ {site.like_count || 0}
+                    </div>
+                    {user && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLikeToggle(site.id, site.liked_by_user || false);
+                        }}
+                        disabled={likingRefs.current[site.id] || false}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: site.liked_by_user ? 'var(--ym-success)' : 'var(--ym-text-secondary)',
+                          cursor: likingRefs.current[site.id] ? 'not-allowed' : 'pointer',
+                          fontSize: '14px',
+                          fontWeight: site.liked_by_user ? 'bold' : 'normal',
+                          transition: 'color var(--ym-transition)',
+                          opacity: likingRefs.current[site.id] ? 0.5 : 1,
+                        }}
+                      >
+                        {site.liked_by_user ? '♥ 已赞' : '♡ 点赞'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  flexWrap: 'wrap',
-                }}>
-                  <div style={{
-                    fontSize: '13px',
-                    color: 'var(--ym-text-muted)',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    ❤️ {site.like_count || 0}
-                  </div>
-                  {user && (
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                marginTop: '32px',
+                flexWrap: 'wrap',
+              }}>
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '6px 12px',
+                    border: '1px solid var(--ym-border)',
+                    borderRadius: 'var(--ym-radius-sm)',
+                    backgroundColor: 'var(--ym-bg-card)',
+                    color: currentPage === 1 ? 'var(--ym-text-muted)' : 'var(--ym-text-secondary)',
+                    fontSize: '14px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    transition: 'all var(--ym-transition)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== 1) {
+                      e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                      e.currentTarget.style.color = 'var(--ym-text-primary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== 1) {
+                      e.currentTarget.style.borderColor = 'var(--ym-border)';
+                      e.currentTarget.style.color = 'var(--ym-text-secondary)';
+                    }
+                  }}
+                >
+                  上一页
+                </button>
+
+                {getPaginationRange().map((item, idx) => {
+                  if (item === '...') {
+                    return <span key={`dots-${idx}`} style={{ padding: '0 4px', color: 'var(--ym-text-muted)' }}>…</span>;
+                  }
+                  const pageNum = item;
+                  const isActive = pageNum === currentPage;
+                  return (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLikeToggle(site.id, site.liked_by_user || false);
-                      }}
-                      disabled={likingRefs.current[site.id] || false}
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      disabled={isActive}
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        color: site.liked_by_user ? 'var(--ym-success)' : 'var(--ym-text-secondary)',
-                        cursor: likingRefs.current[site.id] ? 'not-allowed' : 'pointer',
+                        padding: '6px 12px',
+                        minWidth: '36px',
+                        border: isActive ? '1px solid var(--ym-accent)' : '1px solid var(--ym-border)',
+                        borderRadius: 'var(--ym-radius-sm)',
+                        backgroundColor: isActive ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                        color: isActive ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
                         fontSize: '14px',
-                        fontWeight: site.liked_by_user ? 'bold' : 'normal',
-                        transition: 'color var(--ym-transition)',
-                        opacity: likingRefs.current[site.id] ? 0.5 : 1,
+                        fontWeight: isActive ? '500' : 'normal',
+                        cursor: isActive ? 'default' : 'pointer',
+                        transition: 'all var(--ym-transition)',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                          e.currentTarget.style.color = 'var(--ym-text-primary)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.borderColor = 'var(--ym-border)';
+                          e.currentTarget.style.color = 'var(--ym-text-secondary)';
+                        }
                       }}
                     >
-                      {site.liked_by_user ? '♥ 已赞' : '♡ 点赞'}
+                      {pageNum}
                     </button>
-                  )}
-                </div>
+                  );
+                })}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '6px 12px',
+                    border: '1px solid var(--ym-border)',
+                    borderRadius: 'var(--ym-radius-sm)',
+                    backgroundColor: 'var(--ym-bg-card)',
+                    color: currentPage === totalPages ? 'var(--ym-text-muted)' : 'var(--ym-text-secondary)',
+                    fontSize: '14px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    transition: 'all var(--ym-transition)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                      e.currentTarget.style.color = 'var(--ym-text-primary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.currentTarget.style.borderColor = 'var(--ym-border)';
+                      e.currentTarget.style.color = 'var(--ym-text-secondary)';
+                    }
+                  }}
+                >
+                  下一页
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+
+            <div style={{
+              textAlign: 'center',
+              marginTop: '16px',
+              fontSize: '13px',
+              color: 'var(--ym-text-muted)',
+            }}>
+              共 {totalItems} 个网站，第 {currentPage}/{totalPages} 页
+            </div>
+          </>
         )}
       </div>
 
