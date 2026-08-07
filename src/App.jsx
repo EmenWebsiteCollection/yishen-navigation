@@ -2,6 +2,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth.js';
+import { useDevice } from './hooks/useDevice.js';
+import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { CreateWebsitePage } from './pages/CreateWebsitePage.jsx';
 import { WebsiteDetailPage } from './pages/WebsiteDetailPage.jsx';
@@ -15,8 +17,13 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  // 设备检测：监听窗口变化并同步 <html data-device>，
+  // 后续组件可通过 useDevice() 读取设备类型
+  useDevice();
+
   return (
     <>
+      <ScrollToTop />
       <ThemeSwitcher />
       <Routes>
         <Route path="/" element={<HomePage />} />

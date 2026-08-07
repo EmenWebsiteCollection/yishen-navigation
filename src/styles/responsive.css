@@ -1,0 +1,169 @@
+/* ========================================================= */
+/* 手机端 UI 适配（Issue #9）                                  */
+/* 断点：mobile <= 640px | tablet 641-1024px | desktop >1024  */
+/* 与 src/hooks/useDevice.js 保持一致                          */
+/* 说明：页面主体为内联样式，移动端覆盖需使用 !important；        */
+/*       仅覆盖必须随屏幕变化的属性，桌面端样式完全不受影响。      */
+/* ========================================================= */
+
+/* ---------- 全局触摸/移动端基础 ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation; /* 去掉移动端双击/长按缩放延迟 */
+}
+
+/* 键盘可达性：桌面端聚焦轮廓（移动端触摸不显示） */
+:focus-visible {
+  outline: 2px solid var(--ym-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- 移动端 ≤640px ---------- */
+@media (max-width: 640px) {
+  /* 顶部导航：收紧内边距与按钮间距 */
+  .ym-nav {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+  }
+
+  .ym-nav-actions {
+    gap: 8px !important;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ym-nav-actions button,
+  .ym-nav-actions a {
+    min-height: 40px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  /* 用户名：窄屏下隐藏邮箱前缀，只保留 emoji */
+  .ym-nav-username {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 主内容容器 */
+  .ym-container {
+    margin: 20px auto !important;
+    padding: 0 14px 32px !important;
+  }
+
+  /* 网站卡片网格：移动端强制单列 */
+  .ym-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  /* 卡片触摸反馈（替代桌面 hover 上浮） */
+  .ym-card:active {
+    transform: scale(0.98) !important;
+  }
+
+  /* 分页：加大点击区域 */
+  .ym-pagination {
+    gap: 8px !important;
+    margin-top: 24px !important;
+  }
+
+  .ym-pagination button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 14px;
+  }
+
+  /* 详情/创建/编辑页卡片：贴边、收紧留白 */
+  .ym-page-card {
+    margin: 16px auto !important;
+    padding: 24px 16px !important;
+    border-radius: var(--ym-radius-md) !important;
+  }
+
+  .ym-page-card h1 {
+    font-size: 22px !important;
+  }
+
+  /* 详情页底部操作按钮（编辑/删除）与访问按钮：加大点击区 */
+  .ym-detail-actions a,
+  .ym-detail-actions button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 输入框/文本域字号提到 16px，避免 iOS 聚焦自动放大 */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* 轮播：箭头加大、圆点加大（触控友好） */
+  .ym-hrc-arrow {
+    width: 44px;
+    height: 44px;
+  }
+
+  .ym-hrc-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .ym-hrc-dot.active {
+    width: 24px;
+  }
+
+  .ym-hrc-rank {
+    left: 14px !important;
+    bottom: 12px !important;
+  }
+
+  /* 主题切换悬浮球：适配刘海屏安全区 */
+  .ym-fab {
+    right: calc(16px + env(safe-area-inset-right)) !important;
+    bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* 登录/注册弹窗：收紧内边距 */
+  .ym-modal-card {
+    padding: 20px !important;
+  }
+}
+
+/* ---------- 平板 641-1024px：微调 ---------- */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .ym-page-card {
+    margin: 28px auto !important;
+  }
+}
+
+/* ---------- 无鼠标设备：屏蔽内联 hover 效果 ---------- */
+@media (hover: none) and (pointer: coarse) {
+  .ym-card:hover {
+    transform: translateY(0) !important;
+    box-shadow: none !important;
+    border-color: var(--ym-border) !important;
+  }
+
+  .ym-hrc-arrow:hover:not(:disabled) {
+    border-color: var(--ym-border) !important;
+    color: var(--ym-text-secondary) !important;
+  }
+}

@@ -102,7 +102,9 @@ export function CreateWebsitePage() {
   };
 
   return (
-    <div style={{
+    <div
+      className="ym-page-card"
+      style={{
       maxWidth: '560px',
       margin: '60px auto',
       padding: '32px 28px',

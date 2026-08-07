@@ -250,7 +250,9 @@ export function HomePage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <nav style={{
+      <nav
+        className="ym-nav"
+        style={{
         padding: '16px 24px',
         backgroundColor: 'var(--ym-bg-card)',
         borderBottom: '1px solid var(--ym-border)',
@@ -263,10 +265,10 @@ export function HomePage() {
         <Link to="/" style={{ textDecoration: 'none' }}>
           <Logo />
         </Link>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="ym-nav-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           {user ? (
             <>
-              <span style={{ fontSize: '14px', color: 'var(--ym-text-secondary)' }}>
+              <span className="ym-nav-username" style={{ fontSize: '14px', color: 'var(--ym-text-secondary)' }}>
                 👤 {user.email?.replace('@nav.local', '') || user.email}
               </span>
               <Link
@@ -357,11 +359,11 @@ export function HomePage() {
         </div>
       </nav>
 
-      <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
+      <div className="ym-container" style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
         <HighRatedCarousel />
 
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+          <div className="ym-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
@@ -394,10 +396,11 @@ export function HomePage() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            <div className="ym-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               {websites.map((site, index) => (
                 <div
                   key={site.id}
+                  className="ym-card"
                   onClick={() => navigate(`/website/${site.id}`)}
                   style={{
                     border: '1px solid var(--ym-border)',
@@ -558,7 +561,9 @@ export function HomePage() {
             </div>
 
             {totalPages > 1 && (
-              <div style={{
+              <div
+                className="ym-pagination"
+                style={{
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -698,7 +703,7 @@ export function HomePage() {
           onClick={closeLoginModal}
         >
           <div
-            className={modalClosing ? 'ym-scale-out' : 'ym-scale-in'}
+            className={`ym-modal-card ${modalClosing ? 'ym-scale-out' : 'ym-scale-in'}`}
             style={{
               backgroundColor: 'var(--ym-bg-card)',
               padding: '24px',
@@ -766,7 +771,7 @@ export function HomePage() {
           onClick={closeRegisterModal}
         >
           <div
-            className={modalClosing ? 'ym-scale-out' : 'ym-scale-in'}
+            className={`ym-modal-card ${modalClosing ? 'ym-scale-out' : 'ym-scale-in'}`}
             style={{
               backgroundColor: 'var(--ym-bg-card)',
               padding: '24px',

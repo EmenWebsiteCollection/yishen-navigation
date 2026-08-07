@@ -41,6 +41,7 @@ export function ThemeSwitcher() {
   return (
     <div
       ref={rootRef}
+      className="ym-fab"
       style={{
         position: 'fixed',
         right: '20px',

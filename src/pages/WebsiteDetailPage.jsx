@@ -272,6 +272,7 @@ export function WebsiteDetailPage() {
   if (error) {
     return (
       <div
+        className="ym-page-card"
         style={{
           maxWidth: '560px',
           margin: '60px auto',
@@ -302,6 +303,7 @@ export function WebsiteDetailPage() {
   if (!website) {
     return (
       <div
+        className="ym-page-card"
         style={{
           maxWidth: '560px',
           margin: '60px auto',
@@ -333,6 +335,7 @@ export function WebsiteDetailPage() {
 
   return (
     <div
+      className="ym-page-card"
       style={{
         maxWidth: '720px',
         margin: '40px auto',
@@ -633,6 +636,7 @@ export function WebsiteDetailPage() {
 
       {/* ---------- 底部操作按钮（仅编辑/删除） ---------- */}
       <div
+        className="ym-detail-actions"
         style={{
           display: 'flex',
           flexWrap: 'wrap',
