@@ -275,6 +275,36 @@ export function HomePage() {
           <Logo />
         </Link>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Link
+            to="/about"
+            style={{
+              padding: '6px 16px',
+              backgroundColor: 'transparent',
+              color: 'var(--ym-text-secondary)',
+              border: '1px solid var(--ym-border)',
+              borderRadius: 'var(--ym-radius-sm)',
+              fontSize: '14px',
+              textDecoration: 'none',
+              transition: 'all var(--ym-transition)',
+            }}
+          >
+            关于
+          </Link>
+          <Link
+            to="/contact"
+            style={{
+              padding: '6px 16px',
+              backgroundColor: 'transparent',
+              color: 'var(--ym-text-secondary)',
+              border: '1px solid var(--ym-border)',
+              borderRadius: 'var(--ym-radius-sm)',
+              fontSize: '14px',
+              textDecoration: 'none',
+              transition: 'all var(--ym-transition)',
+            }}
+          >
+            联系我们
+          </Link>
           {user ? (
             <>
               <span style={{ fontSize: '14px', color: 'var(--ym-text-secondary)' }}>

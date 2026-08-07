@@ -9,6 +9,8 @@ import { EditWebsitePage } from './pages/EditWebsitePage.jsx';
 import { ProfilePage } from './pages/ProfilePage.jsx';
 import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
+import { AboutPage } from './pages/AboutPage.jsx';
+import { ContactPage } from './pages/ContactPage.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -34,6 +36,8 @@ function App() {
         <Route path="/create" element={<PrivateRoute><CreateWebsitePage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
         <Route path="/user/:id" element={<CreatorProfilePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
