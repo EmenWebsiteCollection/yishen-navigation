@@ -1,5 +1,9 @@
 // src/services/passwordRecovery.js
-import { supabase } from './supabase.js';
+// 找回密码改为调用 Netlify 函数（发信走 Resend，重置走 Supabase service_role），
+// 不再依赖 Supabase 的邮件 / SMTP 渠道。
+// 详见 netlify/functions/send-reset-code.mjs 与 reset-password.mjs。
+
+const FUNC_BASE = '/.netlify/functions';
 
 // 校验是否为合法邮箱
 export const isValidEmail = (value) => {
@@ -11,31 +15,37 @@ export const isValidPhone = (value) => {
   return /^\+?[1-9]\d{6,14}$/.test((value || '').trim().replace(/[\s-]/g, ''));
 };
 
+async function postJson(path, body) {
+  const res = await fetch(`${FUNC_BASE}/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    // 忽略非 JSON 响应
+  }
+  if (!res.ok) {
+    throw new Error(data.error || `请求失败 (${res.status})`);
+  }
+  return data;
+}
+
 // 发送找回密码验证码（邮箱或手机号）
 // channel: 'email' | 'phone'，value: 邮箱地址或手机号
-// 使用 Supabase Auth OTP：shouldCreateUser:false 确保仅向已存在账号发送
+// 实际发信与验证码生成均在服务端 Netlify 函数完成。
 export const sendResetCode = async ({ channel, value }) => {
-  const clean = (value || '').trim();
-  const base = channel === 'phone' ? { phone: clean } : { email: clean };
-  const { error } = await supabase.auth.signInWithOtp({
-    ...base,
-    options: { shouldCreateUser: false },
-  });
-  if (error) throw error;
+  return postJson('send-reset-code', { email: (value || '').trim() });
 };
 
 // 校验验证码并重置密码
-// 流程：verifyOtp 拿到会话 → updateUser 设置新密码（账号不变，仅更新密码）
+// 由服务端 Netlify 函数校验验证码，并用 service_role 后台更新密码。
 export const resetPasswordWithCode = async ({ channel, value, code, newPassword }) => {
-  const clean = (value || '').trim();
-  const verifyPayload =
-    channel === 'phone'
-      ? { phone: clean, token: (code || '').trim(), type: 'sms' }
-      : { email: clean, token: (code || '').trim(), type: 'email' };
-
-  const { error: verifyError } = await supabase.auth.verifyOtp(verifyPayload);
-  if (verifyError) throw verifyError;
-
-  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-  if (updateError) throw updateError;
+  return postJson('reset-password', {
+    email: (value || '').trim(),
+    code: (code || '').trim(),
+    newPassword,
+  });
 };
