@@ -9,6 +9,8 @@ import { EditWebsitePage } from './pages/EditWebsitePage.jsx';
 import { ProfilePage } from './pages/ProfilePage.jsx';
 import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
+import { ScrollToTop } from './components/ScrollToTop.jsx';
+import { useDevice } from './hooks/useDevice.js';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -17,8 +19,10 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  useDevice();
   return (
     <>
+      <ScrollToTop />
       <ThemeSwitcher />
       <Routes>
         <Route path="/" element={<HomePage />} />

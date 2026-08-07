@@ -223,7 +223,7 @@ export function HomePage() {
   const handlePageChange = (newPage) => {
     if (newPage === currentPage || newPage < 1 || newPage > totalPages) return;
     setSearchParams({ page: newPage });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   const getPaginationRange = () => {
