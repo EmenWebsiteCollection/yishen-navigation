@@ -74,10 +74,6 @@ graph TD
 - ✅ 提交代码前请确保本地测试通过，并遵循项目的 ESLint/Prettier 配置。
 - ✅ 数据库变更必须经过数据库组审核，并编写对应的迁移脚本。
 - ✅ 任何架构层面的改动需提前在项目管理组发起讨论。
-- 🔑 **找回密码**：登录页已支持通过「邮箱验证码」找回密码（详见 [docs/password-recovery.md](docs/password-recovery.md)）。手机号验证码暂未上线（弹窗内显示「部署中」）。
-  - 实现方式：前端调用 Netlify 函数（`/.netlify/functions/send-reset-code`、`reset-password`），由函数经 **Resend** 发信、用 Supabase `service_role` 重置密码——**不依赖 Supabase SMTP**。
-  - 部署时需在 Netlify 配置环境变量：`RESEND_API_KEY`、`RESEND_FROM`、`SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`（详见文档）。
-  - 仅对注册时绑定了**真实邮箱**的账号生效；旧的 `username@nav.local` 假邮箱账号无法找回。
 
 ---
 

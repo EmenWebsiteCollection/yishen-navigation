@@ -10,7 +10,6 @@
     "netlify:dev": "netlify dev"
   },
   "dependencies": {
-    "@netlify/blobs": "^10.7.12",
     "@supabase/supabase-js": "^2.45.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
