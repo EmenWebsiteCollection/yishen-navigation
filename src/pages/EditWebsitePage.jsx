@@ -1,10 +1,31 @@
-// src/pages/EditWebsitePage.jsx
+﻿// src/pages/EditWebsitePage.jsx
+// 编辑作品：类型/URL/标题/描述/图片/状态/公开·私密/分组/更新日志
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { getWebsiteById, updateWebsite } from '../services/websites.js';
+import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS } from '../services/works.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  border: '1px solid var(--ym-border)',
+  borderRadius: 'var(--ym-radius-sm)',
+  fontSize: '15px',
+  backgroundColor: 'var(--ym-bg-card)',
+  color: 'var(--ym-text-primary)',
+  boxSizing: 'border-box',
+  fontFamily: 'var(--ym-font-body)',
+};
+
+const labelStyle = {
+  display: 'block',
+  fontSize: '13px',
+  color: 'var(--ym-text-secondary)',
+  marginBottom: '4px',
+  fontWeight: '500',
+};
 
 export function EditWebsitePage() {
   const { id } = useParams();
@@ -13,9 +34,15 @@ export function EditWebsitePage() {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [workType, setWorkType] = useState('website');
+  const [status, setStatus] = useState('');
+  const [visibility, setVisibility] = useState('public');
+  const [groupId, setGroupId] = useState('');
+  const [changelog, setChangelog] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -28,32 +55,38 @@ export function EditWebsitePage() {
       setLoading(false);
       return;
     }
-    const loadWebsite = async () => {
+    const loadWork = async () => {
       try {
         setLoading(true);
         setError('');
-        const data = await getWebsiteById(id);
+        const data = await getWorkById(id, user.id);
         if (!data) {
-          setError('网站不存在');
+          setError('作品不存在');
           return;
         }
         if (user.id !== data.user_id) {
-          setError('您没有权限编辑此网站');
+          setError('您没有权限编辑此作品');
           return;
         }
-        setUrl(data.url);
+        setUrl(data.url || '');
         setTitle(data.title);
         setDescription(data.description || '');
+        setWorkType(data.work_type || 'website');
+        setStatus(data.status || '');
+        setVisibility(data.visibility || 'public');
+        setGroupId(data.group_id || '');
+        setChangelog(data.changelog || '');
         setImageUrl(data.image_url || '');
         setImagePreview(data.image_url || '');
+        setGroups(await listGroups(user.id));
       } catch (err) {
-        setError('加载网站信息失败，请稍后重试');
+        setError('加载作品信息失败，请稍后重试');
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    loadWebsite();
+    loadWork();
   }, [id, user, authLoading]);
 
   const handleFileChange = (e) => {
@@ -62,21 +95,18 @@ export function EditWebsitePage() {
     if (err) {
       setError(err);
       setImageFile(null);
-      // 不改变预览，保留原来的
       return;
     }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
     setError('');
-    // 如果有旧图片，但用户选择了新文件，我们标记为替换，删除按钮依然可用
   };
 
   // 删除图片
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview('');
-    setImageUrl(''); // 清除数据库中的图片 URL
-    // 注意：如果用户此时保存，image_url 会变为 null
+    setImageUrl('');
   };
 
   const handleSubmit = async (e) => {
@@ -87,41 +117,42 @@ export function EditWebsitePage() {
       setError('标题不能为空');
       return;
     }
-    if (!url.trim()) {
-      setError('URL 不能为空');
-      return;
-    }
-    try {
-      new URL(url.trim());
-    } catch (_) {
-      setError('请输入有效的 URL（包含协议，如 https://）。');
-      return;
+    if (workType === 'website') {
+      if (!url.trim()) {
+        setError('网站类作品必须填写 URL');
+        return;
+      }
+      try {
+        new URL(url.trim());
+      } catch (_) {
+        setError('请输入有效的 URL（包含协议，如 https://）。');
+        return;
+      }
     }
 
     setSaving(true);
     try {
       let finalImageUrl = null;
-
-      // 如果用户删除了图片（imageUrl 和 imagePreview 都为空，且 imageFile 为空）
       if (!imagePreview && !imageFile) {
         finalImageUrl = null;
       } else if (imageFile) {
-        // 用户选择了新图片，上传
-        const uploadedUrl = await uploadWebsiteImage(imageFile, user.id);
-        finalImageUrl = uploadedUrl;
+        finalImageUrl = await uploadWebsiteImage(imageFile, user.id);
       } else if (imagePreview && imagePreview.startsWith('http')) {
-        // 保留已有的图片 URL（未改变）
         finalImageUrl = imageUrl;
       } else {
-        // 其他情况（例如 blob 但未上传，不会发生）
         finalImageUrl = null;
       }
 
-      await updateWebsite(id, { 
-        url: url.trim(), 
-        title: title.trim(), 
+      await updateWork(id, {
+        url: url.trim(),
+        title: title.trim(),
         description: description.trim() || '',
-        image_url: finalImageUrl
+        image_url: finalImageUrl,
+        work_type: workType,
+        status: status || null,
+        visibility,
+        group_id: groupId || null,
+        changelog: changelog.trim() || null,
       });
       setMessage('✅ 保存成功！');
       setTimeout(() => navigate(`/website/${id}`), 1500);
@@ -136,7 +167,7 @@ export function EditWebsitePage() {
     return <div style={{ textAlign: 'center', marginTop: '60px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
   }
 
-  if (error) {
+  if (error && !message) {
     return (
       <div style={{
         maxWidth: '560px',
@@ -175,112 +206,79 @@ export function EditWebsitePage() {
         marginBottom: '24px',
         letterSpacing: '1px',
       }}>
-        编辑网站
+        编辑作品
       </h2>
       <form onSubmit={handleSubmit}>
-        {/* URL */}
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="edit-url" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
-            URL
-          </label>
-          <input
-            id="edit-url"
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-            placeholder="https://example.com"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--ym-border)',
-              borderRadius: 'var(--ym-radius-sm)',
-              fontSize: '15px',
-              backgroundColor: 'var(--ym-bg-card)',
-              color: 'var(--ym-text-primary)',
-              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
+        {/* 作品类型 */}
+        <div style={{ marginBottom: '18px' }}>
+          <label style={labelStyle}>作品类型</label>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {WORK_TYPES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setWorkType(t.id)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--ym-border)',
+                  backgroundColor: workType === t.id ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                  color: workType === t.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  transition: 'all var(--ym-transition)',
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* URL（仅网站类） */}
+        {workType === 'website' && (
+          <div style={{ marginBottom: '16px' }}>
+            <label htmlFor="edit-url" style={labelStyle}>URL</label>
+            <input
+              id="edit-url"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              placeholder="https://example.com"
+              style={inputStyle}
+            />
+          </div>
+        )}
 
         {/* 标题 */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="edit-title" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
-            标题
-          </label>
+          <label htmlFor="edit-title" style={labelStyle}>标题</label>
           <input
             id="edit-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--ym-border)',
-              borderRadius: 'var(--ym-radius-sm)',
-              fontSize: '15px',
-              backgroundColor: 'var(--ym-bg-card)',
-              color: 'var(--ym-text-primary)',
-              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            style={inputStyle}
           />
         </div>
 
         {/* 描述 */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="edit-desc" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
-            详情描述
-          </label>
+          <label htmlFor="edit-desc" style={labelStyle}>详情描述</label>
           <textarea
             id="edit-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows="4"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--ym-border)',
-              borderRadius: 'var(--ym-radius-sm)',
-              fontSize: '15px',
-              backgroundColor: 'var(--ym-bg-card)',
-              color: 'var(--ym-text-primary)',
-              resize: 'vertical',
-              fontFamily: 'var(--ym-font-body)',
-              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            style={{ ...inputStyle, resize: 'vertical' }}
           />
         </div>
 
         {/* 图片上传与删除 */}
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
-            网站图片（可选，支持 PNG/JPG/GIF/WebP，≤5MB）
-          </label>
+          <label style={labelStyle}>作品图片（可选，支持 PNG/JPG/GIF/WebP，≤5MB）</label>
           {hasImage && (
             <div style={{ marginBottom: '8px', position: 'relative' }}>
               <img
@@ -307,10 +305,7 @@ export function EditWebsitePage() {
                   borderRadius: 'var(--ym-radius-sm)',
                   fontSize: '13px',
                   cursor: 'pointer',
-                  transition: 'background-color var(--ym-transition)',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--ym-danger-hover)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ym-danger)'}
               >
                 删除图片
               </button>
@@ -322,11 +317,47 @@ export function EditWebsitePage() {
             onChange={handleFileChange}
             style={{ width: '100%', padding: '6px 0' }}
           />
-          {imageUrl && !imageFile && (
-            <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
-              当前已有图片，选择新文件或点击删除按钮移除。
-            </div>
-          )}
+        </div>
+
+        {/* 状态 / 可见性 / 分组 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+          <div>
+            <label style={labelStyle}>创作状态</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
+              <option value="">未设置</option>
+              {WORK_STATUS.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>可见性</label>
+            <select value={visibility} onChange={(e) => setVisibility(e.target.value)} style={inputStyle}>
+              <option value="public">公开</option>
+              <option value="private">私密</option>
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>分组</label>
+            <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inputStyle}>
+              <option value="">未分组</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 更新日志 */}
+        <div style={{ marginBottom: '20px' }}>
+          <label htmlFor="edit-changelog" style={labelStyle}>更新日志（可选）</label>
+          <textarea
+            id="edit-changelog"
+            value={changelog}
+            onChange={(e) => setChangelog(e.target.value)}
+            rows="3"
+            style={{ ...inputStyle, resize: 'vertical' }}
+          />
         </div>
 
         {message && (
@@ -343,7 +374,7 @@ export function EditWebsitePage() {
             {message}
           </div>
         )}
-        {error && (
+        {error && !message && (
           <div style={{
             padding: '12px 16px',
             marginBottom: '16px',
@@ -363,47 +394,19 @@ export function EditWebsitePage() {
             disabled={saving}
             style={{
               padding: '10px 28px',
-              backgroundColor: saving ? 'var(--ym-accent)' : 'var(--ym-accent)',
+              backgroundColor: 'var(--ym-accent)',
               color: 'var(--ym-accent-text-on)',
               border: 'none',
               borderRadius: 'var(--ym-radius-sm)',
               fontSize: '15px',
               fontWeight: '500',
-              transition: 'background-color var(--ym-transition), opacity var(--ym-transition)',
               cursor: saving ? 'not-allowed' : 'pointer',
-              opacity: saving ? 0.5 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-            onMouseEnter={(e) => {
-              if (!saving) e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)';
-            }}
-            onMouseLeave={(e) => {
-              if (!saving) e.currentTarget.style.backgroundColor = 'var(--ym-accent)';
+              opacity: saving ? 0.6 : 1,
             }}
           >
-            {saving ? (
-              <>
-                <span className="ym-spin" style={{ display: 'inline-block', width: '14px', height: '14px', border: '2px solid var(--ym-accent-text-on)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-                保存中...
-              </>
-            ) : '保存'}
+            {saving ? '保存中...' : '保存'}
           </button>
-          <Link
-            to={`/website/${id}`}
-            style={{
-              color: 'var(--ym-text-secondary)',
-              fontSize: '14px',
-              textDecoration: 'none',
-              transition: 'color var(--ym-transition)',
-              fontWeight: '500',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ym-text-primary)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--ym-text-secondary)'}
-          >
-            取消
-          </Link>
+          <Link to={`/website/${id}`} style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', textDecoration: 'none' }}>取消</Link>
         </div>
       </form>
     </div>

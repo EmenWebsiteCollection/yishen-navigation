@@ -3,12 +3,15 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
-  getWebsiteById,
-  deleteWebsite,
-  likeWebsite,
-  unlikeWebsite,
-  hasLikedWebsite,
-} from '../services/websites.js';
+  getWorkById,
+  deleteWork,
+  likeWork,
+  unlikeWork,
+  hasLikedWork,
+  getWorkFavoriteCount,
+  favoriteWork,
+  unfavoriteWork,
+} from '../services/works.js';
 import {
   getCommentsByWebsite,
   createComment,
@@ -66,17 +69,27 @@ const CommentCard = ({
           fontWeight: '500',
           color: 'var(--ym-text-primary)',
           marginBottom: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          flexWrap: 'wrap',
         }}
       >
-        {isReply ? (
-          <>
-            <span style={{ color: 'var(--ym-text-muted)', fontWeight: '400' }}>回复 </span>
-            <span style={{ color: 'var(--ym-accent)' }}>@{replyToUsername}</span>
-            <span style={{ color: 'var(--ym-text-muted)', fontWeight: '400' }}>：</span>
-            <span style={{ color: 'var(--ym-text-primary)', fontWeight: '500' }}>用户：{comment.username}</span>
-          </>
-        ) : (
-          <>用户：{comment.username}</>
+        <Link
+          to={`/user/${comment.user_id}`}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: 'var(--ym-text-primary)' }}
+        >
+          {comment.avatar_url ? (
+            <img src={comment.avatar_url} alt='' style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ display: 'inline-block', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--ym-bg-subtle)', textAlign: 'center', lineHeight: '20px', fontSize: '11px' }}>👤</span>
+          )}
+          {comment.username}
+        </Link>
+        {isReply && (
+          <span style={{ color: 'var(--ym-text-muted)', fontWeight: '400', fontSize: '13px' }}>
+            回复 <span style={{ color: 'var(--ym-accent)' }}>@{replyToUsername}</span>
+          </span>
         )}
       </div>
 
@@ -232,6 +245,11 @@ export function WebsiteDetailPage() {
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeToggling, setLikeToggling] = useState(false);
 
+  // 收藏
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [favoritedByUser, setFavoritedByUser] = useState(false);
+  const [favoriteToggling, setFavoriteToggling] = useState(false);
+
   // 评论
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -250,7 +268,7 @@ export function WebsiteDetailPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await getWebsiteById(id);
+        const data = await getWorkById(id, user?.id);
         if (data === null) {
           setError('网站不存在');
           setWebsite(null);
@@ -258,9 +276,11 @@ export function WebsiteDetailPage() {
         }
         setWebsite(data);
         setLikeCount(data.like_count || 0);
+        setFavoriteCount(await getWorkFavoriteCount(id));
+        setFavoritedByUser(data.favorited_by_user || false);
 
         if (user) {
-          const liked = await hasLikedWebsite(id, user.id);
+          const liked = await hasLikedWork(id, user.id);
           setLikedByUser(liked);
         } else {
           setLikedByUser(false);
@@ -305,11 +325,11 @@ export function WebsiteDetailPage() {
     setLikeToggling(true);
     try {
       if (likedByUser) {
-        await unlikeWebsite(id, user.id);
+        await unlikeWork(id, user.id);
         setLikeCount((prev) => prev - 1);
         setLikedByUser(false);
       } else {
-        await likeWebsite(id, user.id);
+        await likeWork(id, user.id);
         setLikeCount((prev) => prev + 1);
         setLikedByUser(true);
       }
@@ -317,6 +337,27 @@ export function WebsiteDetailPage() {
       console.error('点赞操作失败:', err);
     } finally {
       setLikeToggling(false);
+    }
+  };
+
+  // ----- 收藏 -----
+  const handleFavoriteToggle = async () => {
+    if (!user || favoriteToggling) return;
+    setFavoriteToggling(true);
+    try {
+      if (favoritedByUser) {
+        await unfavoriteWork(id, user.id);
+        setFavoriteCount((prev) => Math.max(0, prev - 1));
+        setFavoritedByUser(false);
+      } else {
+        await favoriteWork(id, user.id);
+        setFavoriteCount((prev) => prev + 1);
+        setFavoritedByUser(true);
+      }
+    } catch (err) {
+      console.error('收藏操作失败:', err);
+    } finally {
+      setFavoriteToggling(false);
     }
   };
 
@@ -410,7 +451,7 @@ export function WebsiteDetailPage() {
     if (!confirmed) return;
     setDeleting(true);
     try {
-      await deleteWebsite(id);
+      await deleteWork(id);
       navigate('/', { state: { deleteSuccess: true } });
     } catch (err) {
       console.error('删除失败:', err);
@@ -611,6 +652,7 @@ export function WebsiteDetailPage() {
           <span style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>详情</span>
         </div>
 
+        {website.url && (
         <button
           onClick={() => window.open(website.url, '_blank')}
           style={{
@@ -630,6 +672,7 @@ export function WebsiteDetailPage() {
         >
           🔗 访问网站
         </button>
+        )}
       </div>
 
       {/* ---------- 标题 ---------- */}
@@ -684,7 +727,12 @@ export function WebsiteDetailPage() {
           marginBottom: '24px',
         }}
       >
-        <Chip label="上传者" value={website.username} />
+        <Link to={`/user/${website.user_id}`} style={{ textDecoration: 'none' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', backgroundColor: 'var(--ym-bg-subtle)', color: 'var(--ym-text-secondary)', borderRadius: '20px', fontSize: '13px', fontWeight: '500' }}>
+            {website.avatar_url ? <img src={website.avatar_url} alt='' style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
+            上传者：{website.username}
+          </span>
+        </Link>
         <Chip label="创建" value={new Date(website.created_at).toLocaleString('zh-CN')} />
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
       </div>
@@ -705,6 +753,26 @@ export function WebsiteDetailPage() {
       >
         {website.description || '暂无详情'}
       </div>
+
+      {/* ---------- 更新日志 ---------- */}
+      {website.changelog && (
+        <div
+          style={{
+            padding: '16px 20px',
+            backgroundColor: 'var(--ym-bg-subtle)',
+            borderRadius: 'var(--ym-radius-sm)',
+            marginBottom: '24px',
+            fontSize: '14px',
+            color: 'var(--ym-text-secondary)',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+        >
+          <div style={{ fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '6px' }}>📝 更新日志</div>
+          {website.changelog}
+        </div>
+      )}
 
       {/* ---------- 点赞 ---------- */}
       <div
@@ -754,6 +822,35 @@ export function WebsiteDetailPage() {
           <span style={{ fontSize: '14px', color: 'var(--ym-text-muted)' }}>
             登录后可点赞
           </span>
+        )}
+      </div>
+
+      {/* ---------- 收藏 ---------- */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '16px', color: 'var(--ym-text-primary)' }}>
+          🔖 {favoriteCount} 人收藏
+        </span>
+        {user ? (
+          <button
+            onClick={handleFavoriteToggle}
+            disabled={favoriteToggling}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: favoritedByUser ? 'var(--ym-success)' : 'var(--ym-bg-card)',
+              color: favoritedByUser ? '#fff' : 'var(--ym-text-secondary)',
+              border: '1px solid var(--ym-border)',
+              borderRadius: 'var(--ym-radius-sm)',
+              cursor: favoriteToggling ? 'not-allowed' : 'pointer',
+              opacity: favoriteToggling ? 0.6 : 1,
+              transition: 'background-color var(--ym-transition), opacity var(--ym-transition)',
+              fontSize: '14px',
+              fontWeight: '500',
+            }}
+          >
+            {favoriteToggling ? '处理中...' : favoritedByUser ? '🔖 已收藏' : '🔖 收藏'}
+          </button>
+        ) : (
+          <span style={{ fontSize: '14px', color: 'var(--ym-text-muted)' }}>登录后可收藏</span>
         )}
       </div>
 

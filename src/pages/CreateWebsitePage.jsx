@@ -1,22 +1,56 @@
-// src/pages/CreateWebsitePage.jsx
-import React, { useState } from 'react';
+﻿// src/pages/CreateWebsitePage.jsx
+// 新建作品：类型选择（网站需 URL + 自动截图；其他类型可传图）、公开/私密、状态、分组、更新日志
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { createWebsite } from '../services/websites.js';
+import { createWork, listGroups, WORK_TYPES, WORK_STATUS } from '../services/works.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  border: '1px solid var(--ym-border)',
+  borderRadius: 'var(--ym-radius-sm)',
+  fontSize: '15px',
+  backgroundColor: 'var(--ym-bg-card)',
+  color: 'var(--ym-text-primary)',
+  boxSizing: 'border-box',
+  fontFamily: 'var(--ym-font-body)',
+};
+
+const labelStyle = {
+  display: 'block',
+  fontSize: '13px',
+  color: 'var(--ym-text-secondary)',
+  marginBottom: '4px',
+  fontWeight: '500',
+};
 
 export function CreateWebsitePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [workType, setWorkType] = useState('website');
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('');
+  const [visibility, setVisibility] = useState('public');
+  const [groupId, setGroupId] = useState('');
+  const [changelog, setChangelog] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    if (!user) return;
+    listGroups(user.id)
+      .then(setGroups)
+      .catch((err) => console.warn('加载分组失败:', err.message));
+  }, [user]);
 
   // 处理文件选择
   const handleFileChange = (e) => {
@@ -42,18 +76,24 @@ export function CreateWebsitePage() {
     setMessage({ type: '', text: '' });
 
     if (!user) {
-      setMessage({ type: 'error', text: '请先登录再提交网站。' });
+      setMessage({ type: 'error', text: '请先登录再提交作品。' });
       return;
     }
-    if (!url.trim() || !title.trim()) {
-      setMessage({ type: 'error', text: 'URL 和标题不能为空。' });
+    if (!title.trim()) {
+      setMessage({ type: 'error', text: '标题不能为空。' });
       return;
     }
-    try {
-      new URL(url);
-    } catch (_) {
-      setMessage({ type: 'error', text: '请输入有效的 URL（包含协议，如 https://）。' });
-      return;
+    if (workType === 'website') {
+      if (!url.trim()) {
+        setMessage({ type: 'error', text: '网站类作品必须填写 URL。' });
+        return;
+      }
+      try {
+        new URL(url);
+      } catch (_) {
+        setMessage({ type: 'error', text: '请输入有效的 URL（包含协议，如 https://）。' });
+        return;
+      }
     }
 
     setLoading(true);
@@ -64,7 +104,7 @@ export function CreateWebsitePage() {
         // 用户手动上传了图片
         setMessage({ type: 'info', text: '正在上传图片...' });
         finalImageUrl = await uploadWebsiteImage(imageFile, user.id);
-      } else {
+      } else if (workType === 'website') {
         // 自动截图（即使失败也继续提交，只是无图）
         setMessage({ type: 'info', text: '正在自动截图（最多约 20 秒）...' });
         setUploading(true);
@@ -84,12 +124,29 @@ export function CreateWebsitePage() {
         }
       }
 
-      // 提交网站
-      await createWebsite(url.trim(), title.trim(), description.trim(), user.id, finalImageUrl);
-      setMessage({ type: 'success', text: '✅ 网站提交成功！' });
+      // 提交作品
+      await createWork(
+        {
+          url: url.trim(),
+          title: title.trim(),
+          description: description.trim(),
+          image_url: finalImageUrl,
+          work_type: workType,
+          status: status || null,
+          visibility,
+          group_id: groupId || null,
+          changelog: changelog.trim() || null,
+        },
+        user.id
+      );
+      setMessage({ type: 'success', text: '✅ 作品提交成功！' });
       setUrl('');
       setTitle('');
       setDescription('');
+      setStatus('');
+      setVisibility('public');
+      setGroupId('');
+      setChangelog('');
       setImageFile(null);
       setImagePreview('');
       setTimeout(() => navigate('/'), 1500);
@@ -119,145 +176,83 @@ export function CreateWebsitePage() {
         marginBottom: '24px',
         letterSpacing: '1px',
       }}>
-        提交新网站
+        新建作品
       </h2>
 
       <form onSubmit={handleSubmit}>
-        {/* URL */}
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="create-url" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
-            URL
-          </label>
-          <input
-            id="create-url"
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com"
-            required
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--ym-border)',
-              borderRadius: 'var(--ym-radius-sm)',
-              fontSize: '15px',
-              backgroundColor: 'var(--ym-bg-card)',
-              color: 'var(--ym-text-primary)',
-              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
+        {/* 作品类型 */}
+        <div style={{ marginBottom: '18px' }}>
+          <label style={labelStyle}>作品类型</label>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {WORK_TYPES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setWorkType(t.id)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--ym-border)',
+                  backgroundColor: workType === t.id ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                  color: workType === t.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  transition: 'all var(--ym-transition)',
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* URL（仅网站类） */}
+        {workType === 'website' && (
+          <div style={{ marginBottom: '16px' }}>
+            <label htmlFor="create-url" style={labelStyle}>URL</label>
+            <input
+              id="create-url"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+              required
+              style={inputStyle}
+            />
+          </div>
+        )}
 
         {/* 标题 */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="create-title" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
-            标题
-          </label>
+          <label htmlFor="create-title" style={labelStyle}>标题</label>
           <input
             id="create-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="网站标题"
+            placeholder={workType === 'website' ? '网站标题' : '作品标题'}
             required
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--ym-border)',
-              borderRadius: 'var(--ym-radius-sm)',
-              fontSize: '15px',
-              backgroundColor: 'var(--ym-bg-card)',
-              color: 'var(--ym-text-primary)',
-              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            style={inputStyle}
           />
         </div>
 
         {/* 描述 */}
         <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="create-desc" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
-            详情描述（可选）
-          </label>
+          <label htmlFor="create-desc" style={labelStyle}>详情描述（可选）</label>
           <textarea
             id="create-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="简要描述网站内容..."
+            placeholder="简要描述作品内容..."
             rows="4"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--ym-border)',
-              borderRadius: 'var(--ym-radius-sm)',
-              fontSize: '15px',
-              backgroundColor: 'var(--ym-bg-card)',
-              color: 'var(--ym-text-primary)',
-              resize: 'vertical',
-              fontFamily: 'var(--ym-font-body)',
-              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            style={{ ...inputStyle, resize: 'vertical' }}
           />
         </div>
 
         {/* 图片上传 */}
         <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="create-image" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
-            网站大图（可选）
-          </label>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap',
-          }}>
+          <label htmlFor="create-image" style={labelStyle}>{workType === 'website' ? '网站大图（可选）' : '作品图片（可选）'}</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <div style={{
               width: '120px',
               height: '68px',
@@ -286,11 +281,59 @@ export function CreateWebsitePage() {
                 onChange={handleFileChange}
                 style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}
               />
-              <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
-                不上传时将自动截取网站首页完整页面
-              </div>
+              {workType === 'website' ? (
+                <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
+                  不上传时将自动截取网站首页完整页面
+                </div>
+              ) : (
+                <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
+                  支持 PNG/JPG/GIF/WebP，≤5MB
+                </div>
+              )}
             </div>
           </div>
+        </div>
+
+        {/* 状态 / 可见性 / 分组 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+          <div>
+            <label style={labelStyle}>创作状态</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
+              <option value="">未设置</option>
+              {WORK_STATUS.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>可见性</label>
+            <select value={visibility} onChange={(e) => setVisibility(e.target.value)} style={inputStyle}>
+              <option value="public">公开</option>
+              <option value="private">私密</option>
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>分组（可选）</label>
+            <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inputStyle}>
+              <option value="">未分组</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 更新日志 */}
+        <div style={{ marginBottom: '20px' }}>
+          <label htmlFor="create-changelog" style={labelStyle}>更新日志（可选）</label>
+          <textarea
+            id="create-changelog"
+            value={changelog}
+            onChange={(e) => setChangelog(e.target.value)}
+            placeholder="记录作品的更新内容..."
+            rows="2"
+            style={{ ...inputStyle, resize: 'vertical' }}
+          />
         </div>
 
         {/* 消息 */}
@@ -344,12 +387,6 @@ export function CreateWebsitePage() {
             justifyContent: 'center',
             gap: '8px',
           }}
-          onMouseEnter={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)';
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = 'var(--ym-accent)';
-          }}
         >
           {loading ? (
             <>
@@ -363,22 +400,12 @@ export function CreateWebsitePage() {
               }} />
               {uploading ? '截图中...' : '提交中...'}
             </>
-          ) : '提交网站'}
+          ) : '提交作品'}
         </button>
       </form>
 
       <div style={{ marginTop: '16px', textAlign: 'center' }}>
-        <Link to="/" style={{
-          color: 'var(--ym-text-secondary)',
-          fontSize: '14px',
-          transition: 'color var(--ym-transition)',
-          textDecoration: 'none',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ym-text-primary)'}
-        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--ym-text-secondary)'}
-        >
-          ← 返回首页
-        </Link>
+        <Link to="/" style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', textDecoration: 'none' }}>← 返回首页</Link>
       </div>
     </div>
   );
