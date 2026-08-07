@@ -53,9 +53,28 @@ const Version = ({ version, date, changes }) => (
 
 const CHANGELOG = [
   {
-    version: 'v1.3.0',
+    version: 'v1.4.0',
     date: '2026-08-08',
     latest: true,
+    changes: {
+      '新增': [
+        '关于页面：项目简介、初衷、愿景与开发团队展示',
+        '版本更新记录页面',
+        '联系我们页面：GitHub Issues、反馈邮箱、社区交流群',
+        '贡献者实时同步：通过 Netlify Function 调用 GitHub API（带缓存），自动更新头像与提交数',
+        '全站统一导航栏，顶部内嵌搜索框',
+      ],
+      '优化': [
+        '关于 / 更新记录 / 联系我们页面加入 emoji、图片与返回主页按钮',
+        '贡献者卡片展示真实 GitHub 头像，可跳转主页',
+        '首页导航栏链接布局调整',
+      ],
+    },
+  },
+  {
+    version: 'v1.3.0',
+    date: '2026-08-08',
+    latest: false,
     changes: {
       '新增': [
         '自定义主题与背景图功能',
