@@ -10,6 +10,7 @@ import { ProfilePage } from './pages/ProfilePage.jsx';
 import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
+import { BackToTop } from './components/BackToTop.jsx';
 import { useDevice } from './hooks/useDevice.js';
 
 const PrivateRoute = ({ children }) => {
@@ -24,6 +25,7 @@ function App() {
     <>
       <ScrollToTop />
       <ThemeSwitcher />
+      <BackToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/website/:id" element={<WebsiteDetailPage />} />
