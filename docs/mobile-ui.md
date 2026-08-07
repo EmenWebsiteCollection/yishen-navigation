@@ -8,7 +8,7 @@
 | 文件 | 作用 |
 | --- | --- |
 | `src/hooks/useDevice.js` | 设备检测 Hook：mobile(≤640px) / tablet(641-1024px) / desktop(>1024px)，同步 `<html data-device>` |
-| `src/components/ScrollToTop.jsx` | 路由切换后自动回到页面顶端（修复评论区反馈的「停留在底端」） |
+| `src/components/ScrollToTop.jsx` | 路由切换/分页后自动回到页面顶端（修复评论区反馈的「停留在底端」+ 分页回顶） |
 | `src/styles/responsive.css` | 移动端断点样式层（≤640px 自动生效，不依赖手动切换） |
 | `docs/mobile-ui-integration.md` | 集成说明：需要在原文件中添加的挂载点清单 |
 
