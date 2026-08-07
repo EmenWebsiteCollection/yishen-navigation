@@ -19,7 +19,7 @@ const ChangeGroup = ({ label, items }) => (
   </div>
 );
 
-const Version = ({ version, date, changes }) => (
+const Version = ({ version, date, changes, latest }) => (
   <div style={{
     padding: '22px 26px',
     backgroundColor: 'var(--ym-bg-card)',
@@ -42,7 +42,7 @@ const Version = ({ version, date, changes }) => (
         color: 'var(--ym-success)',
         fontWeight: '500',
       }}>
-        最新
+        {latest ? '最新' : ''}
       </span>
     </div>
     {Object.entries(changes).map(([label, items]) => (
@@ -150,7 +150,7 @@ export function ChangelogPage() {
         />
 
         {CHANGELOG.map((v) => (
-          <Version key={v.version} version={v.version} date={v.date} changes={v.changes} />
+          <Version key={v.version} version={v.version} date={v.date} changes={v.changes} latest={v.latest} />
         ))}
       </div>
     </div>
