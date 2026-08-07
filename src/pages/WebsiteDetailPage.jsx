@@ -32,7 +32,7 @@ const Chip = ({ label, value }) => (
   </span>
 );
 
-// ---------- 评论卡片组件（已调整） ----------
+// ---------- 评论卡片组件 ----------
 const CommentCard = ({ comment, currentUserId, onDelete }) => {
   const isOwner = currentUserId && comment.user_id === currentUserId;
 
@@ -46,7 +46,6 @@ const CommentCard = ({ comment, currentUserId, onDelete }) => {
         marginBottom: '12px',
       }}
     >
-      {/* 用户名（前缀“用户：”） */}
       <div
         style={{
           fontWeight: '500',
@@ -57,7 +56,6 @@ const CommentCard = ({ comment, currentUserId, onDelete }) => {
         用户：{comment.username}
       </div>
 
-      {/* 评论内容（保留换行） */}
       <div
         style={{
           color: 'var(--ym-text-secondary)',
@@ -70,7 +68,6 @@ const CommentCard = ({ comment, currentUserId, onDelete }) => {
         {comment.content}
       </div>
 
-      {/* 底部：日期（左） + 删除按钮（右） */}
       <div
         style={{
           display: 'flex',
@@ -201,7 +198,7 @@ export function WebsiteDetailPage() {
     }
   };
 
-  // ----- 发表评论（含换行符限制） -----
+  // ----- 发表评论 -----
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     const trimmed = commentContent.trim();
@@ -209,7 +206,6 @@ export function WebsiteDetailPage() {
       alert('评论不能为空');
       return;
     }
-    // 限制换行符数量（最多 10 个）
     const newlineCount = (trimmed.match(/\n/g) || []).length;
     if (newlineCount > 10) {
       alert('评论中的换行不能超过 10 个');
@@ -228,7 +224,7 @@ export function WebsiteDetailPage() {
     try {
       await createComment(id, user.id, trimmed);
       setCommentContent('');
-      await loadComments(); // 重新加载评论
+      await loadComments();
     } catch (err) {
       console.error('发表评论失败:', err);
       alert('发表评论失败，请稍后重试');
@@ -243,7 +239,6 @@ export function WebsiteDetailPage() {
     if (!confirmed) return;
     try {
       await deleteComment(commentId);
-      // 本地移除该评论
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch (err) {
       console.error('删除评论失败:', err);
@@ -348,23 +343,55 @@ export function WebsiteDetailPage() {
         boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
       }}
     >
-      {/* ---------- 面包屑 ---------- */}
-      <div style={{ marginBottom: '20px' }}>
-        <Link
-          to="/"
+      {/* ---------- 面包屑 + 访问按钮（右上角） ---------- */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div>
+          <Link
+            to="/"
+            style={{
+              color: 'var(--ym-text-secondary)',
+              fontSize: '14px',
+              textDecoration: 'none',
+              transition: 'color var(--ym-transition)',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ym-text-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ym-text-secondary)')}
+          >
+            ← 返回首页
+          </Link>
+          <span style={{ color: 'var(--ym-text-muted)', margin: '0 8px' }}>/</span>
+          <span style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>详情</span>
+        </div>
+
+        {/* “访问网站”按钮移到右上角 */}
+        <button
+          onClick={() => window.open(website.url, '_blank')}
           style={{
-            color: 'var(--ym-text-secondary)',
+            padding: '8px 20px',
+            backgroundColor: 'var(--ym-accent)',
+            color: 'var(--ym-accent-text-on)',
+            border: 'none',
+            borderRadius: 'var(--ym-radius-sm)',
             fontSize: '14px',
-            textDecoration: 'none',
-            transition: 'color var(--ym-transition)',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'background-color var(--ym-transition)',
+            whiteSpace: 'nowrap',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ym-text-primary)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ym-text-secondary)')}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent)')}
         >
-          ← 返回首页
-        </Link>
-        <span style={{ color: 'var(--ym-text-muted)', margin: '0 8px' }}>/</span>
-        <span style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>详情</span>
+          🔗 访问网站
+        </button>
       </div>
 
       {/* ---------- 标题 ---------- */}
@@ -384,17 +411,20 @@ export function WebsiteDetailPage() {
 
       {/* ---------- 网站大图 ---------- */}
       {website.image_url && (
-        <div style={{
-          borderRadius: 'var(--ym-radius-sm)',
-          overflow: 'hidden',
-          marginBottom: '20px',
-          border: '1px solid var(--ym-border)',
-          backgroundColor: 'var(--ym-bg-subtle)',
-        }}>
+        <div
+          style={{
+            borderRadius: 'var(--ym-radius-sm)',
+            overflow: 'hidden',
+            marginBottom: '20px',
+            border: '1px solid var(--ym-border)',
+            backgroundColor: 'var(--ym-bg-subtle)',
+          }}
+        >
           <img
             src={website.image_url}
             alt={website.title}
             style={{ width: '100%', display: 'block' }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
       )}
@@ -489,20 +519,31 @@ export function WebsiteDetailPage() {
         )}
       </div>
 
-      {/* ========================================================= */}
-      {/* ---------- 评论区域（已调整） ---------- */}
+      {/* ---------- 评论区域 ---------- */}
       <div style={{ marginTop: '20px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '16px' }}>
+        <h3
+          style={{
+            fontSize: '18px',
+            fontWeight: '500',
+            color: 'var(--ym-text-primary)',
+            marginBottom: '16px',
+          }}
+        >
           💬 评论（{comments.length}）
         </h3>
 
-        {/* 评论列表 */}
         {loadingComments ? (
           <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>加载评论...</div>
         ) : commentsError ? (
           <div style={{ color: 'var(--ym-danger)', fontSize: '14px' }}>评论加载失败</div>
         ) : comments.length === 0 ? (
-          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
+          <div
+            style={{
+              color: 'var(--ym-text-secondary)',
+              fontSize: '14px',
+              marginBottom: '16px',
+            }}
+          >
             暂无评论，成为第一个评论的人吧。
           </div>
         ) : (
@@ -518,7 +559,6 @@ export function WebsiteDetailPage() {
           </div>
         )}
 
-        {/* 发表评论表单 */}
         {user ? (
           <form onSubmit={handleCommentSubmit} style={{ marginTop: '12px' }}>
             <textarea
@@ -579,15 +619,19 @@ export function WebsiteDetailPage() {
             </div>
           </form>
         ) : (
-          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', marginTop: '8px' }}>
+          <div
+            style={{
+              color: 'var(--ym-text-secondary)',
+              fontSize: '14px',
+              marginTop: '8px',
+            }}
+          >
             登录后即可发表评论
           </div>
         )}
       </div>
-      {/* ---------- 评论区域结束 ---------- */}
-      {/* ========================================================= */}
 
-      {/* ---------- 操作按钮 ---------- */}
+      {/* ---------- 底部操作按钮（仅编辑/删除） ---------- */}
       <div
         style={{
           display: 'flex',
@@ -599,25 +643,6 @@ export function WebsiteDetailPage() {
           paddingTop: '24px',
         }}
       >
-        <button
-          onClick={() => window.open(website.url, '_blank')}
-          style={{
-            padding: '10px 24px',
-            backgroundColor: 'var(--ym-accent)',
-            color: 'var(--ym-accent-text-on)',
-            border: 'none',
-            borderRadius: 'var(--ym-radius-sm)',
-            fontSize: '15px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'background-color var(--ym-transition)',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent)')}
-        >
-          访问网站
-        </button>
-
         {isOwner && (
           <>
             <Link
