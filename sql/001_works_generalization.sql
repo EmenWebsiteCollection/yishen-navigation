@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- 001_works_generalization.sql
 -- 依门（yishen-navigation）第一阶段：works 泛化 + 创作者档案 + 收藏/分组
 --
@@ -74,9 +74,9 @@ begin
 end $$;
 
 create policy "groups_select_own" on public.groups for select using (auth.uid() = user_id);
-create policy "groups_insert_own" on public.groups for insert with check (auth.uid() = user_id);
-create policy "groups_update_own" on public.groups for update using (auth.uid() = user_id);
-create policy "groups_delete_own" on public.groups for delete using (auth.uid() = user_id);
+create policy "groups_insert_own" on public.groups for insert with check (auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false));
+create policy "groups_update_own" on public.groups for update using ((auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false)) or is_admin());
+create policy "groups_delete_own" on public.groups for delete using ((auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false)) or is_admin());
 
 -- works.group_id 外键：删除分组后，作品归入「未分组」
 do $$
@@ -111,8 +111,8 @@ begin
 end $$;
 
 create policy "favorites_select_own" on public.favorites for select using (auth.uid() = user_id);
-create policy "favorites_insert_own" on public.favorites for insert with check (auth.uid() = user_id);
-create policy "favorites_delete_own" on public.favorites for delete using (auth.uid() = user_id);
+create policy "favorites_insert_own" on public.favorites for insert with check (auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false));
+create policy "favorites_delete_own" on public.favorites for delete using ((auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false)) or is_admin());
 
 -- ---------- 5. profiles 扩展（创作者档案） ----------
 alter table public.profiles add column if not exists avatar_url text;
@@ -166,7 +166,7 @@ begin
 end $$;
 
 create policy "profiles_select_all" on public.profiles for select using (true);
-create policy "profiles_update_own" on public.profiles for update using (auth.uid() = id);
+create policy "profiles_update_own" on public.profiles for update using (auth.uid() = id or is_admin());
 
 -- ---------- 6. works RLS ----------
 alter table public.works enable row level security;
@@ -180,13 +180,13 @@ begin
 end $$;
 
 create policy "works_select_public_or_owner" on public.works
-  for select using (visibility = 'public' or auth.uid() = user_id);
+  for select using (visibility = 'public' or auth.uid() = user_id or is_admin());
 create policy "works_insert_own" on public.works
-  for insert with check (auth.uid() = user_id);
+  for insert with check (auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false));
 create policy "works_update_own" on public.works
-  for update using (auth.uid() = user_id);
+  for update using ((auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false)) or is_admin());
 create policy "works_delete_own" on public.works
-  for delete using (auth.uid() = user_id);
+  for delete using ((auth.uid() = user_id and not coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_anonymous'::text)::boolean, false)) or is_admin());
 
 -- ---------- 7. 视图 works_with_likes（security_invoker：随查询者身份应用 RLS） ----------
 drop view if exists public.websites_with_likes;
@@ -283,15 +283,20 @@ begin
 end $$;
 
 create policy "avatars_read" on storage.objects for select using (bucket_id = 'avatars');
-create policy "avatars_write" on storage.objects for insert with check (bucket_id = 'avatars' and owner_id = auth.uid());
-create policy "avatars_update" on storage.objects for update using (bucket_id = 'avatars' and owner_id = auth.uid());
-create policy "avatars_delete" on storage.objects for delete using (bucket_id = 'avatars' and owner_id = auth.uid());
+create policy "avatars_write" on storage.objects for insert with check (bucket_id = 'avatars' and owner_id = auth.uid()::text);
+create policy "avatars_update" on storage.objects for update using (bucket_id = 'avatars' and owner_id = auth.uid()::text);
+create policy "avatars_delete" on storage.objects for delete using (bucket_id = 'avatars' and owner_id = auth.uid()::text);
 
 create policy "covers_read" on storage.objects for select using (bucket_id = 'covers');
-create policy "covers_write" on storage.objects for insert with check (bucket_id = 'covers' and owner_id = auth.uid());
-create policy "covers_update" on storage.objects for update using (bucket_id = 'covers' and owner_id = auth.uid());
-create policy "covers_delete" on storage.objects for delete using (bucket_id = 'covers' and owner_id = auth.uid());
+create policy "covers_write" on storage.objects for insert with check (bucket_id = 'covers' and owner_id = auth.uid()::text);
+create policy "covers_update" on storage.objects for update using (bucket_id = 'covers' and owner_id = auth.uid()::text);
+create policy "covers_delete" on storage.objects for delete using (bucket_id = 'covers' and owner_id = auth.uid()::text);
 
 -- ============================================================================
 -- 完成。执行后建议运行 sql/000_diagnose.sql 检查结果。
 -- ============================================================================
+
+-- ---------- 10. 显式授权（security_invoker 视图要求查询者对底层表有 SELECT） ----------
+grant select on public.works, public.profiles, public.website_likes, public.comments, public.favorites, public.groups to anon, authenticated;
+grant insert, update, delete on public.works, public.favorites, public.groups to authenticated;
+grant select on public.works_with_likes to anon, authenticated;
