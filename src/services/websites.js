@@ -185,7 +185,7 @@ export const getWebsiteById = async (id) => {
   };
 };
 
-// ========== 更新网站（允许修改 URL 和图片） ==========
+// ========== 更新网站（允许修改 URL、标题、描述、图片） ==========
 export const updateWebsite = async (id, data) => {
   const { url, title, description, image_url } = data;
   if (!title || title.trim() === '') throw new Error('标题不能为空');

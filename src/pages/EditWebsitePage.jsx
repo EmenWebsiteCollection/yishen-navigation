@@ -45,8 +45,7 @@ export function EditWebsitePage() {
         setTitle(data.title);
         setDescription(data.description || '');
         setImageUrl(data.image_url || '');
-        setImagePreview('');
-        setImageFile(null);
+        setImagePreview(data.image_url || '');
       } catch (err) {
         setError('加载网站信息失败，请稍后重试');
         console.error(err);
@@ -58,21 +57,17 @@ export function EditWebsitePage() {
   }, [id, user, authLoading]);
 
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    setError('');
-    if (!file) {
-      setImageFile(null);
-      setImagePreview('');
-      return;
-    }
+    const file = e.target.files[0];
     const err = validateImageFile(file);
     if (err) {
       setError(err);
-      e.target.value = '';
+      setImageFile(null);
+      setImagePreview(imageUrl);
       return;
     }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -87,25 +82,30 @@ export function EditWebsitePage() {
       setError('URL 不能为空');
       return;
     }
-    // 简单 URL 格式校验
     try {
       new URL(url.trim());
     } catch (_) {
       setError('请输入有效的 URL（包含协议，如 https://）。');
       return;
     }
+
     setSaving(true);
     try {
-      let finalImageUrl = imageUrl;
+      let finalImageUrl = imageUrl; // 保留原有图片
+      // 如果用户选择了新图片，上传
       if (imageFile) {
-        setMessage('正在上传图片...');
-        finalImageUrl = await uploadWebsiteImage(imageFile, user.id);
+        const uploadedUrl = await uploadWebsiteImage(imageFile, user.id);
+        finalImageUrl = uploadedUrl;
+      } else if (imagePreview && imagePreview.startsWith('blob:')) {
+        // 如果预览是 blob 但未上传，不处理（实际上已在上一步处理）
       }
-      await updateWebsite(id, {
-        url: url.trim(),
-        title: title.trim(),
+      // 如果用户想删除图片，可以加一个删除按钮，这里暂不实现
+
+      await updateWebsite(id, { 
+        url: url.trim(), 
+        title: title.trim(), 
         description: description.trim() || '',
-        imageUrl: finalImageUrl,
+        image_url: finalImageUrl
       });
       setMessage('✅ 保存成功！');
       setTimeout(() => navigate(`/website/${id}`), 1500);
@@ -132,13 +132,7 @@ export function EditWebsitePage() {
         textAlign: 'center',
       }}>
         <p style={{ color: 'var(--ym-danger)' }}>{error}</p>
-        <Link to="/" style={{
-          color: 'var(--ym-accent)',
-          fontSize: '14px',
-          marginTop: '12px',
-          display: 'inline-block',
-          textDecoration: 'none',
-        }}>
+        <Link to="/" style={{ color: 'var(--ym-accent)', fontSize: '14px', marginTop: '12px', display: 'inline-block', textDecoration: 'none' }}>
           返回首页
         </Link>
       </div>
@@ -166,15 +160,9 @@ export function EditWebsitePage() {
         编辑网站
       </h2>
       <form onSubmit={handleSubmit}>
-        {/* URL 输入框（新增） */}
+        {/* URL */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="edit-url" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
+          <label htmlFor="edit-url" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
             URL
           </label>
           <input
@@ -205,15 +193,9 @@ export function EditWebsitePage() {
           />
         </div>
 
-        {/* 标题输入框 */}
+        {/* 标题 */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="edit-title" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
+          <label htmlFor="edit-title" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
             标题
           </label>
           <input
@@ -243,15 +225,9 @@ export function EditWebsitePage() {
           />
         </div>
 
-        {/* 详情输入框 */}
-        <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="edit-desc" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
+        {/* 描述 */}
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="edit-desc" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
             详情描述
           </label>
           <textarea
@@ -282,77 +258,27 @@ export function EditWebsitePage() {
           />
         </div>
 
-        {/* 网站大图 */}
+        {/* 图片 */}
         <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="edit-image" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
-            网站大图（可选）
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
+            网站图片（可选，支持 PNG/JPG/GIF/WebP，≤5MB）
           </label>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap',
-          }}>
-            <div style={{
-              width: '120px',
-              height: '68px',
-              borderRadius: 'var(--ym-radius-sm)',
-              border: '1px dashed var(--ym-border-strong)',
-              overflow: 'hidden',
-              backgroundColor: 'var(--ym-bg-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              fontSize: '12px',
-              color: 'var(--ym-text-muted)',
-            }}>
-              {(imagePreview || imageUrl) ? (
-                <img
-                  src={imagePreview || imageUrl}
-                  alt="预览"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                '无图片'
-              )}
+          {imagePreview && (
+            <div style={{ marginBottom: '8px' }}>
+              <img src={imagePreview} alt="预览" style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: 'var(--ym-radius-sm)', border: '1px solid var(--ym-border)' }} />
             </div>
-            <div>
-              <input
-                id="edit-image"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}
-              />
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '4px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImageUrl('');
-                    setImageFile(null);
-                    setImagePreview('');
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--ym-danger)',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    padding: '0',
-                  }}
-                >
-                  移除图片
-                </button>
-              </div>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            style={{ width: '100%', padding: '6px 0' }}
+          />
+          {imageUrl && !imageFile && (
+            <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
+              当前图片已存在，选择新文件将替换。
             </div>
-          </div>
+          )}
         </div>
 
         {message && (
@@ -411,14 +337,7 @@ export function EditWebsitePage() {
           >
             {saving ? (
               <>
-                <span className="ym-spin" style={{
-                  display: 'inline-block',
-                  width: '14px',
-                  height: '14px',
-                  border: '2px solid var(--ym-accent-text-on)',
-                  borderTopColor: 'transparent',
-                  borderRadius: '50%',
-                }} />
+                <span className="ym-spin" style={{ display: 'inline-block', width: '14px', height: '14px', border: '2px solid var(--ym-accent-text-on)', borderTopColor: 'transparent', borderRadius: '50%' }} />
                 保存中...
               </>
             ) : '保存'}

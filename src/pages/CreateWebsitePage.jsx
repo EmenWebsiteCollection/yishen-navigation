@@ -14,25 +14,48 @@ export function CreateWebsitePage() {
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // 处理文件选择
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    setMessage({ type: '', text: '' });
-    if (!file) {
+    const file = e.target.files[0];
+    const error = validateImageFile(file);
+    if (error) {
+      setMessage({ type: 'error', text: error });
       setImageFile(null);
       setImagePreview('');
       return;
     }
-    const err = validateImageFile(file);
-    if (err) {
-      setMessage({ type: 'error', text: err });
-      e.target.value = '';
-      return;
-    }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+    setMessage({ type: '', text: '' });
+  };
+
+  // 自动截图
+  const handleAutoScreenshot = async () => {
+    if (!url) {
+      setMessage({ type: 'error', text: '请先输入 URL' });
+      return;
+    }
+    setUploading(true);
+    try {
+      const screenshotUrl = await fetchWebsiteScreenshot(url);
+      if (screenshotUrl) {
+        // 直接使用截图 URL（外部图片，无需上传到 Supabase）
+        setImagePreview(screenshotUrl);
+        // 存储为外部 URL，不需要上传文件
+        setImageFile(null); // 标记为外部 URL
+        setMessage({ type: 'success', text: '✅ 截图获取成功' });
+      } else {
+        setMessage({ type: 'error', text: '截图获取失败，请手动上传图片' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: '截图获取失败: ' + err.message });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -55,22 +78,19 @@ export function CreateWebsitePage() {
     }
 
     setLoading(true);
-    let imageUrl = null;
     try {
+      let finalImageUrl = null;
+
+      // 如果有上传的图片文件，先上传到 Supabase Storage
       if (imageFile) {
-        setMessage({ type: 'info', text: '正在上传图片...' });
-        imageUrl = await uploadWebsiteImage(imageFile, user.id);
-      } else {
-        setMessage({ type: 'info', text: '正在加载网站完整页面并生成截图，请稍候（最多约 20 秒）...' });
-        imageUrl = await fetchWebsiteScreenshot(url.trim());
+        const uploadedUrl = await uploadWebsiteImage(imageFile, user.id);
+        finalImageUrl = uploadedUrl;
+      } else if (imagePreview && imagePreview.startsWith('http')) {
+        // 如果是自动截图获取的外部 URL，直接使用
+        finalImageUrl = imagePreview;
       }
-    } catch (err) {
-      setMessage({ type: 'error', text: err.message || '图片处理失败，请重试。' });
-      setLoading(false);
-      return;
-    }
-    try {
-      await createWebsite(url.trim(), title.trim(), description.trim(), user.id, imageUrl);
+
+      await createWebsite(url.trim(), title.trim(), description.trim(), user.id, finalImageUrl);
       setMessage({ type: 'success', text: '✅ 网站提交成功！' });
       setUrl('');
       setTitle('');
@@ -87,7 +107,7 @@ export function CreateWebsitePage() {
 
   return (
     <div style={{
-      maxWidth: '560px',
+      maxWidth: '600px',
       margin: '60px auto',
       padding: '32px 28px',
       backgroundColor: 'var(--ym-bg-card)',
@@ -106,51 +126,66 @@ export function CreateWebsitePage() {
         提交新网站
       </h2>
       <form onSubmit={handleSubmit}>
+        {/* URL 输入框 */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="create-url" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
+          <label htmlFor="create-url" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
             URL
           </label>
-          <input
-            id="create-url"
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com"
-            required
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--ym-border)',
-              borderRadius: 'var(--ym-radius-sm)',
-              fontSize: '15px',
-              backgroundColor: 'var(--ym-bg-card)',
-              color: 'var(--ym-text-primary)',
-              transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--ym-border)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              id="create-url"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+              required
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                border: '1px solid var(--ym-border)',
+                borderRadius: 'var(--ym-radius-sm)',
+                fontSize: '15px',
+                backgroundColor: 'var(--ym-bg-card)',
+                color: 'var(--ym-text-primary)',
+                transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleAutoScreenshot}
+              disabled={uploading}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: 'var(--ym-accent)',
+                color: 'var(--ym-accent-text-on)',
+                border: 'none',
+                borderRadius: 'var(--ym-radius-sm)',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                opacity: uploading ? 0.6 : 1,
+                whiteSpace: 'nowrap',
+                transition: 'background-color var(--ym-transition)',
+              }}
+              onMouseEnter={(e) => { if (!uploading) e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)'; }}
+              onMouseLeave={(e) => { if (!uploading) e.currentTarget.style.backgroundColor = 'var(--ym-accent)'; }}
+            >
+              {uploading ? '截图中...' : '自动截图'}
+            </button>
+          </div>
         </div>
+
+        {/* 标题输入框 */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="create-title" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
+          <label htmlFor="create-title" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
             标题
           </label>
           <input
@@ -180,14 +215,10 @@ export function CreateWebsitePage() {
             }}
           />
         </div>
-        <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="create-desc" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
+
+        {/* 描述输入框 */}
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="create-desc" style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
             详情描述（可选）
           </label>
           <textarea
@@ -218,135 +249,79 @@ export function CreateWebsitePage() {
             }}
           />
         </div>
+
+        {/* 图片上传 */}
         <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="create-image" style={{
-            display: 'block',
-            fontSize: '13px',
-            color: 'var(--ym-text-secondary)',
-            marginBottom: '4px',
-            fontWeight: '500',
-          }}>
-            网站大图（可选）
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
+            网站图片（可选，支持 PNG/JPG/GIF/WebP，≤5MB）
           </label>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap',
-          }}>
-            <div style={{
-              width: '120px',
-              height: '68px',
-              borderRadius: 'var(--ym-radius-sm)',
-              border: '1px dashed var(--ym-border-strong)',
-              overflow: 'hidden',
-              backgroundColor: 'var(--ym-bg-subtle)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              fontSize: '12px',
-              color: 'var(--ym-text-muted)',
-            }}>
-              {imagePreview ? (
-                <img src={imagePreview} alt="预览" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                '无图片'
-              )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            style={{ width: '100%', padding: '6px 0' }}
+          />
+          {imagePreview && (
+            <div style={{ marginTop: '8px' }}>
+              <img src={imagePreview} alt="预览" style={{ maxWidth: '100%', maxHeight: '160px', borderRadius: 'var(--ym-radius-sm)', border: '1px solid var(--ym-border)' }} />
             </div>
-            <div>
-              <input
-                id="create-image"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}
-              />
-              <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
-                不上传时将自动截取网站首页完整页面
-              </div>
-            </div>
-          </div>
+          )}
         </div>
+
         {message.text && (
           <div style={{
             padding: '12px 16px',
             marginBottom: '16px',
             borderRadius: 'var(--ym-radius-sm)',
-            backgroundColor: message.type === 'error'
-              ? 'var(--ym-danger-bg)'
-              : message.type === 'info'
-                ? 'var(--ym-bg-subtle)'
-                : 'var(--ym-success-bg)',
-            color: message.type === 'error'
-              ? 'var(--ym-danger)'
-              : message.type === 'info'
-                ? 'var(--ym-text-secondary)'
-                : 'var(--ym-success)',
-            borderLeft: `4px solid ${
-              message.type === 'error'
-                ? 'var(--ym-danger)'
-                : message.type === 'info'
-                  ? 'var(--ym-border-strong)'
-                  : 'var(--ym-success)'
-            }`,
+            backgroundColor: message.type === 'error' ? 'var(--ym-danger-bg)' : 'var(--ym-success-bg)',
+            color: message.type === 'error' ? 'var(--ym-danger)' : 'var(--ym-success)',
+            borderLeft: `4px solid ${message.type === 'error' ? 'var(--ym-danger)' : 'var(--ym-success)'}`,
             fontSize: '14px',
             animation: 'ym-slide-down var(--ym-transition) forwards',
           }}>
             {message.text}
           </div>
         )}
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || uploading}
           style={{
             width: '100%',
             padding: '10px',
-            backgroundColor: loading ? 'var(--ym-accent)' : 'var(--ym-accent)',
+            backgroundColor: (loading || uploading) ? 'var(--ym-accent)' : 'var(--ym-accent)',
             color: 'var(--ym-accent-text-on)',
             border: 'none',
             borderRadius: 'var(--ym-radius-sm)',
             fontSize: '16px',
             fontWeight: '500',
             transition: 'background-color var(--ym-transition), opacity var(--ym-transition)',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.5 : 1,
+            cursor: (loading || uploading) ? 'not-allowed' : 'pointer',
+            opacity: (loading || uploading) ? 0.5 : 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
           }}
           onMouseEnter={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)';
+            if (!loading && !uploading) e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)';
           }}
           onMouseLeave={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = 'var(--ym-accent)';
+            if (!loading && !uploading) e.currentTarget.style.backgroundColor = 'var(--ym-accent)';
           }}
         >
           {loading ? (
             <>
-              <span className="ym-spin" style={{
-                display: 'inline-block',
-                width: '16px',
-                height: '16px',
-                border: '2px solid var(--ym-accent-text-on)',
-                borderTopColor: 'transparent',
-                borderRadius: '50%',
-              }} />
+              <span className="ym-spin" style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid var(--ym-accent-text-on)', borderTopColor: 'transparent', borderRadius: '50%' }} />
               提交中...
             </>
           ) : '提交网站'}
         </button>
       </form>
       <div style={{ marginTop: '16px', textAlign: 'center' }}>
-        <Link to="/" style={{
-          color: 'var(--ym-text-secondary)',
-          fontSize: '14px',
-          transition: 'color var(--ym-transition)',
-          textDecoration: 'none',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ym-text-primary)'}
-        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--ym-text-secondary)'}
+        <Link to="/" style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', transition: 'color var(--ym-transition)', textDecoration: 'none' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ym-text-primary)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--ym-text-secondary)'}
         >
           ← 返回首页
         </Link>
