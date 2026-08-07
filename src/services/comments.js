@@ -1,12 +1,12 @@
-// src/services/comments.js
+﻿// src/services/comments.js
 import { supabase } from './supabase.js';
 
 /**
- * 获取某个网站的所有评论（含回复，按时间升序，前端自行分组）
- * @param {string} websiteId - 网站 UUID
- * @returns {Promise<Array>} 评论数组，包含 id, content, created_at, user_id, parent_id, username
+ * 获取某个作品的所有评论（含回复，按时间升序，前端自行分组）
+ * @param {string} workId - 作品 UUID
+ * @returns {Promise<Array>} 评论数组，包含 id, content, created_at, user_id, parent_id, username, avatar_url
  */
-export const getCommentsByWebsite = async (websiteId) => {
+export const getCommentsByWebsite = async (workId) => {
   const { data, error } = await supabase
     .from('comments')
     .select(`
@@ -15,9 +15,9 @@ export const getCommentsByWebsite = async (websiteId) => {
       created_at,
       user_id,
       parent_id,
-      profiles ( username )
+      profiles ( username, avatar_url )
     `)
-    .eq('website_id', websiteId)
+    .eq('website_id', workId)
     .order('created_at', { ascending: true });
 
   if (error) throw error;
@@ -29,25 +29,26 @@ export const getCommentsByWebsite = async (websiteId) => {
     user_id: comment.user_id,
     parent_id: comment.parent_id,
     username: comment.profiles?.username || '用户',
+    avatar_url: comment.profiles?.avatar_url || null,
   }));
 };
 
 /**
  * 发表新评论或回复
- * @param {string} websiteId - 网站 UUID
+ * @param {string} workId - 作品 UUID
  * @param {string} userId - 当前用户 ID (profiles.id)
  * @param {string} content - 评论内容
  * @param {string|null} parentId - 回复某条评论时传它的 id；顶级评论传 null
  * @returns {Promise<object>} 新评论对象
  */
-export const createComment = async (websiteId, userId, content, parentId = null) => {
+export const createComment = async (workId, userId, content, parentId = null) => {
   const trimmed = (content || '').trim();
   if (!trimmed) throw new Error('评论不能为空');
   if (trimmed.length > 1000) throw new Error('评论不能超过 1000 字');
   if ((trimmed.match(/\n/g) || []).length > 10) throw new Error('评论中的换行不能超过 10 个');
   const { data, error } = await supabase
     .from('comments')
-    .insert({ website_id: websiteId, user_id: userId, content: trimmed, parent_id: parentId })
+    .insert({ website_id: workId, user_id: userId, content: trimmed, parent_id: parentId })
     .select()
     .single();
 

@@ -3,12 +3,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
-  getWebsiteById,
-  deleteWebsite,
-  likeWebsite,
-  unlikeWebsite,
-  hasLikedWebsite,
-} from '../services/websites.js';
+  getWorkById,
+  deleteWork,
+  likeWork,
+  unlikeWork,
+  hasLikedWork,
+} from '../services/works.js';
 import {
   getCommentsByWebsite,
   createComment,
@@ -250,7 +250,7 @@ export function WebsiteDetailPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await getWebsiteById(id);
+        const data = await getWorkById(id, user?.id);
         if (data === null) {
           setError('网站不存在');
           setWebsite(null);
@@ -260,7 +260,7 @@ export function WebsiteDetailPage() {
         setLikeCount(data.like_count || 0);
 
         if (user) {
-          const liked = await hasLikedWebsite(id, user.id);
+          const liked = await hasLikedWork(id, user.id);
           setLikedByUser(liked);
         } else {
           setLikedByUser(false);
@@ -305,11 +305,11 @@ export function WebsiteDetailPage() {
     setLikeToggling(true);
     try {
       if (likedByUser) {
-        await unlikeWebsite(id, user.id);
+        await unlikeWork(id, user.id);
         setLikeCount((prev) => prev - 1);
         setLikedByUser(false);
       } else {
-        await likeWebsite(id, user.id);
+        await likeWork(id, user.id);
         setLikeCount((prev) => prev + 1);
         setLikedByUser(true);
       }
@@ -410,7 +410,7 @@ export function WebsiteDetailPage() {
     if (!confirmed) return;
     setDeleting(true);
     try {
-      await deleteWebsite(id);
+      await deleteWork(id);
       navigate('/', { state: { deleteSuccess: true } });
     } catch (err) {
       console.error('删除失败:', err);

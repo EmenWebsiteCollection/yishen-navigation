@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { getWebsiteById, updateWebsite } from '../services/websites.js';
+import { getWorkById, updateWork } from '../services/works.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
@@ -32,7 +32,7 @@ export function EditWebsitePage() {
       try {
         setLoading(true);
         setError('');
-        const data = await getWebsiteById(id);
+        const data = await getWorkById(id, user?.id);
         if (!data) {
           setError('网站不存在');
           return;
@@ -117,7 +117,7 @@ export function EditWebsitePage() {
         finalImageUrl = null;
       }
 
-      await updateWebsite(id, { 
+      await updateWork(id, { 
         url: url.trim(), 
         title: title.trim(), 
         description: description.trim() || '',

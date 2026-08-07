@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { getWebsites, likeWebsite, unlikeWebsite } from '../services/websites.js';
+import { getWorks, likeWork, unlikeWork } from '../services/works.js';
 import { logout } from '../services/auth.js';
 import { supabase } from '../services/supabase.js';
 import { LoginPage } from './LoginPage.jsx';
@@ -80,7 +80,7 @@ export function HomePage() {
     try {
       setLoading(true);
       setError(null);
-      const { websites: data, total } = await getWebsites(page, PAGE_SIZE);
+      const { works: data, total } = await getWorks({ page, pageSize: PAGE_SIZE });
       setTotalItems(total);
       setTotalPages(Math.ceil(total / PAGE_SIZE) || 1);
 
@@ -185,9 +185,9 @@ export function HomePage() {
 
     try {
       if (newLiked) {
-        await likeWebsite(websiteId, user.id);
+        await likeWork(websiteId, user.id);
       } else {
-        await unlikeWebsite(websiteId, user.id);
+        await unlikeWork(websiteId, user.id);
       }
     } catch (err) {
       console.error('点赞操作失败:', err);

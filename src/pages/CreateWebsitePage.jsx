@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { createWebsite } from '../services/websites.js';
+import { createWork } from '../services/works.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
@@ -85,7 +85,7 @@ export function CreateWebsitePage() {
       }
 
       // 提交网站
-      await createWebsite(url.trim(), title.trim(), description.trim(), user.id, finalImageUrl);
+      await createWork({ url: url.trim(), title: title.trim(), description: description.trim(), image_url: finalImageUrl }, user.id);
       setMessage({ type: 'success', text: '✅ 网站提交成功！' });
       setUrl('');
       setTitle('');

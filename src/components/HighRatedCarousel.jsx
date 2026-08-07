@@ -1,7 +1,7 @@
 // src/components/HighRatedCarousel.jsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getTopRatedWebsites } from '../services/websites.js';
+import { getTopRatedWorks } from '../services/works.js';
 import '../styles/high-rated.css';
 
 const ROTATE_INTERVAL = 5000;
@@ -75,7 +75,7 @@ export function HighRatedCarousel() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getTopRatedWebsites(8);
+        const data = await getTopRatedWorks(8);
         if (!cancelled) setSites(data);
       } catch (err) {
         console.warn('加载高分网站失败:', err);
