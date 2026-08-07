@@ -76,7 +76,7 @@ export function RegisterPage({ onSuccess }) {
               marginBottom: '4px',
               fontWeight: '500',
             }}>
-              用户名
+              用户名 / 邮箱 / 手机号
             </label>
             <input
               id="register-username"
@@ -84,6 +84,7 @@ export function RegisterPage({ onSuccess }) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              placeholder="例如：alice 或 alice@qq.com 或 13800138000"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -103,6 +104,13 @@ export function RegisterPage({ onSuccess }) {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             />
+            <p style={{
+              marginTop: '6px',
+              fontSize: '12px',
+              color: 'var(--ym-text-muted)',
+            }}>
+              支持纯用户名，或填写真实邮箱 / 手机号（可用于登录与找回密码）。
+            </p>
           </div>
           <div style={{ marginBottom: '16px' }}>
             <label htmlFor="register-password" style={{
