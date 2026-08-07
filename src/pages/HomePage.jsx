@@ -471,6 +471,7 @@ export function HomePage() {
                         src={site.image_url}
                         alt={site.title}
                         loading="lazy"
+                        decoding="async"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         style={{
                           position: 'absolute',
@@ -551,7 +552,7 @@ export function HomePage() {
                         style={{ fontSize: '13px', color: 'var(--ym-text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       >
                         {site.avatar_url ? (
-                          <img src={site.avatar_url} alt='' style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} />
+                          <img src={site.avatar_url} alt='' loading="lazy" decoding="async" style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} />
                         ) : (
                           <span style={{ display: 'inline-block', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--ym-bg-subtle)', textAlign: 'center', lineHeight: '18px', fontSize: '11px' }}>👤</span>
                         )}

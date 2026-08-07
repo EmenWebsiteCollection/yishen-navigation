@@ -28,7 +28,9 @@ const Slide = ({ site, index }) => (
         <img
           src={site.image_url}
           alt={site.title}
-          loading="lazy"
+          loading={index === 0 ? 'eager' : 'lazy'}
+          fetchpriority={index === 0 ? 'high' : 'auto'}
+          decoding="async"
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
       )}
@@ -49,7 +51,7 @@ const Slide = ({ site, index }) => (
       <p className="ym-hrc-desc">{site.description || '暂无详情，点击查看完整介绍。'}</p>
       <div className="ym-hrc-footer">
         <Link to={`/user/${site.user_id}`} className='ym-hrc-author' style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-          {site.avatar_url ? <img src={site.avatar_url} alt='' style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
+          {site.avatar_url ? <img src={site.avatar_url} alt='' loading="lazy" decoding="async" style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
           👤 {site.username}
         </Link>
         <Link to={`/website/${site.id}`} className="ym-hrc-btn">

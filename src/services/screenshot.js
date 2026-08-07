@@ -126,19 +126,94 @@ const downloadAndUploadScreenshot = async (imageUrl, userId) => {
 };
 
 /**
- * 通用上传：把图片上传到指定存储桶，返回公开访问 URL
+ * 读取图片为位图（优先 createImageBitmap，兼容回退到 <img> 解码）
+ */
+const loadBitmap = async (file) => {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      return await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch (_) {
+      try {
+        return await createImageBitmap(file);
+      } catch (_) {
+        // 继续走 <img> 回退
+      }
+    }
+  }
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片解码失败')); };
+    img.src = url;
+  });
+};
+
+/**
+ * 压缩图片：等比缩小超限大图 + 统一转 WebP 减重（保留透明度）
+ * - 压缩后若没有更小，返回原文件；动图（GIF）与无法解码的图片直接返回原文件
+ * @param {File} file - 原图片文件
+ * @param {Object} [opts] - { maxWidth, maxHeight, quality }
+ * @returns {Promise<File>} 压缩后的文件（失败/无效时返回原文件）
+ */
+export const compressImageFile = async (
+  file,
+  { maxWidth = 1600, maxHeight = 1600, quality = 0.82 } = {}
+) => {
+  if (!file || !file.type.startsWith('image/')) return file;
+  if (file.type === 'image/gif') return file; // 动图不压缩，避免丢帧
+  try {
+    const bitmap = await loadBitmap(file);
+    try {
+      const scale = Math.min(1, maxWidth / bitmap.width, maxHeight / bitmap.height);
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+      if (!blob || blob.size >= file.size) return file; // 不支持 WebP 或压缩无效
+      const baseName = (file.name || 'image').replace(/\.[^.]+$/, '');
+      return new File([blob], `${baseName}.webp`, {
+        type: 'image/webp',
+        lastModified: Date.now(),
+      });
+    } finally {
+      if (typeof bitmap.close === 'function') bitmap.close();
+    }
+  } catch (err) {
+    console.warn('图片压缩失败，使用原图:', err.message);
+    return file;
+  }
+};
+
+/**
+ * 通用上传：压缩后把图片上传到指定存储桶，返回公开访问 URL
  * @param {File} file - 图片文件
  * @param {string} userId - 用户 ID
  * @param {string} bucket - 存储桶名（screenshots / avatars / covers）
+ * @param {Object} [opts] - 自定义压缩参数（覆盖桶默认档位）
  * @returns {Promise<string>} 公开访问 URL
  */
-export const uploadToBucket = async (file, userId, bucket) => {
+export const uploadToBucket = async (file, userId, bucket, opts = null) => {
   if (!file) return null;
-  const safeName = (file.name || 'image').replace(/[^a-zA-Z0-9.\-]/g, '_');
+  // 不同用途给不同压缩档位：截图保持 1280、封面 1600、头像 512
+  const BUCKET_PRESETS = {
+    screenshots: { maxWidth: 1280, maxHeight: 1280, quality: 0.8 },
+    covers: { maxWidth: 1600, maxHeight: 1600, quality: 0.82 },
+    avatars: { maxWidth: 512, maxHeight: 512, quality: 0.85 },
+  };
+  const preset = BUCKET_PRESETS[bucket] || { maxWidth: 1600, maxHeight: 1600, quality: 0.82 };
+  const compressed = await compressImageFile(file, opts || preset);
+  const safeName = (compressed.name || 'image').replace(/[^a-zA-Z0-9.\-]/g, '_');
   const path = `${userId}/${Date.now()}-${safeName}`;
+  // 路径含 userId + 时间戳，图片不可变，可长缓存（1 年）
   const { data, error } = await supabase.storage
     .from(bucket)
-    .upload(path, file, { cacheControl: '3600', upsert: false });
+    .upload(path, compressed, { cacheControl: '31536000', upsert: false });
   if (error) throw error;
   const { data: pubData } = supabase.storage
     .from(bucket)

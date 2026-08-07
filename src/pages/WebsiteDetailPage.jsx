@@ -80,7 +80,7 @@ const CommentCard = ({
           style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none', color: 'var(--ym-text-primary)' }}
         >
           {comment.avatar_url ? (
-            <img src={comment.avatar_url} alt='' style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+            <img src={comment.avatar_url} alt='' loading="lazy" decoding="async" style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
           ) : (
             <span style={{ display: 'inline-block', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--ym-bg-subtle)', textAlign: 'center', lineHeight: '20px', fontSize: '11px' }}>👤</span>
           )}
@@ -704,6 +704,8 @@ export function WebsiteDetailPage() {
           <img
             src={website.image_url}
             alt={website.title}
+            fetchpriority="high"
+            decoding="async"
             style={{ width: '100%', display: 'block' }}
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
@@ -729,7 +731,7 @@ export function WebsiteDetailPage() {
       >
         <Link to={`/user/${website.user_id}`} style={{ textDecoration: 'none' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', backgroundColor: 'var(--ym-bg-subtle)', color: 'var(--ym-text-secondary)', borderRadius: '20px', fontSize: '13px', fontWeight: '500' }}>
-            {website.avatar_url ? <img src={website.avatar_url} alt='' style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
+            {website.avatar_url ? <img src={website.avatar_url} alt='' loading="lazy" decoding="async" style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
             上传者：{website.username}
           </span>
         </Link>
