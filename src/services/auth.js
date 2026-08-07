@@ -13,7 +13,6 @@ const normalizeEmail = (username) => {
 
 export const register = async (username, password) => {
   const email = normalizeEmail(username);
-  console.log('注册邮箱:', email); // 调试：确认转换结果
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -37,8 +36,8 @@ export const logout = async () => {
   if (error) throw error;
 };
 
-export const getCurrentUser = () => {
-  const { data: { user } } = supabase.auth.getUser();
+export const getCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
   return user;
 };
 
