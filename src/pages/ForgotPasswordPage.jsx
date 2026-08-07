@@ -145,7 +145,7 @@ export function ForgotPasswordPage({ onClose, onSuccess }) {
       }}>
         {[
           { key: 'email', label: '邮箱' },
-          { key: 'phone', label: '手机号' },
+          { key: 'phone', label: '手机号（部署中）' },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -170,7 +170,24 @@ export function ForgotPasswordPage({ onClose, onSuccess }) {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit}>
+      {channel === 'phone' ? (
+        <div style={{
+          padding: '24px 16px',
+          textAlign: 'center',
+          backgroundColor: 'var(--ym-bg-subtle)',
+          borderRadius: 'var(--ym-radius-sm)',
+          border: '1px dashed var(--ym-border-strong)',
+        }}>
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>🚧</div>
+          <p style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '6px' }}>
+            手机号验证码功能正在部署中
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', lineHeight: '1.6' }}>
+            暂仅支持通过「邮箱」接收验证码找回密码，敬请期待。
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit}>
         {/* 联系方式输入 */}
         <div style={{ marginBottom: '16px' }}>
           <label htmlFor="fp-value" style={labelStyle}>
@@ -287,7 +304,8 @@ export function ForgotPasswordPage({ onClose, onSuccess }) {
             </>
           ) : '重置密码'}
         </button>
-      </form>
+        </form>
+      )}
 
       <p style={{
         marginTop: '16px',

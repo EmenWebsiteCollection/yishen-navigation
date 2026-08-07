@@ -22,18 +22,25 @@
 
 验证码要能真正发出，需要在 Supabase 项目中启用对应渠道：
 
-### 邮箱验证码
-- Supabase 控制台 → **Authentication → Providers → Email**
-  - 确认 **Email OTP** 已启用（默认开启）。
-  - 配置 **SMTP**（Authentication → Email → SMTP settings），否则验证码只会在开发环境的 Auth 日志中显示，不会真正发信。
-- 开发调试：未配置 SMTP 时，验证码会出现在 Supabase 控制台 **Authentication → Users** 对应用户详情，或 **Logs** 中。
+### 邮箱验证码（经由 Resend 发送，推荐）
+本项目的邮件通过 **Resend** 发送。Resend 的 API Key 本身就是 **SMTP 密码**，最安全、零代码改动的做法是把它填进 Supabase 的自定义 SMTP，这样 `signInWithOtp` 就会经由 Resend 真实把验证码邮件发出去（**Key 不进前端代码、不提交到公开仓库**）。
 
-### 手机号验证码（短信）
-- Supabase 控制台 → **Authentication → Providers → Phone**
-  - 启用 Phone，并配置短信服务商（Twilio / Vonage / MessageBird 等）的 API 凭据。
-  - 短信 OTP 必须配置服务商后才能发送。
+配置步骤（Supabase 控制台 → **Authentication → Settings → Custom SMTP → Enable**）：
+- **SMTP Host**：`smtp.resend.com`
+- **SMTP Port**：`587`（STARTTLS）
+- **SMTP User**：`resend`
+- **SMTP Password**：你的 Resend API Key（形如 `re_xxx...`）
+- **Sender email**：`onboarding@resend.dev`（测试用，无需验证域名）；正式环境改为你在 Resend 验证过的域名邮箱
+- **Sender name**：依神导航
+- **Authentication → Providers → Email** 中确认 **Email OTP** 已启用
 
-> ⚠️ 若未配置上述渠道，`signInWithOtp` 会返回错误（如 `sms_send_failed` / 未配置邮件服务），前端会如实提示，但不会静默失败。
+> 验证是否生效：注册一个用真实邮箱的账号（或在已有账号的 Email 里改成你的真实邮箱），点「忘记密码？」→ 选邮箱 → 发送验证码，正常应能收到来自 Resend 的邮件。
+
+### 手机号验证码（短信）—— 暂未上线
+- 当前版本中「手机号」Tab 点击后显示 **「🚧 手机号验证码功能正在部署中」**，不会真正发送短信。
+- 如需上线，再于 Supabase 控制台 **Authentication → Providers → Phone** 启用并配置短信服务商（Twilio / Vonage / MessageBird 等）。
+
+> ⚠️ 若未配置上述邮箱 SMTP，`signInWithOtp` 会返回错误（如未配置邮件服务），前端会如实提示，但不会静默失败。
 
 ## 重要限制（务必阅读）
 
