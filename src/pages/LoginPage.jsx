@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { login } from '../services/auth.js';
 import '../styles/global.css';
 
-export function LoginPage({ onSuccess, onSwitchToRegister }) {
+export function LoginPage({ onSuccess, onSwitchToRegister, onForgotPassword }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -183,6 +183,20 @@ export function LoginPage({ onSuccess, onSwitchToRegister }) {
           onMouseLeave={(e) => e.currentTarget.style.color = 'var(--ym-accent)'}
         >
           注册
+        </span>
+        {' · '}
+        <span
+          onClick={onForgotPassword}
+          style={{
+            color: 'var(--ym-accent)',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'color var(--ym-transition)',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ym-accent-hover)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--ym-accent)'}
+        >
+          忘记密码？
         </span>
       </p>
     </div>
