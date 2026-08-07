@@ -252,9 +252,13 @@ export function HomePage() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
       <nav style={{
-        padding: '16px 24px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        padding: '12px 24px',
         backgroundColor: 'var(--ym-bg-card)',
         borderBottom: '1px solid var(--ym-border)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -264,6 +268,9 @@ export function HomePage() {
         <Link to="/" style={{ textDecoration: 'none' }}>
           <Logo />
         </Link>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: '200px' }}>
+          <SearchBar />
+        </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           {user ? (
             <>
@@ -376,10 +383,6 @@ export function HomePage() {
       </nav>
 
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <SearchBar />
-        </div>
-
         <HighRatedCarousel />
 
         {loading ? (
