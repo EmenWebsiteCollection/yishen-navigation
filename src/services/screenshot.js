@@ -1,12 +1,14 @@
-// src/services/screenshot.js
+﻿// src/services/screenshot.js
 import { supabase } from './supabase.js';
 
 // 自动截图接口（Microlink 免费接口，无需 API Key，支持 CORS）
 const SCREENSHOT_API_URL =
   import.meta.env.VITE_SCREENSHOT_API_URL || 'https://api.microlink.io/';
 
-// 用户上传图片的存储桶（需在 Supabase 后台创建）
+// 存储桶
 const SCREENSHOT_BUCKET = 'screenshots';
+const AVATAR_BUCKET = 'avatars';
+const COVER_BUCKET = 'covers';
 
 // 默认占位图（当截图失败时使用）
 const PLACEHOLDER_IMAGE =
@@ -124,24 +126,46 @@ const downloadAndUploadScreenshot = async (imageUrl, userId) => {
 };
 
 /**
- * 上传图片到 Supabase Storage，返回公开访问 URL
+ * 通用上传：把图片上传到指定存储桶，返回公开访问 URL
  * @param {File} file - 图片文件
  * @param {string} userId - 用户 ID
+ * @param {string} bucket - 存储桶名（screenshots / avatars / covers）
  * @returns {Promise<string>} 公开访问 URL
  */
-export const uploadWebsiteImage = async (file, userId) => {
+export const uploadToBucket = async (file, userId, bucket) => {
   if (!file) return null;
   const safeName = (file.name || 'image').replace(/[^a-zA-Z0-9.\-]/g, '_');
   const path = `${userId}/${Date.now()}-${safeName}`;
   const { data, error } = await supabase.storage
-    .from(SCREENSHOT_BUCKET)
+    .from(bucket)
     .upload(path, file, { cacheControl: '3600', upsert: false });
   if (error) throw error;
   const { data: pubData } = supabase.storage
-    .from(SCREENSHOT_BUCKET)
+    .from(bucket)
     .getPublicUrl(data.path);
   return pubData.publicUrl;
 };
+
+/**
+ * 上传图片到 Supabase Storage（screenshots 桶），返回公开访问 URL
+ * @param {File} file - 图片文件
+ * @param {string} userId - 用户 ID
+ * @returns {Promise<string>} 公开访问 URL
+ */
+export const uploadWebsiteImage = async (file, userId) =>
+  uploadToBucket(file, userId, SCREENSHOT_BUCKET);
+
+/**
+ * 上传头像（avatars 桶）
+ */
+export const uploadAvatar = async (file, userId) =>
+  uploadToBucket(file, userId, AVATAR_BUCKET);
+
+/**
+ * 上传封面（covers 桶）
+ */
+export const uploadCover = async (file, userId) =>
+  uploadToBucket(file, userId, COVER_BUCKET);
 
 /**
  * 校验用户选择的图片文件

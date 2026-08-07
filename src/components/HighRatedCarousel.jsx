@@ -1,7 +1,7 @@
 // src/components/HighRatedCarousel.jsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getTopRatedWebsites } from '../services/websites.js';
+import { getTopRatedWorks } from '../services/works.js';
 import '../styles/high-rated.css';
 
 const ROTATE_INTERVAL = 5000;
@@ -48,7 +48,10 @@ const Slide = ({ site, index }) => (
       <h3 className="ym-hrc-title-text">{site.title}</h3>
       <p className="ym-hrc-desc">{site.description || '暂无详情，点击查看完整介绍。'}</p>
       <div className="ym-hrc-footer">
-        <span className="ym-hrc-author">👤 {site.username}</span>
+        <Link to={`/user/${site.user_id}`} className='ym-hrc-author' style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+          {site.avatar_url ? <img src={site.avatar_url} alt='' style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
+          👤 {site.username}
+        </Link>
         <Link to={`/website/${site.id}`} className="ym-hrc-btn">
           查看详情 →
         </Link>
@@ -75,7 +78,7 @@ export function HighRatedCarousel() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getTopRatedWebsites(8);
+        const data = await getTopRatedWorks(8);
         if (!cancelled) setSites(data);
       } catch (err) {
         console.warn('加载高分网站失败:', err);
