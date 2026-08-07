@@ -52,7 +52,7 @@ const WorkCard = ({ work }) => (
   >
     <div style={{ aspectRatio: '16/9', backgroundColor: 'var(--ym-bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ym-text-muted)', fontSize: '12px' }}>
       {work.image_url ? (
-        <img src={work.image_url} alt={work.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={work.image_url} alt={work.title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       ) : (
         workTypeLabel(work.work_type)
       )}
@@ -148,7 +148,7 @@ export function CreatorProfilePage() {
       {/* 封面横幅 */}
       <div style={{ height: '180px', backgroundColor: profile.cover_url ? 'transparent' : 'var(--ym-bg-subtle)', position: 'relative' }}>
         {profile.cover_url ? (
-          <img src={profile.cover_url} alt="封面" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={profile.cover_url} alt="封面" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ym-text-muted)', fontSize: '14px' }}>
             创作者主页
@@ -163,6 +163,7 @@ export function CreatorProfilePage() {
             <img
               src={profile.avatar_url || DEFAULT_AVATAR}
               alt={username}
+              decoding="async"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
             />

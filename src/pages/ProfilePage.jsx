@@ -408,7 +408,7 @@ export function ProfilePage() {
                 <div key={w.id} style={{ display: 'flex', gap: '14px', padding: '14px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <div style={{ width: '88px', height: '56px', borderRadius: 'var(--ym-radius-sm)', overflow: 'hidden', backgroundColor: 'var(--ym-bg-subtle)', flexShrink: 0 }}>
                     {w.image_url ? (
-                      <img src={w.image_url} alt={w.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={w.image_url} alt={w.title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: 'var(--ym-text-muted)' }}>
                         {workTypeLabel(w.work_type)}
@@ -514,7 +514,7 @@ export function ProfilePage() {
                       {avatarFile ? (
                         <img src={URL.createObjectURL(avatarFile)} alt="头像预览" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : profile?.avatar_url ? (
-                        <img src={profile.avatar_url} alt="头像" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={profile.avatar_url} alt="头像" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : '无头像'}
                     </div>
                     <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; const err = f ? validateImageFile(f) : null; if (err) { alert(err); e.target.value = ''; return; } setAvatarFile(f); }} style={{ fontSize: '12px', marginTop: '6px' }} />
@@ -525,7 +525,7 @@ export function ProfilePage() {
                       {coverFile ? (
                         <img src={URL.createObjectURL(coverFile)} alt="封面预览" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : profile?.cover_url ? (
-                        <img src={profile.cover_url} alt="封面" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={profile.cover_url} alt="封面" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : '上传封面'}
                     </div>
                     <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; const err = f ? validateImageFile(f) : null; if (err) { alert(err); e.target.value = ''; return; } setCoverFile(f); }} style={{ fontSize: '12px' }} />
