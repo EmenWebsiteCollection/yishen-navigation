@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { createWebsite } from '../services/websites.js';
+import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
 export function CreateWebsitePage() {
@@ -11,8 +12,28 @@ export function CreateWebsitePage() {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setMessage({ type: '', text: '' });
+    if (!file) {
+      setImageFile(null);
+      setImagePreview('');
+      return;
+    }
+    const err = validateImageFile(file);
+    if (err) {
+      setMessage({ type: 'error', text: err });
+      e.target.value = '';
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,12 +55,28 @@ export function CreateWebsitePage() {
     }
 
     setLoading(true);
+    let imageUrl = null;
     try {
-      await createWebsite(url.trim(), title.trim(), description.trim(), user.id);
+      if (imageFile) {
+        setMessage({ type: 'info', text: '正在上传图片...' });
+        imageUrl = await uploadWebsiteImage(imageFile, user.id);
+      } else {
+        setMessage({ type: 'info', text: '正在加载网站完整页面并生成截图，请稍候（最多约 20 秒）...' });
+        imageUrl = await fetchWebsiteScreenshot(url.trim());
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '图片处理失败，请重试。' });
+      setLoading(false);
+      return;
+    }
+    try {
+      await createWebsite(url.trim(), title.trim(), description.trim(), user.id, imageUrl);
       setMessage({ type: 'success', text: '✅ 网站提交成功！' });
       setUrl('');
       setTitle('');
       setDescription('');
+      setImageFile(null);
+      setImagePreview('');
       setTimeout(() => navigate('/'), 1500);
     } catch (err) {
       setMessage({ type: 'error', text: err.message || '提交失败，请稍后重试。' });
@@ -181,14 +218,78 @@ export function CreateWebsitePage() {
             }}
           />
         </div>
+        <div style={{ marginBottom: '20px' }}>
+          <label htmlFor="create-image" style={{
+            display: 'block',
+            fontSize: '13px',
+            color: 'var(--ym-text-secondary)',
+            marginBottom: '4px',
+            fontWeight: '500',
+          }}>
+            网站大图（可选）
+          </label>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}>
+            <div style={{
+              width: '120px',
+              height: '68px',
+              borderRadius: 'var(--ym-radius-sm)',
+              border: '1px dashed var(--ym-border-strong)',
+              overflow: 'hidden',
+              backgroundColor: 'var(--ym-bg-subtle)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              fontSize: '12px',
+              color: 'var(--ym-text-muted)',
+            }}>
+              {imagePreview ? (
+                <img src={imagePreview} alt="预览" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                '无图片'
+              )}
+            </div>
+            <div>
+              <input
+                id="create-image"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}
+              />
+              <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
+                不上传时将自动截取网站首页完整页面
+              </div>
+            </div>
+          </div>
+        </div>
         {message.text && (
           <div style={{
             padding: '12px 16px',
             marginBottom: '16px',
             borderRadius: 'var(--ym-radius-sm)',
-            backgroundColor: message.type === 'error' ? 'var(--ym-danger-bg)' : 'var(--ym-success-bg)',
-            color: message.type === 'error' ? 'var(--ym-danger)' : 'var(--ym-success)',
-            borderLeft: `4px solid ${message.type === 'error' ? 'var(--ym-danger)' : 'var(--ym-success)'}`,
+            backgroundColor: message.type === 'error'
+              ? 'var(--ym-danger-bg)'
+              : message.type === 'info'
+                ? 'var(--ym-bg-subtle)'
+                : 'var(--ym-success-bg)',
+            color: message.type === 'error'
+              ? 'var(--ym-danger)'
+              : message.type === 'info'
+                ? 'var(--ym-text-secondary)'
+                : 'var(--ym-success)',
+            borderLeft: `4px solid ${
+              message.type === 'error'
+                ? 'var(--ym-danger)'
+                : message.type === 'info'
+                  ? 'var(--ym-border-strong)'
+                  : 'var(--ym-success)'
+            }`,
             fontSize: '14px',
             animation: 'ym-slide-down var(--ym-transition) forwards',
           }}>

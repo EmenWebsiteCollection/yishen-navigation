@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getWebsiteById, updateWebsite } from '../services/websites.js';
+import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
 export function EditWebsitePage() {
@@ -12,6 +13,9 @@ export function EditWebsitePage() {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -40,6 +44,9 @@ export function EditWebsitePage() {
         setUrl(data.url);
         setTitle(data.title);
         setDescription(data.description || '');
+        setImageUrl(data.image_url || '');
+        setImagePreview('');
+        setImageFile(null);
       } catch (err) {
         setError('加载网站信息失败，请稍后重试');
         console.error(err);
@@ -49,6 +56,24 @@ export function EditWebsitePage() {
     };
     loadWebsite();
   }, [id, user, authLoading]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setError('');
+    if (!file) {
+      setImageFile(null);
+      setImagePreview('');
+      return;
+    }
+    const err = validateImageFile(file);
+    if (err) {
+      setError(err);
+      e.target.value = '';
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,10 +96,16 @@ export function EditWebsitePage() {
     }
     setSaving(true);
     try {
-      await updateWebsite(id, { 
-        url: url.trim(), 
-        title: title.trim(), 
-        description: description.trim() || '' 
+      let finalImageUrl = imageUrl;
+      if (imageFile) {
+        setMessage('正在上传图片...');
+        finalImageUrl = await uploadWebsiteImage(imageFile, user.id);
+      }
+      await updateWebsite(id, {
+        url: url.trim(),
+        title: title.trim(),
+        description: description.trim() || '',
+        imageUrl: finalImageUrl,
       });
       setMessage('✅ 保存成功！');
       setTimeout(() => navigate(`/website/${id}`), 1500);
@@ -249,6 +280,79 @@ export function EditWebsitePage() {
               e.currentTarget.style.boxShadow = 'none';
             }}
           />
+        </div>
+
+        {/* 网站大图 */}
+        <div style={{ marginBottom: '20px' }}>
+          <label htmlFor="edit-image" style={{
+            display: 'block',
+            fontSize: '13px',
+            color: 'var(--ym-text-secondary)',
+            marginBottom: '4px',
+            fontWeight: '500',
+          }}>
+            网站大图（可选）
+          </label>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}>
+            <div style={{
+              width: '120px',
+              height: '68px',
+              borderRadius: 'var(--ym-radius-sm)',
+              border: '1px dashed var(--ym-border-strong)',
+              overflow: 'hidden',
+              backgroundColor: 'var(--ym-bg-subtle)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              fontSize: '12px',
+              color: 'var(--ym-text-muted)',
+            }}>
+              {(imagePreview || imageUrl) ? (
+                <img
+                  src={imagePreview || imageUrl}
+                  alt="预览"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                '无图片'
+              )}
+            </div>
+            <div>
+              <input
+                id="edit-image"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}
+              />
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl('');
+                    setImageFile(null);
+                    setImagePreview('');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--ym-danger)',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    padding: '0',
+                  }}
+                >
+                  移除图片
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {message && (

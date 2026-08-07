@@ -382,6 +382,23 @@ export function WebsiteDetailPage() {
         {website.title}
       </h1>
 
+      {/* ---------- 网站大图 ---------- */}
+      {website.image_url && (
+        <div style={{
+          borderRadius: 'var(--ym-radius-sm)',
+          overflow: 'hidden',
+          marginBottom: '20px',
+          border: '1px solid var(--ym-border)',
+          backgroundColor: 'var(--ym-bg-subtle)',
+        }}>
+          <img
+            src={website.image_url}
+            alt={website.title}
+            style={{ width: '100%', display: 'block' }}
+          />
+        </div>
+      )}
+
       <hr
         style={{
           border: 'none',

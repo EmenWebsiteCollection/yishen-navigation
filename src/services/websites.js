@@ -12,7 +12,7 @@ export const checkUrlExists = async (url) => {
   return !!data;
 };
 
-export const createWebsite = async (url, title, description, userId) => {
+export const createWebsite = async (url, title, description, userId, imageUrl) => {
   const exists = await checkUrlExists(url);
   if (exists) throw new Error('该网址已存在，无法重复创建。');
 
@@ -26,7 +26,7 @@ export const createWebsite = async (url, title, description, userId) => {
 
   const { data, error } = await supabase
     .from('websites')
-    .insert([{ url, title, description, user_id: userId }])
+    .insert([{ url, title, description, user_id: userId, image_url: imageUrl || null }])
     .select()
     .single();
   if (error) throw error;
@@ -64,6 +64,7 @@ export const getWebsites = async (page = 1, pageSize = 10) => {
     url: item.url,
     title: item.title,
     description: item.description || '',
+    image_url: item.image_url || '',
     created_at: item.created_at,
     updated_at: item.updated_at,
     user_id: item.user_id,
@@ -116,6 +117,7 @@ export const getWebsiteById = async (id) => {
     url: data.url,
     title: data.title,
     description: data.description || '',
+    image_url: data.image_url || '',
     user_id: data.user_id,
     created_at: data.created_at,
     updated_at: data.updated_at,
@@ -125,9 +127,9 @@ export const getWebsiteById = async (id) => {
   };
 };
 
-// ========== 更新网站（允许修改 URL） ==========
+// ========== 更新网站（允许修改 URL 与图片） ==========
 export const updateWebsite = async (id, data) => {
-  const { url, title, description } = data;
+  const { url, title, description, imageUrl } = data;
   if (!title || title.trim() === '') throw new Error('标题不能为空');
   if (!url || url.trim() === '') throw new Error('URL 不能为空');
   const trimmedUrl = url.trim();
@@ -147,6 +149,7 @@ export const updateWebsite = async (id, data) => {
       url: trimmedUrl,
       title: trimmedTitle,
       description: trimmedDesc,
+      image_url: imageUrl !== undefined ? imageUrl || null : current.image_url,
     })
     .eq('id', id)
     .select()

@@ -43,22 +43,17 @@ const Logo = () => (
 
 const SkeletonCard = () => (
   <div style={{
-    padding: '16px 20px',
     border: '1px solid var(--ym-border)',
     borderRadius: 'var(--ym-radius-md)',
     backgroundColor: 'var(--ym-bg-card)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '8px',
+    overflow: 'hidden',
     animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
   }}>
-    <div style={{ flex: 1, minWidth: '200px' }}>
-      <div style={{ height: '20px', width: '60%', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px', marginBottom: '8px' }} />
-      <div style={{ height: '14px', width: '40%', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px' }} />
+    <div style={{ aspectRatio: '16/9', backgroundColor: 'var(--ym-bg-subtle)' }} />
+    <div style={{ padding: '14px 16px' }}>
+      <div style={{ height: '18px', width: '70%', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px', marginBottom: '8px' }} />
+      <div style={{ height: '13px', width: '50%', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px' }} />
     </div>
-    <div style={{ height: '14px', width: '80px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px' }} />
   </div>
 );
 
@@ -362,7 +357,7 @@ export function HomePage() {
 
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
         {loading ? (
-          <div style={{ display: 'grid', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
@@ -395,72 +390,100 @@ export function HomePage() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               {websites.map((site, index) => (
                 <div
                   key={site.id}
                   onClick={() => navigate(`/website/${site.id}`)}
                   style={{
-                    position: 'relative',
-                    padding: '16px 20px',
                     border: '1px solid var(--ym-border)',
                     borderRadius: 'var(--ym-radius-md)',
                     backgroundColor: 'var(--ym-bg-card)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '8px',
+                    overflow: 'hidden',
                     cursor: 'pointer',
-                    transition: 'transform var(--ym-transition), border-color var(--ym-transition)',
-                    paddingLeft: 'calc(20px + 12px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'transform var(--ym-transition), border-color var(--ym-transition), box-shadow var(--ym-transition)',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateX(4px)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-                    const line = e.currentTarget.querySelector('.card-line');
-                    if (line) line.style.transform = 'scaleY(1)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateX(0)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.borderColor = 'var(--ym-border)';
-                    const line = e.currentTarget.querySelector('.card-line');
-                    if (line) line.style.transform = 'scaleY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
-                  <div className="card-line" style={{
-                    position: 'absolute',
-                    left: '0',
-                    top: '6px',
-                    width: '3px',
-                    height: 'calc(100% - 12px)',
-                    backgroundColor: 'var(--ym-border-strong)',
-                    borderRadius: '2px',
-                    transform: 'scaleY(0)',
-                    transformOrigin: 'center',
-                    transition: 'transform var(--ym-transition)',
-                  }} />
                   <div style={{
-                    position: 'absolute',
-                    left: '8px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontFamily: 'var(--ym-font-display)',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    color: 'var(--ym-text-muted)',
-                    letterSpacing: '0.5px',
-                    lineHeight: 1,
+                    position: 'relative',
+                    aspectRatio: '16/9',
+                    backgroundColor: 'var(--ym-bg-subtle)',
+                    overflow: 'hidden',
                   }}>
-                    {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'linear-gradient(135deg, var(--ym-bg-subtle), var(--ym-border))',
+                    }}>
+                      <span style={{
+                        fontFamily: 'var(--ym-font-display)',
+                        fontSize: '44px',
+                        color: 'var(--ym-text-muted)',
+                        lineHeight: 1,
+                      }}>
+                        {(site.title || '网').trim()[0]}
+                      </span>
+                    </div>
+                    {site.image_url && (
+                      <img
+                        src={site.image_url}
+                        alt={site.title}
+                        loading="lazy"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                        }}
+                      />
+                    )}
+                    <span style={{
+                      position: 'absolute',
+                      left: '10px',
+                      top: '10px',
+                      fontFamily: 'var(--ym-font-display)',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      color: 'var(--ym-bg-card)',
+                      backgroundColor: 'rgba(0,0,0,0.45)',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      letterSpacing: '0.5px',
+                      lineHeight: 1.6,
+                    }}>
+                      {String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}
+                    </span>
                   </div>
 
-                  <div style={{ flex: 1, minWidth: '200px', paddingLeft: '4px' }}>
+                  <div style={{
+                    padding: '14px 16px',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}>
                     <div style={{
                       fontSize: '16px',
                       fontWeight: '500',
                       color: 'var(--ym-text-primary)',
-                      marginBottom: '4px',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
@@ -473,51 +496,58 @@ export function HomePage() {
                         fontWeight: '400',
                       }}>↗</span>
                     </div>
+                    <div
+                      title={site.url}
+                      style={{
+                        fontSize: '13px',
+                        color: 'var(--ym-text-secondary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      📎 {site.url}
+                    </div>
                     <div style={{
-                      fontSize: '13px',
-                      color: 'var(--ym-text-secondary)',
+                      marginTop: 'auto',
                       display: 'flex',
-                      gap: '16px',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                       flexWrap: 'wrap',
+                      gap: '8px',
+                      paddingTop: '8px',
+                      borderTop: '1px solid var(--ym-border)',
                     }}>
-                      <span>📎 {site.url}</span>
-                      <span>👤 {site.username}</span>
+                      <span style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>
+                        👤 {site.username}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>
+                          ❤️ {site.like_count || 0}
+                        </span>
+                        {user && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLikeToggle(site.id, site.liked_by_user || false);
+                            }}
+                            disabled={likingRefs.current[site.id] || false}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: site.liked_by_user ? 'var(--ym-success)' : 'var(--ym-text-secondary)',
+                              cursor: likingRefs.current[site.id] ? 'not-allowed' : 'pointer',
+                              fontSize: '13px',
+                              fontWeight: site.liked_by_user ? 'bold' : 'normal',
+                              transition: 'color var(--ym-transition)',
+                              opacity: likingRefs.current[site.id] ? 0.5 : 1,
+                            }}
+                          >
+                            {site.liked_by_user ? '♥ 已赞' : '♡ 点赞'}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                  }}>
-                    <div style={{
-                      fontSize: '13px',
-                      color: 'var(--ym-text-muted)',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      ❤️ {site.like_count || 0}
-                    </div>
-                    {user && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLikeToggle(site.id, site.liked_by_user || false);
-                        }}
-                        disabled={likingRefs.current[site.id] || false}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: site.liked_by_user ? 'var(--ym-success)' : 'var(--ym-text-secondary)',
-                          cursor: likingRefs.current[site.id] ? 'not-allowed' : 'pointer',
-                          fontSize: '14px',
-                          fontWeight: site.liked_by_user ? 'bold' : 'normal',
-                          transition: 'color var(--ym-transition)',
-                          opacity: likingRefs.current[site.id] ? 0.5 : 1,
-                        }}
-                      >
-                        {site.liked_by_user ? '♥ 已赞' : '♡ 点赞'}
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
