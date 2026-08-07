@@ -38,9 +38,15 @@ export const getCommentsByWebsite = async (websiteId) => {
  * @returns {Promise<object>} 新评论对象
  */
 export const createComment = async (websiteId, userId, content) => {
+  // 前端服务层兜底校验（数据库层另有 CHECK 约束）
+  const trimmed = (content || '').trim();
+  if (!trimmed) throw new Error('评论不能为空');
+  if (trimmed.length > 1000) throw new Error('评论不能超过 1000 字');
+  if ((trimmed.match(/\n/g) || []).length > 10) throw new Error('评论中的换行不能超过 10 个');
+
   const { data, error } = await supabase
     .from('comments')
-    .insert({ website_id: websiteId, user_id: userId, content })
+    .insert({ website_id: websiteId, user_id: userId, content: trimmed })
     .select()
     .single();
 

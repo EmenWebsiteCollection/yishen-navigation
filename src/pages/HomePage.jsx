@@ -204,6 +204,7 @@ export function HomePage() {
       likedRefs.current[websiteId] = currentLiked;
     } finally {
       likingRefs.current[websiteId] = false;
+      setWebsites(prev => [...prev]); // 强制重渲染，让按钮从禁用状态恢复
     }
   };
 

@@ -2,17 +2,24 @@
 import { supabase } from './supabase.js';
 
 // ========== 基础函数 ==========
+// URL 规范化：去掉结尾斜杠，避免 https://a.com 与 https://a.com/ 被视为不同网址
+export const normalizeUrl = (url) => {
+  if (!url) return url;
+  return url.trim().replace(/\/+$/, '');
+};
+
 export const checkUrlExists = async (url) => {
   const { data, error } = await supabase
     .from('websites')
     .select('id')
-    .eq('url', url)
+    .eq('url', normalizeUrl(url))
     .maybeSingle();
   if (error && error.code !== 'PGRST116') throw error;
   return !!data;
 };
 
 export const createWebsite = async (url, title, description, userId, imageUrl = null) => {
+  url = normalizeUrl(url);
   const exists = await checkUrlExists(url);
   if (exists) throw new Error('该网址已存在，无法重复创建。');
 
@@ -190,7 +197,7 @@ export const updateWebsite = async (id, data) => {
   const { url, title, description, image_url } = data;
   if (!title || title.trim() === '') throw new Error('标题不能为空');
   if (!url || url.trim() === '') throw new Error('URL 不能为空');
-  const trimmedUrl = url.trim();
+  const trimmedUrl = normalizeUrl(url);
   const trimmedTitle = title.trim();
   const trimmedDesc = description?.trim() || null;
 
