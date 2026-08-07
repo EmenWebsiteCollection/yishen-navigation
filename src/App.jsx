@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage.jsx';
 import { CreateWebsitePage } from './pages/CreateWebsitePage.jsx';
 import { WebsiteDetailPage } from './pages/WebsiteDetailPage.jsx';
 import { EditWebsitePage } from './pages/EditWebsitePage.jsx';
+import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -15,20 +16,23 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/website/:id" element={<WebsiteDetailPage />} />
-      <Route
-        path="/website/:id/edit"
-        element={
-          <PrivateRoute>
-            <EditWebsitePage />
-          </PrivateRoute>
-        }
-      />
-      <Route path="/create" element={<PrivateRoute><CreateWebsitePage /></PrivateRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <ThemeSwitcher />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/website/:id" element={<WebsiteDetailPage />} />
+        <Route
+          path="/website/:id/edit"
+          element={
+            <PrivateRoute>
+              <EditWebsitePage />
+            </PrivateRoute>
+          }
+        />
+        <Route path="/create" element={<PrivateRoute><CreateWebsitePage /></PrivateRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 

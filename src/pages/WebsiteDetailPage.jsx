@@ -458,7 +458,7 @@ export function WebsiteDetailPage() {
             style={{
               padding: '6px 16px',
               backgroundColor: likedByUser ? 'var(--ym-success)' : 'var(--ym-accent)',
-              color: '#fff',
+              color: likedByUser ? 'var(--ym-success-text-on)' : 'var(--ym-accent-text-on)',
               border: 'none',
               borderRadius: 'var(--ym-radius-sm)',
               cursor: likeToggling ? 'not-allowed' : 'pointer',
@@ -544,7 +544,7 @@ export function WebsiteDetailPage() {
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--ym-border)';
@@ -650,7 +650,7 @@ export function WebsiteDetailPage() {
               style={{
                 padding: '10px 24px',
                 backgroundColor: 'var(--ym-danger)',
-                color: '#fff',
+                color: 'var(--ym-danger-text-on)',
                 border: 'none',
                 borderRadius: 'var(--ym-radius-sm)',
                 fontSize: '15px',

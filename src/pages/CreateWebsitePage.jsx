@@ -151,7 +151,7 @@ export function CreateWebsitePage() {
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--ym-border)';
@@ -207,7 +207,7 @@ export function CreateWebsitePage() {
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = 'var(--ym-border)';
@@ -241,7 +241,7 @@ export function CreateWebsitePage() {
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = 'var(--ym-border)';
