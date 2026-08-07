@@ -145,6 +145,83 @@ export const getWebsites = async (page = 1, pageSize = 10) => {
   };
 };
 
+// ========== 获取高分网站（按评分降序，用于首页轮播展位） ==========
+export const getTopRatedWebsites = async (limit = 8) => {
+  const { data, error } = await supabase
+    .from('websites_with_likes')
+    .select(
+      `
+      id,
+      url,
+      title,
+      description,
+      image_url,
+      user_id,
+      like_count,
+      profiles ( username )
+      `
+    )
+    .order('like_count', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.warn('⚠️ 高分网站视图查询失败，使用降级方案:', error.message);
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('websites')
+      .select(
+        `
+        id,
+        url,
+        title,
+        description,
+        image_url,
+        user_id,
+        profiles ( username )
+        `
+      )
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (fallbackError) throw fallbackError;
+
+    const websites = await Promise.all(
+      fallbackData.map(async (item) => {
+        let likeCount = 0;
+        try {
+          const { count } = await supabase
+            .from('website_likes')
+            .select('*', { count: 'exact', head: true })
+            .eq('website_id', item.id);
+          likeCount = count || 0;
+        } catch (e) {}
+        return {
+          id: item.id,
+          url: item.url,
+          title: item.title,
+          description: item.description || '',
+          image_url: item.image_url || null,
+          user_id: item.user_id,
+          username: item.profiles?.username || '用户',
+          like_count: likeCount,
+        };
+      })
+    );
+
+    return websites.sort((a, b) => b.like_count - a.like_count).slice(0, limit);
+  }
+
+  return data.map((item) => ({
+    id: item.id,
+    url: item.url,
+    title: item.title,
+    description: item.description || '',
+    image_url: item.image_url || null,
+    user_id: item.user_id,
+    username: item.profiles?.username || '用户',
+    like_count: item.like_count || 0,
+  }));
+};
+
 // ========== 获取单个网站 ==========
 export const getWebsiteById = async (id) => {
   const { data, error } = await supabase
