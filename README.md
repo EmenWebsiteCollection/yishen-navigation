@@ -60,9 +60,9 @@ graph TD
 
 ## 🛠 技术栈
 
-- **前端框架**：React（待补充版本）
-- **样式方案**：CSS Modules / Styled Components
-- **后端服务**：Supabase（数据库、认证、存储）
+- **前端框架**：React 18 + Vite 5（SPA）
+- **样式方案**：全局 CSS（`src/styles/`：tokens.css / global.css / animations.css，CSS 变量主题体系）
+- **后端服务**：Supabase（数据库、认证、存储），数据库迁移脚本见 `sql/` 目录（编号顺序执行）
 - **部署平台**：Netlify（持续集成与自动部署）
 - **版本控制**：Git + GitHub
 
@@ -71,7 +71,7 @@ graph TD
 ## 📌 注意事项
 
 - ✅ 所有 Issue 和 PR 必须使用英文或中文清晰描述，并关联对应的项目看板。
-- ✅ 提交代码前请确保本地测试通过，并遵循项目的 ESLint/Prettier 配置。
+- ✅ 提交代码前请确保 `npm run build` 通过（项目暂未配置 ESLint/Prettier 与自动化测试）。
 - ✅ 数据库变更必须经过数据库组审核，并编写对应的迁移脚本。
 - ✅ 任何架构层面的改动需提前在项目管理组发起讨论。
 

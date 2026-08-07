@@ -10,11 +10,11 @@ Vite + React 18 SPA (Simplified-Chinese UI), deployed to Netlify, backed by Supa
 
 ## Architecture
 
-- Client-only SPA: the browser talks directly to Supabase via the anon-key JS client in `src/services/`. **There are no Netlify Functions** — `netlify.toml` references `netlify/functions`, but that directory does not exist. `docs/tech.md` describes an aspirational "all data via Netlify Functions" design the code does not implement; trust the code.
-- The database schema lives only in the Supabase project — there are no SQL files or migrations in the repo. Tables in use: `websites`, `profiles`, `comments`, `website_likes`, plus view `websites_with_likes` (home list, ordered by `like_count`). Field/schema changes must be made in the Supabase dashboard.
+- Client-only SPA: the browser talks directly to Supabase via the anon-key JS client in `src/services/`. **There are no Netlify Functions** — `netlify.toml` still references `netlify/functions`, but that directory does not exist (the password-recovery feature briefly added functions there and was reverted). `docs/tech.md` describes an aspirational "all data via Netlify Functions" design the code does not implement; trust the code.
+- Database migrations live in the `sql/` directory, numbered (`000_diagnose.sql` diagnostic, `001_works_generalization.sql` works generalization + creator profiles + favorites/groups + storage buckets). Run them in Supabase Dashboard → SQL Editor in order. Current schema (post-001): `works` (websites renamed, with `work_type`/`featured`/`cover_url`/`status`/`visibility`/`group_id`/`changelog`), `profiles` (creator-profile fields), `favorites`, `groups`, `comments`, `website_likes`; views `works_with_likes` (home list, RLS-aware, ordered by `like_count`) and `websites` (read-only compatibility view over `works`).
 - URL uniqueness is enforced at the app layer (`checkUrlExists` in `src/services/websites.js`), not only by DB constraints.
 - Website preview images (`websites.image_url`, added via the Supabase dashboard): users can upload to the `screenshots` storage bucket (`uploadWebsiteImage` in `src/services/screenshot.js`), otherwise a full-page screenshot is auto-fetched client-side from Microlink's free API (`fetchWebsiteScreenshot`) at submit time and stored in `image_url`. Requires RLS policies on `storage.objects` and the `websites_with_likes` view to include `image_url`.
-- Routes (`src/App.jsx`): `/`, `/website/:id`, `/website/:id/edit`, `/create`. `netlify.toml` has no SPA redirect rule, so hard-refreshing a deep link on the deployed site 404s.
+- Routes (`src/App.jsx`): `/`, `/website/:id`, `/website/:id/edit`, `/create`, `/profile` (private), `/user/:id` (creator profile). `netlify.toml` has no SPA redirect rule, so hard-refreshing a deep link on the deployed site 404s.
 
 ## Conventions
 
