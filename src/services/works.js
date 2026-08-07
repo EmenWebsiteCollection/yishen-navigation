@@ -47,13 +47,14 @@ export const normalizeUrl = (url) => {
 
 // works 表直查字段（含 profiles 关联）
 const TABLE_SELECT = `
-  id, url, title, description, image_url, cover_url, work_type,
+  id, url, title, description, image_url, cover_url, video_url, work_type,
   featured, status, visibility, group_id, changelog,
   created_at, updated_at, user_id,
   profiles ( username, avatar_url )
 `;
 
 // works_with_likes 视图字段（视图已 join profiles）
+// ⚠️ 视图未包含 video_url（列表页不需要），若需列表展示需由团队重建视图并补列
 const VIEW_SELECT = `
   id, url, title, description, image_url, cover_url, work_type,
   featured, status, visibility, group_id, changelog,
@@ -69,6 +70,7 @@ const mapWork = (item) => {
     description: item.description || '',
     image_url: item.image_url || null,
     cover_url: item.cover_url || null,
+    video_url: item.video_url || null,
     work_type: item.work_type || 'website',
     featured: !!item.featured,
     status: item.status || null,
@@ -106,6 +108,7 @@ export const createWork = async (payload, userId) => {
     description = '',
     image_url = null,
     cover_url = null,
+    video_url = null,
     work_type = 'website',
     status = null,
     visibility = 'public',
@@ -142,6 +145,7 @@ export const createWork = async (payload, userId) => {
         description: description?.trim() || null,
         image_url: image_url || null,
         cover_url: cover_url || null,
+        video_url: video_url?.trim() || null,
         work_type: trimmedType,
         status: status || null,
         visibility: visibility === 'private' ? 'private' : 'public',
@@ -292,6 +296,7 @@ export const updateWork = async (id, data) => {
     description,
     image_url,
     cover_url,
+    video_url,
     work_type,
     status,
     visibility,
@@ -330,6 +335,7 @@ export const updateWork = async (id, data) => {
   };
   if (image_url !== undefined) patch.image_url = image_url || null;
   if (cover_url !== undefined) patch.cover_url = cover_url || null;
+  if (video_url !== undefined) patch.video_url = video_url?.trim() || null;
   if (status !== undefined) patch.status = status || null;
   if (group_id !== undefined) patch.group_id = group_id || null;
   if (featured !== undefined) patch.featured = !!featured;

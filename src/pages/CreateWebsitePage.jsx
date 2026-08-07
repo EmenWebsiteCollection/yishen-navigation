@@ -32,6 +32,7 @@ export function CreateWebsitePage() {
   const navigate = useNavigate();
   const [workType, setWorkType] = useState('website');
   const [url, setUrl] = useState('');
+const [videoUrl, setVideoUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('');
@@ -95,6 +96,14 @@ export function CreateWebsitePage() {
         return;
       }
     }
+    if (videoUrl.trim()) {
+      try {
+        new URL(videoUrl.trim());
+      } catch (_) {
+        setMessage({ type: 'error', text: '演示视频链接无效（需包含协议，如 https://）。' });
+        return;
+      }
+    }
 
     setLoading(true);
     let finalImageUrl = null;
@@ -131,6 +140,7 @@ export function CreateWebsitePage() {
           title: title.trim(),
           description: description.trim(),
           image_url: finalImageUrl,
+          video_url: videoUrl.trim() || null,
           work_type: workType,
           status: status || null,
           visibility,
@@ -141,6 +151,7 @@ export function CreateWebsitePage() {
       );
       setMessage({ type: 'success', text: '✅ 作品提交成功！' });
       setUrl('');
+      setVideoUrl('');
       setTitle('');
       setDescription('');
       setStatus('');
@@ -221,6 +232,22 @@ export function CreateWebsitePage() {
             />
           </div>
         )}
+
+        {/* 演示视频链接（可选） */}
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="create-video-url" style={labelStyle}>演示视频链接（可选）</label>
+          <input
+            id="create-video-url"
+            type="url"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="https://www.bilibili.com/video/BV... 或 https://youtu.be/..."
+            style={inputStyle}
+          />
+          <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--ym-text-muted)' }}>
+            填写后详情页展示「观看演示视频」入口，点击跳转到视频网站观看
+          </div>
+        </div>
 
         {/* 标题 */}
         <div style={{ marginBottom: '16px' }}>
