@@ -9,6 +9,7 @@ import { LoginPage } from './LoginPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { SearchBar } from '../components/SearchBar.jsx';
+import { getProfile } from '../services/users.js';
 import '../styles/global.css';
 
 const PAGE_SIZE = 10;
@@ -69,10 +70,29 @@ export function HomePage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (user && !isAnonymous) {
+      getProfile(user.id)
+        .then((p) => {
+          if (!cancelled) setAvatarUrl(p?.avatar_url || null);
+        })
+        .catch(() => {
+          if (!cancelled) setAvatarUrl(null);
+        });
+    } else {
+      setAvatarUrl(null);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isAnonymous]);
 
   const likedRefs = useRef({});
   const likingRefs = useRef({});
@@ -274,8 +294,31 @@ export function HomePage() {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           {user ? (
             <>
-              <span style={{ fontSize: '14px', color: 'var(--ym-text-secondary)' }}>
-                👤 {user.email?.replace('@nav.local', '') || user.email}
+              <span style={{ fontSize: '14px', color: 'var(--ym-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="头像"
+                    style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '50%',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'var(--ym-bg-subtle)',
+                      fontSize: '15px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    👤
+                  </span>
+                )}
+                {user.email?.replace('@nav.local', '') || user.email}
                 {!isAnonymous && (
                   <Link
                     to='/profile'
