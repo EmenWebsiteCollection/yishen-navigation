@@ -1,0 +1,164 @@
+/* src/styles/search.css — 搜索栏（Issue #19）
+ * 颜色/圆角/过渡全部走 tokens.css 的 --ym-* 变量，随主题自动适配。
+ */
+
+.ym-search {
+  position: relative;
+  max-width: 480px;
+  width: 100%;
+}
+
+.ym-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ym-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--ym-text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ym-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 38px;
+  border: 1px solid var(--ym-border);
+  border-radius: var(--ym-radius-md);
+  background-color: var(--ym-bg-card);
+  color: var(--ym-text-primary);
+  font-size: 14px;
+  transition: border-color var(--ym-transition), box-shadow var(--ym-transition);
+}
+
+.ym-search-input::placeholder {
+  color: var(--ym-text-muted);
+}
+
+.ym-search-input:focus {
+  border-color: var(--ym-border-strong);
+  box-shadow: 0 0 0 3px var(--ym-focus-ring);
+  outline: none;
+}
+
+.ym-search-clear {
+  position: absolute;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ym-text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--ym-transition), color var(--ym-transition);
+}
+
+.ym-search-clear:hover {
+  background-color: var(--ym-bg-subtle);
+  color: var(--ym-text-primary);
+}
+
+.ym-search-spinner {
+  position: absolute;
+  right: 12px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ym-border);
+  border-top-color: var(--ym-accent);
+  border-radius: 50%;
+  animation: ym-spin 0.8s linear infinite;
+}
+
+.ym-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  max-height: 420px;
+  overflow: auto;
+  background-color: var(--ym-bg-card);
+  border: 1px solid var(--ym-border);
+  border-radius: var(--ym-radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  animation: ym-fade-in var(--ym-transition) forwards;
+}
+
+.ym-search-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ym-border);
+  transition: background-color var(--ym-transition);
+}
+
+.ym-search-item:last-child {
+  border-bottom: none;
+}
+
+.ym-search-item:hover,
+.ym-search-item.active {
+  background-color: var(--ym-bg-subtle);
+}
+
+.ym-search-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ym-text-primary);
+  margin-bottom: 2px;
+}
+
+.ym-search-item-url {
+  font-size: 12px;
+  color: var(--ym-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ym-search-item-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--ym-text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ym-search-item-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ym-text-muted);
+}
+
+/* 命中高亮（由 search.js 的 highlightHtml 生成，先转义后注入，安全） */
+.ym-search-hl {
+  background: transparent;
+  color: var(--ym-accent);
+  font-weight: 700;
+}
+
+.ym-search-empty {
+  padding: 18px 16px;
+  text-align: center;
+  color: var(--ym-text-secondary);
+  font-size: 13px;
+}
+
+/* 移动端：搜索栏占满宽度 */
+@media (max-width: 640px) {
+  .ym-search {
+    max-width: 100%;
+  }
+}
