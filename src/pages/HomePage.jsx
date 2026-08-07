@@ -9,40 +9,11 @@ import { LoginPage } from './LoginPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { SearchBar } from '../components/SearchBar.jsx';
+import { SiteHeader } from '../components/SiteHeader.jsx';
 import { getProfile } from '../services/users.js';
 import '../styles/global.css';
 
 const PAGE_SIZE = 10;
-
-const Logo = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-    <div style={{
-      width: '34px',
-      height: '34px',
-      borderRadius: '8px',
-      backgroundColor: 'var(--ym-accent)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    }}>
-      <span style={{
-        fontFamily: 'var(--ym-font-display)',
-        fontSize: '18px',
-        color: 'var(--ym-accent-text-on)',
-        fontWeight: '500',
-        lineHeight: 1,
-      }}>神</span>
-    </div>
-    <span style={{
-      fontFamily: 'var(--ym-font-display)',
-      fontSize: '17px',
-      fontWeight: '500',
-      color: 'var(--ym-text-primary)',
-      letterSpacing: '0.5px',
-    }}>依神网站汇总</span>
-  </div>
-);
 
 const SkeletonCard = () => (
   <div style={{
@@ -271,27 +242,10 @@ export function HomePage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <nav style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        padding: '12px 24px',
-        backgroundColor: 'var(--ym-bg-card)',
-        borderBottom: '1px solid var(--ym-border)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '12px',
-      }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <Logo />
-        </Link>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: '200px' }}>
-          <SearchBar />
-        </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <SiteHeader
+        center={<SearchBar />}
+        right={
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           {user ? (
             <>
               <span style={{ fontSize: '14px', color: 'var(--ym-text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
@@ -422,8 +376,9 @@ export function HomePage() {
               </button>
             </>
           )}
-        </div>
-      </nav>
+          </div>
+        }
+      />
 
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
         <HighRatedCarousel />
