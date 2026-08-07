@@ -1,37 +1,32 @@
 // src/services/auth.js
 import { supabase } from './supabase.js';
 
-// 判断用户输入的标识符类型：邮箱 / 手机号 / 普通用户名
-// - 含 @ 视为邮箱
-// - 纯数字或以 + 开头的号码视为手机号（去掉空格与短横线后 7~15 位）
-// - 其余视为普通用户名，自动补全为 username@nav.local（兼容旧账号）
-export const resolveIdentifier = (raw) => {
-  const v = (raw || '').trim();
-  if (!v) return { type: 'username', value: '' };
-  if (v.includes('@')) return { type: 'email', value: v };
-  if (/^\+?[1-9]\d{6,14}$/.test(v.replace(/[\s-]/g, ''))) {
-    return { type: 'phone', value: v.replace(/[\s-]/g, '') };
-  }
-  return { type: 'username', value: `${v}@nav.local` };
+// 辅助：将用户输入的用户名转换为合法邮箱
+const normalizeEmail = (username) => {
+  if (!username || username.trim() === '') return '';
+  const trimmed = username.trim();
+  // 如果已经包含 @，视为完整邮箱，直接返回
+  if (trimmed.includes('@')) return trimmed;
+  // 否则自动补全域名
+  return `${trimmed}@nav.local`;
 };
 
-const toCredentials = (raw, password) => {
-  const id = resolveIdentifier(raw);
-  return id.type === 'phone'
-    ? { phone: id.value, password }
-    : { email: id.value, password };
-};
-
-export const register = async (raw, password) => {
-  const credentials = toCredentials(raw, password);
-  const { data, error } = await supabase.auth.signUp(credentials);
+export const register = async (username, password) => {
+  const email = normalizeEmail(username);
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
   if (error) throw error;
   return data;
 };
 
-export const login = async (raw, password) => {
-  const credentials = toCredentials(raw, password);
-  const { data, error } = await supabase.auth.signInWithPassword(credentials);
+export const login = async (username, password) => {
+  const email = normalizeEmail(username);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
   if (error) throw error;
   return data;
 };
