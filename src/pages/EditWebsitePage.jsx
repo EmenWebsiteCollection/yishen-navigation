@@ -62,12 +62,21 @@ export function EditWebsitePage() {
     if (err) {
       setError(err);
       setImageFile(null);
-      setImagePreview(imageUrl);
+      // 不改变预览，保留原来的
       return;
     }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
     setError('');
+    // 如果有旧图片，但用户选择了新文件，我们标记为替换，删除按钮依然可用
+  };
+
+  // 删除图片
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setImageUrl(''); // 清除数据库中的图片 URL
+    // 注意：如果用户此时保存，image_url 会变为 null
   };
 
   const handleSubmit = async (e) => {
@@ -91,15 +100,22 @@ export function EditWebsitePage() {
 
     setSaving(true);
     try {
-      let finalImageUrl = imageUrl; // 保留原有图片
-      // 如果用户选择了新图片，上传
-      if (imageFile) {
+      let finalImageUrl = null;
+
+      // 如果用户删除了图片（imageUrl 和 imagePreview 都为空，且 imageFile 为空）
+      if (!imagePreview && !imageFile) {
+        finalImageUrl = null;
+      } else if (imageFile) {
+        // 用户选择了新图片，上传
         const uploadedUrl = await uploadWebsiteImage(imageFile, user.id);
         finalImageUrl = uploadedUrl;
-      } else if (imagePreview && imagePreview.startsWith('blob:')) {
-        // 如果预览是 blob 但未上传，不处理（实际上已在上一步处理）
+      } else if (imagePreview && imagePreview.startsWith('http')) {
+        // 保留已有的图片 URL（未改变）
+        finalImageUrl = imageUrl;
+      } else {
+        // 其他情况（例如 blob 但未上传，不会发生）
+        finalImageUrl = null;
       }
-      // 如果用户想删除图片，可以加一个删除按钮，这里暂不实现
 
       await updateWebsite(id, { 
         url: url.trim(), 
@@ -138,6 +154,8 @@ export function EditWebsitePage() {
       </div>
     );
   }
+
+  const hasImage = imagePreview || imageUrl;
 
   return (
     <div style={{
@@ -258,14 +276,44 @@ export function EditWebsitePage() {
           />
         </div>
 
-        {/* 图片 */}
+        {/* 图片上传与删除 */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', fontWeight: '500' }}>
             网站图片（可选，支持 PNG/JPG/GIF/WebP，≤5MB）
           </label>
-          {imagePreview && (
-            <div style={{ marginBottom: '8px' }}>
-              <img src={imagePreview} alt="预览" style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: 'var(--ym-radius-sm)', border: '1px solid var(--ym-border)' }} />
+          {hasImage && (
+            <div style={{ marginBottom: '8px', position: 'relative' }}>
+              <img
+                src={imagePreview || imageUrl}
+                alt="预览"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '160px',
+                  borderRadius: 'var(--ym-radius-sm)',
+                  border: '1px solid var(--ym-border)',
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                style={{
+                  position: 'absolute',
+                  top: '6px',
+                  right: '6px',
+                  padding: '4px 12px',
+                  backgroundColor: 'var(--ym-danger)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 'var(--ym-radius-sm)',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'background-color var(--ym-transition)',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--ym-danger-hover)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ym-danger)'}
+              >
+                删除图片
+              </button>
             </div>
           )}
           <input
@@ -276,7 +324,7 @@ export function EditWebsitePage() {
           />
           {imageUrl && !imageFile && (
             <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
-              当前图片已存在，选择新文件将替换。
+              当前已有图片，选择新文件或点击删除按钮移除。
             </div>
           )}
         </div>
