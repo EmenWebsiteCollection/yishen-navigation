@@ -9,6 +9,7 @@ import { LoginPage } from './LoginPage.jsx';
 import { ForgotPasswordPage } from './ForgotPasswordPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
+import { SearchBar } from '../components/SearchBar.jsx';
 import '../styles/global.css';
 
 const PAGE_SIZE = 10;
@@ -385,6 +386,10 @@ export function HomePage() {
       </nav>
 
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <SearchBar />
+        </div>
+
         <HighRatedCarousel />
 
         {loading ? (

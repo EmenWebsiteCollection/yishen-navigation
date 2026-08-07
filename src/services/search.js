@@ -73,8 +73,8 @@ function escapeLike(s) {
 }
 
 /**
- * 搜索网站（服务端 ilike 过滤 + 客户端排序）。
- * 优先查 websites_with_likes 视图；视图失败时降级查 websites 表并手动统计点赞数。
+ * 搜索作品（服务端 ilike 过滤 + 客户端排序）。
+ * 优先查 works_with_likes 视图；视图失败时降级查 works 表并手动统计点赞数。
  * @param {string} query 搜索词
  * @param {{limit?: number}} options
  * @returns {Promise<{results: Array, total: number, query: string}>}
@@ -89,7 +89,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
   const or = `title.ilike.${like},url.ilike.${like},description.ilike.${like}`;
 
   const { data, error } = await supabase
-    .from('websites_with_likes')
+    .from('works_with_likes')
     .select(
       `
       id,
@@ -111,7 +111,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
   if (error) {
     console.warn('⚠️ 搜索：视图查询失败，使用降级方案:', error.message);
     const { data: fallbackData, error: fallbackError } = await supabase
-      .from('websites')
+      .from('works')
       .select(
         `
         id,

@@ -153,7 +153,7 @@ export function SearchBar({ placeholder = '搜索网站：标题 / URL / 描述'
                 )}
                 <div className="ym-search-item-meta">
                   <span>❤️ {site.like_count || 0}</span>
-                  {site.profiles?.username && <span>👤 {site.profiles.username}</span>}
+                  {site.username && <span>👤 {site.username}</span>}
                 </div>
               </div>
             ))
