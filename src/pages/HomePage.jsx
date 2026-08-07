@@ -59,7 +59,7 @@ const SkeletonCard = () => (
 );
 
 export function HomePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAnonymous } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [websites, setWebsites] = useState([]);
@@ -268,6 +268,23 @@ export function HomePage() {
             <>
               <span style={{ fontSize: '14px', color: 'var(--ym-text-secondary)' }}>
                 👤 {user.email?.replace('@nav.local', '') || user.email}
+                {!isAnonymous && (
+                  <Link
+                    to='/profile'
+                    style={{
+                      padding: '6px 16px',
+                      backgroundColor: 'transparent',
+                      color: 'var(--ym-text-secondary)',
+                      border: '1px solid var(--ym-border)',
+                      borderRadius: 'var(--ym-radius-sm)',
+                      fontSize: '14px',
+                      textDecoration: 'none',
+                      transition: 'all var(--ym-transition)',
+                    }}
+                  >
+                    个人中心
+                  </Link>
+                )}
               </span>
               <Link
                 to="/create"
@@ -522,9 +539,18 @@ export function HomePage() {
                       paddingTop: '8px',
                       borderTop: '1px solid var(--ym-border)',
                     }}>
-                      <span style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>
-                        👤 {site.username}
-                      </span>
+                      <Link
+                        to={`/user/${site.user_id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ fontSize: '13px', color: 'var(--ym-text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        {site.avatar_url ? (
+                          <img src={site.avatar_url} alt='' style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ display: 'inline-block', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'var(--ym-bg-subtle)', textAlign: 'center', lineHeight: '18px', fontSize: '11px' }}>👤</span>
+                        )}
+                        {site.username}
+                      </Link>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>
                           ❤️ {site.like_count || 0}

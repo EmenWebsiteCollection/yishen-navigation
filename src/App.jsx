@@ -1,4 +1,4 @@
-﻿// src/App.jsx
+// src/App.jsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth.js';
@@ -7,6 +7,7 @@ import { CreateWebsitePage } from './pages/CreateWebsitePage.jsx';
 import { WebsiteDetailPage } from './pages/WebsiteDetailPage.jsx';
 import { EditWebsitePage } from './pages/EditWebsitePage.jsx';
 import { ProfilePage } from './pages/ProfilePage.jsx';
+import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
 
 const PrivateRoute = ({ children }) => {
@@ -32,6 +33,7 @@ function App() {
         />
         <Route path="/create" element={<PrivateRoute><CreateWebsitePage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+        <Route path="/user/:id" element={<CreatorProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

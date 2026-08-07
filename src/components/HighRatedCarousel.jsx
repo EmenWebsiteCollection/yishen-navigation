@@ -48,7 +48,10 @@ const Slide = ({ site, index }) => (
       <h3 className="ym-hrc-title-text">{site.title}</h3>
       <p className="ym-hrc-desc">{site.description || '暂无详情，点击查看完整介绍。'}</p>
       <div className="ym-hrc-footer">
-        <span className="ym-hrc-author">👤 {site.username}</span>
+        <Link to={`/user/${site.user_id}`} className='ym-hrc-author' style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+          {site.avatar_url ? <img src={site.avatar_url} alt='' style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
+          👤 {site.username}
+        </Link>
         <Link to={`/website/${site.id}`} className="ym-hrc-btn">
           查看详情 →
         </Link>
