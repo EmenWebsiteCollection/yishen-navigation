@@ -7,6 +7,7 @@ import { logout } from '../services/auth.js';
 import { supabase } from '../services/supabase.js';
 import { LoginPage } from './LoginPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
+import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import '../styles/global.css';
 
 const PAGE_SIZE = 10;
@@ -357,6 +358,8 @@ export function HomePage() {
       </nav>
 
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
+        <HighRatedCarousel />
+
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
