@@ -16,6 +16,7 @@ import {
 } from '../services/comments.js';
 import '../styles/global.css';
 
+// ---------- 辅助组件 ----------
 const Chip = ({ label, value }) => (
   <span
     style={{
@@ -32,9 +33,22 @@ const Chip = ({ label, value }) => (
   </span>
 );
 
-// ---------- 评论卡片组件 ----------
-const CommentCard = ({ comment, currentUserId, onDelete }) => {
+// ---------- 评论卡片组件（包含回复功能） ----------
+const CommentCard = ({
+  comment,
+  currentUserId,
+  onDelete,
+  onReplyClick,
+  isReplying,
+  replyContent,
+  onReplyContentChange,
+  onReplySubmit,
+  onReplyCancel,
+  replySubmitting,
+  replyToUsername,
+}) => {
   const isOwner = currentUserId && comment.user_id === currentUserId;
+  const isReply = Boolean(replyToUsername);
 
   return (
     <div
@@ -46,6 +60,7 @@ const CommentCard = ({ comment, currentUserId, onDelete }) => {
         marginBottom: '12px',
       }}
     >
+      {/* 用户名显示 */}
       <div
         style={{
           fontWeight: '500',
@@ -53,9 +68,19 @@ const CommentCard = ({ comment, currentUserId, onDelete }) => {
           marginBottom: '4px',
         }}
       >
-        用户：{comment.username}
+        {isReply ? (
+          <>
+            <span style={{ color: 'var(--ym-text-muted)', fontWeight: '400' }}>回复 </span>
+            <span style={{ color: 'var(--ym-accent)' }}>@{replyToUsername}</span>
+            <span style={{ color: 'var(--ym-text-muted)', fontWeight: '400' }}>：</span>
+            <span style={{ color: 'var(--ym-text-primary)', fontWeight: '500' }}>用户：{comment.username}</span>
+          </>
+        ) : (
+          <>用户：{comment.username}</>
+        )}
       </div>
 
+      {/* 评论内容 */}
       <div
         style={{
           color: 'var(--ym-text-secondary)',
@@ -68,6 +93,7 @@ const CommentCard = ({ comment, currentUserId, onDelete }) => {
         {comment.content}
       </div>
 
+      {/* 底部：时间 + 操作按钮 */}
       <div
         style={{
           display: 'flex',
@@ -78,49 +104,145 @@ const CommentCard = ({ comment, currentUserId, onDelete }) => {
         }}
       >
         <span>{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
-        {isOwner && (
-          <button
-            onClick={() => onDelete(comment.id)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--ym-danger)',
-              cursor: 'pointer',
-              fontSize: '13px',
-              transition: 'color var(--ym-transition)',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ym-danger-hover)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ym-danger)')}
-          >
-            删除
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {currentUserId && (
+            <button
+              onClick={() => onReplyClick(comment.id)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--ym-text-secondary)',
+                cursor: 'pointer',
+                fontSize: '13px',
+                transition: 'color var(--ym-transition)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ym-accent)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ym-text-secondary)')}
+            >
+              回复
+            </button>
+          )}
+          {isOwner && (
+            <button
+              onClick={() => onDelete(comment.id)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--ym-danger)',
+                cursor: 'pointer',
+                fontSize: '13px',
+                transition: 'color var(--ym-transition)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ym-danger-hover)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ym-danger)')}
+            >
+              删除
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* 回复输入框（展开状态）- 统一使用较小尺寸，所有层级一致 */}
+      {isReplying && (
+        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--ym-border)' }}>
+          <textarea
+            value={replyContent}
+            onChange={(e) => onReplyContentChange(e.target.value)}
+            placeholder={`回复 @${comment.username}...`}
+            rows={1}          // 改为 1 行，整体变小
+            disabled={replySubmitting}
+            maxLength="1000"
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              border: '1px solid var(--ym-border)',
+              borderRadius: 'var(--ym-radius-sm)',
+              fontSize: '13px',
+              backgroundColor: 'var(--ym-bg-subtle)',
+              color: 'var(--ym-text-primary)',
+              resize: 'vertical',
+              fontFamily: 'var(--ym-font-body)',
+              boxSizing: 'border-box',
+              marginBottom: '6px',
+              lineHeight: 1.4,
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(156,107,46,0.12)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'var(--ym-border)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <button
+              onClick={onReplyCancel}
+              disabled={replySubmitting}
+              style={{
+                padding: '4px 14px',
+                backgroundColor: 'transparent',
+                color: 'var(--ym-text-secondary)',
+                border: '1px solid var(--ym-border)',
+                borderRadius: 'var(--ym-radius-sm)',
+                fontSize: '12px',
+                cursor: replySubmitting ? 'not-allowed' : 'pointer',
+              }}
+            >
+              取消
+            </button>
+            <button
+              onClick={onReplySubmit}
+              disabled={replySubmitting}
+              style={{
+                padding: '4px 14px',
+                backgroundColor: 'var(--ym-accent)',
+                color: 'var(--ym-accent-text-on)',
+                border: 'none',
+                borderRadius: 'var(--ym-radius-sm)',
+                fontSize: '12px',
+                fontWeight: '500',
+                cursor: replySubmitting ? 'not-allowed' : 'pointer',
+                opacity: replySubmitting ? 0.6 : 1,
+              }}
+            >
+              {replySubmitting ? '回复中...' : '回复'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
+// ---------- 主组件 ----------
 export function WebsiteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  // ----- 网站详情状态 -----
+
+  // 网站详情
   const [website, setWebsite] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // ----- 点赞状态 -----
+  // 点赞
   const [likeCount, setLikeCount] = useState(0);
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeToggling, setLikeToggling] = useState(false);
 
-  // ----- 评论状态 -----
+  // 评论
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentsError, setCommentsError] = useState(null);
   const [commentContent, setCommentContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // 回复状态
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   // ----- 加载详情 -----
   useEffect(() => {
@@ -157,7 +279,7 @@ export function WebsiteDetailPage() {
     }
   }, [id, user]);
 
-  // ----- 加载评论 -----
+  // ----- 加载评论（含 parent_id） -----
   const loadComments = useCallback(async () => {
     if (!id) return;
     setLoadingComments(true);
@@ -177,7 +299,7 @@ export function WebsiteDetailPage() {
     loadComments();
   }, [loadComments]);
 
-  // ----- 点赞切换 -----
+  // ----- 点赞 -----
   const handleLikeToggle = async () => {
     if (!user || likeToggling) return;
     setLikeToggling(true);
@@ -198,7 +320,7 @@ export function WebsiteDetailPage() {
     }
   };
 
-  // ----- 发表评论 -----
+  // ----- 发表顶级评论 -----
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     const trimmed = commentContent.trim();
@@ -206,13 +328,13 @@ export function WebsiteDetailPage() {
       alert('评论不能为空');
       return;
     }
+    if (trimmed.length > 1000) {
+      alert('评论不能超过 1000 字');
+      return;
+    }
     const newlineCount = (trimmed.match(/\n/g) || []).length;
     if (newlineCount > 10) {
       alert('评论中的换行不能超过 10 个');
-      return;
-    }
-    if (trimmed.length > 1000) {
-      alert('评论不能超过 1000 字');
       return;
     }
     if (!user) {
@@ -233,13 +355,46 @@ export function WebsiteDetailPage() {
     }
   };
 
-  // ----- 删除评论 -----
+  // ----- 发表回复 -----
+  const handleReplySubmit = async () => {
+    if (!user || !replyingTo) return;
+    const trimmed = replyContent.trim();
+    if (!trimmed) {
+      alert('回复不能为空');
+      return;
+    }
+    if (trimmed.length > 1000) {
+      alert('回复不能超过 1000 字');
+      return;
+    }
+    const newlineCount = (trimmed.match(/\n/g) || []).length;
+    if (newlineCount > 10) {
+      alert('回复中的换行不能超过 10 个');
+      return;
+    }
+
+    setSubmittingReply(true);
+    try {
+      await createComment(id, user.id, trimmed, replyingTo);
+      setReplyContent('');
+      setReplyingTo(null);
+      await loadComments();
+    } catch (err) {
+      console.error('发表回复失败:', err);
+      alert('发表回复失败，请稍后重试');
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+
+  // ----- 删除评论（级联删除由数据库 ON DELETE CASCADE 处理） -----
   const handleDeleteComment = async (commentId) => {
-    const confirmed = window.confirm('确认删除该评论吗？');
+    const confirmed = window.confirm('确认删除该评论吗？（其下的回复会一并删除）');
     if (!confirmed) return;
     try {
       await deleteComment(commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      await loadComments();
+      if (replyingTo === commentId) setReplyingTo(null);
     } catch (err) {
       console.error('删除评论失败:', err);
       alert('删除失败，请重试');
@@ -264,7 +419,90 @@ export function WebsiteDetailPage() {
     }
   };
 
-  // ---------- 渲染 ----------
+  // ----- 渲染树形评论（递归构建） -----
+  const buildCommentTree = (commentsList) => {
+    const map = {};
+    const roots = [];
+    commentsList.forEach((c) => (map[c.id] = { ...c, children: [] }));
+    commentsList.forEach((c) => {
+      if (c.parent_id && map[c.parent_id]) {
+        map[c.parent_id].children.push(map[c.id]);
+      } else {
+        roots.push(map[c.id]);
+      }
+    });
+    roots.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    roots.forEach((root) => {
+      if (root.children) {
+        root.children.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      }
+    });
+    return roots;
+  };
+
+  const commentTree = buildCommentTree(comments);
+
+  // 递归渲染评论（无限深度，通过缩进控制，但所有回复输入框尺寸一致）
+  const renderCommentTree = (nodes, depth = 0) => {
+    if (!nodes || nodes.length === 0) return null;
+
+    return nodes.map((node) => {
+      const replyToUsername = node.parent_id
+        ? comments.find((c) => c.id === node.parent_id)?.username || null
+        : null;
+
+      return (
+        <div key={node.id} style={{ marginLeft: depth > 0 ? '24px' : '0' }}>
+          {depth > 0 && (
+            <div
+              style={{
+                marginLeft: '-12px',
+                paddingLeft: '16px',
+                borderLeft: '2px solid var(--ym-border)',
+              }}
+            >
+              <CommentCard
+                comment={node}
+                currentUserId={user?.id}
+                onDelete={handleDeleteComment}
+                onReplyClick={(cid) => {
+                  setReplyingTo(cid);
+                  setReplyContent('');
+                }}
+                isReplying={replyingTo === node.id}
+                replyContent={replyContent}
+                onReplyContentChange={setReplyContent}
+                onReplySubmit={handleReplySubmit}
+                onReplyCancel={() => setReplyingTo(null)}
+                replySubmitting={submittingReply}
+                replyToUsername={replyToUsername}
+              />
+            </div>
+          )}
+          {depth === 0 && (
+            <CommentCard
+              comment={node}
+              currentUserId={user?.id}
+              onDelete={handleDeleteComment}
+              onReplyClick={(cid) => {
+                setReplyingTo(cid);
+                setReplyContent('');
+              }}
+              isReplying={replyingTo === node.id}
+              replyContent={replyContent}
+              onReplyContentChange={setReplyContent}
+              onReplySubmit={handleReplySubmit}
+              onReplyCancel={() => setReplyingTo(null)}
+              replySubmitting={submittingReply}
+            />
+          )}
+          {node.children && node.children.length > 0 && renderCommentTree(node.children, depth + 1)}
+        </div>
+      );
+    });
+  };
+
+  // ---------- 渲染状态 ----------
   if (loading) {
     return <div style={{ textAlign: 'center', marginTop: '60px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
   }
@@ -331,6 +569,7 @@ export function WebsiteDetailPage() {
 
   const isOwner = user && user.id === website.user_id;
 
+  // ---------- 主界面 ----------
   return (
     <div
       style={{
@@ -343,7 +582,7 @@ export function WebsiteDetailPage() {
         boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
       }}
     >
-      {/* ---------- 面包屑 + 访问按钮（右上角） ---------- */}
+      {/* ---------- 顶部：面包屑 + 访问按钮 ---------- */}
       <div
         style={{
           display: 'flex',
@@ -372,7 +611,6 @@ export function WebsiteDetailPage() {
           <span style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>详情</span>
         </div>
 
-        {/* “访问网站”按钮移到右上角 */}
         <button
           onClick={() => window.open(website.url, '_blank')}
           style={{
@@ -409,7 +647,7 @@ export function WebsiteDetailPage() {
         {website.title}
       </h1>
 
-      {/* ---------- 网站大图 ---------- */}
+      {/* ---------- 大图 ---------- */}
       {website.image_url && (
         <div
           style={{
@@ -451,7 +689,7 @@ export function WebsiteDetailPage() {
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
       </div>
 
-      {/* ---------- 详情描述 ---------- */}
+      {/* ---------- 描述 ---------- */}
       <div
         style={{
           padding: '16px 20px',
@@ -468,7 +706,7 @@ export function WebsiteDetailPage() {
         {website.description || '暂无详情'}
       </div>
 
-      {/* ---------- 点赞区域 ---------- */}
+      {/* ---------- 点赞 ---------- */}
       <div
         style={{
           display: 'flex',
@@ -488,7 +726,7 @@ export function WebsiteDetailPage() {
             style={{
               padding: '6px 16px',
               backgroundColor: likedByUser ? 'var(--ym-success)' : 'var(--ym-accent)',
-              color: likedByUser ? 'var(--ym-success-text-on)' : 'var(--ym-accent-text-on)',
+              color: '#fff',
               border: 'none',
               borderRadius: 'var(--ym-radius-sm)',
               cursor: likeToggling ? 'not-allowed' : 'pointer',
@@ -548,17 +786,11 @@ export function WebsiteDetailPage() {
           </div>
         ) : (
           <div style={{ marginBottom: '20px' }}>
-            {comments.map((comment) => (
-              <CommentCard
-                key={comment.id}
-                comment={comment}
-                currentUserId={user?.id}
-                onDelete={handleDeleteComment}
-              />
-            ))}
+            {renderCommentTree(commentTree)}
           </div>
         )}
 
+        {/* 发表顶级评论 */}
         {user ? (
           <form onSubmit={handleCommentSubmit} style={{ marginTop: '12px' }}>
             <textarea
