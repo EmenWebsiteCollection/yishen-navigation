@@ -739,6 +739,33 @@ export function WebsiteDetailPage() {
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
       </div>
 
+      {/* ---------- 演示视频 ---------- */}
+      {website.video_url && (
+        <a
+          href={website.video_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            marginBottom: '24px',
+            backgroundColor: 'var(--ym-accent)',
+            color: 'var(--ym-accent-text-on)',
+            borderRadius: 'var(--ym-radius-sm)',
+            fontSize: '14px',
+            fontWeight: '500',
+            textDecoration: 'none',
+            transition: 'background-color var(--ym-transition)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-accent)'; }}
+        >
+          ▶ 观看演示视频
+        </a>
+      )}
+
       {/* ---------- 描述 ---------- */}
       <div
         style={{
