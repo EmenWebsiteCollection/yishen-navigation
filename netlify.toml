@@ -2,3 +2,11 @@
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
+
+# SPA 路由：任何找不到的路径都回 index.html，由前端 JS 接管路由
+# （修复深链接直接访问/刷新 404，如 /website/xxx、/user/xxx）
+# 说明：/.netlify/functions/* 由 Netlify 优先处理，不受此规则影响
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
