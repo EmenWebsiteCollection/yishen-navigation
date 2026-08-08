@@ -810,6 +810,21 @@ export function ProfilePage() {
                   <p style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', margin: '0 0 12px' }}>
                     绑定邮箱或手机号后，可在登录页通过验证码找回密码。已绑定信息仅你本人可见。
                   </p>
+                  {/* 未绑定提醒：本站账号是「用户名 + @nav.local 假邮箱」，不补绑就永远无法自助找回密码 */}
+                  {profile && !profile.email && !profile.phone && (
+                    <div style={{
+                      padding: '10px 12px',
+                      marginBottom: '12px',
+                      borderRadius: 'var(--ym-radius-sm)',
+                      backgroundColor: 'var(--ym-warning-bg, #fff7e6)',
+                      color: 'var(--ym-warning, #b26a00)',
+                      borderLeft: '4px solid var(--ym-warning, #b26a00)',
+                      fontSize: '13px',
+                      lineHeight: 1.7,
+                    }}>
+                      ⚠️ 你还没有绑定邮箱或手机号。一旦忘记密码将<b>无法自助找回</b>，只能联系管理员处理。建议现在补一个邮箱。
+                    </div>
+                  )}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '12px' }}>
                     <div>
                       <label style={labelStyle}>邮箱</label>

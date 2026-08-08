@@ -27,8 +27,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const CODE_TTL_MS = 10 * 60 * 1000; // 10 分钟
-const MAX_ATTEMPTS = 5;
+const CODE_TTL_MS = 10 * 60 * 1000; // 验证码有效期 10 分钟
+const MAX_ATTEMPTS = 5; // 单个验证码最多校验 5 次
+const RESEND_INTERVAL_MS = 60 * 1000; // 同一联系方式最短重发间隔 60 秒
+
+// 统一的“已发送”文案：无论账号是否存在都返回它，避免用户枚举
+const GENERIC_SENT_MSG = '若该联系方式已绑定账号，验证码已发送，请注意查收（含垃圾邮件箱）。';
 
 function sha256(text) {
   return createHash('sha256').update(text).digest('hex');
@@ -58,7 +62,12 @@ async function sendCodeEmail(email, code) {
   const subject = '依神网站汇总 - 找回密码验证码';
   const html = `<p>您好，您的验证码是：<b style="font-size:18px">${code}</b></p><p>该验证码 10 分钟内有效，请勿泄露给他人。</p>`;
 
-  if (!apiKey) throw new Error('服务器未配置邮件发送密钥（EMAIL_API_KEY）');
+  // 注意：aliyun 走 ALIYUN_ACCESS_KEY_ID/SECRET，不使用 EMAIL_API_KEY，
+  // 所以这里不能对所有 provider 统一强校验 apiKey（否则阿里云会被误拦）。
+  if (provider !== 'aliyun' && !apiKey) {
+    throw new Error('服务器未配置邮件发送密钥（EMAIL_API_KEY）');
+  }
+  if (!from) throw new Error('服务器未配置发信地址（EMAIL_FROM）');
 
   if (provider === 'resend') {
     const res = await fetch('https://api.resend.com/emails', {
@@ -105,24 +114,41 @@ async function sendCodeEmail(email, code) {
       ReplyToAddress: 'false',
       FromAlias: '依神网站汇总',
     };
+    // 用 POST + form-urlencoded：避免 AccessKeyId/Signature 出现在 URL 与访问日志中
     const sortedKeys = Object.keys(params).sort();
     const canonical = sortedKeys
       .map((k) => `${aliyunEncode(k)}=${aliyunEncode(params[k])}`)
       .join('&');
-    const stringToSign = `GET&${aliyunEncode('/')}&${aliyunEncode(canonical)}`;
+    const stringToSign = `POST&${aliyunEncode('/')}&${aliyunEncode(canonical)}`;
     const signature = createHmac('sha1', akSecret + '&')
       .update(stringToSign, 'utf8')
       .digest('base64');
-    const allParams = { ...params, Signature: signature };
-    const query = Object.keys(allParams)
-      .sort()
-      .map((k) => `${aliyunEncode(k)}=${aliyunEncode(allParams[k])}`)
-      .join('&');
-    const endpoint = `https://dm.aliyuncs.com/?${query}`;
-    const res = await fetch(endpoint, { method: 'GET' });
-    if (!res.ok) throw new Error(`阿里云邮件发送失败: ${res.status} ${await res.text()}`);
-    const data = await res.json().catch(() => ({}));
-    if (data.Code) throw new Error(`阿里云邮件发送失败: ${data.Code} ${data.Message || ''}`);
+    const body = `${canonical}&Signature=${aliyunEncode(signature)}`;
+
+    // cn-hangzhou 用公共域名，其他地域用 dm.{region}.aliyuncs.com
+    const endpoint =
+      region === 'cn-hangzhou'
+        ? 'https://dm.aliyuncs.com/'
+        : `https://dm.${region}.aliyuncs.com/`;
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    const text = await res.text();
+    let data = {};
+    try {
+      data = JSON.parse(text);
+    } catch {
+      /* 非 JSON 响应时保留原文用于报错 */
+    }
+    if (!res.ok || data.Code) {
+      // 阿里云错误码直出便于排查：InvalidAccountName / InvalidSendingDomain 等
+      throw new Error(
+        `阿里云邮件发送失败: ${data.Code || res.status} ${data.Message || text.slice(0, 200)}`
+      );
+    }
   } else {
     // generic：POST 到你自己的转发接口（body: { to, subject, html, apiKey }）
     const url = process.env.EMAIL_API_URL;
@@ -141,13 +167,37 @@ async function handleRequest({ contactType, contact }) {
   const email = contactType === 'email' || isEmailAddr(contact);
   const col = email ? 'email' : 'phone';
 
+  // 手机短信尚未接入：先于查库返回，避免无意义的数据库开销
+  if (!email) {
+    return json({ error: '手机验证码功能正在部署中，请使用邮箱找回密码' }, 503);
+  }
+
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('id, username')
     .eq(col, contact)
     .maybeSingle();
   if (error) return json({ error: '查询账号失败' }, 500);
-  if (!profile) return json({ error: '未找到绑定该联系方式的账号' }, 404);
+
+  // 防用户枚举：账号不存在时也返回成功，不透露该联系方式是否已注册。
+  // 真实用户会收到邮件，攻击者无法据此判断账号是否存在。
+  if (!profile) return json({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
+
+  // 发送限频：同一联系方式 60 秒内只允许发一次，防邮件轰炸与发信额度被刷。
+  const { data: last } = await supabase
+    .from('password_reset_codes')
+    .select('created_at')
+    .eq('contact', contact)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (last?.created_at) {
+    const elapsed = Date.now() - new Date(last.created_at).getTime();
+    if (elapsed < RESEND_INTERVAL_MS) {
+      const wait = Math.ceil((RESEND_INTERVAL_MS - elapsed) / 1000);
+      return json({ error: `发送过于频繁，请 ${wait} 秒后再试` }, 429);
+    }
+  }
 
   const code = genCode();
   const codeHash = sha256(code + profile.id); // salt 用 user_id，与校验一致
@@ -159,7 +209,7 @@ async function handleRequest({ contactType, contact }) {
     .from('password_reset_codes')
     .insert({
       user_id: profile.id,
-      contact_type: email ? 'email' : 'phone',
+      contact_type: 'email',
       contact,
       code_hash: codeHash,
       expires_at: expiresAt,
@@ -167,17 +217,14 @@ async function handleRequest({ contactType, contact }) {
     });
   if (insErr) return json({ error: '生成验证码失败' }, 500);
 
-  if (email) {
-    try {
-      await sendCodeEmail(contact, code);
-    } catch (e) {
-      return json({ error: e.message }, 502);
-    }
-    return json({ ok: true, channel: 'email' });
+  try {
+    await sendCodeEmail(contact, code);
+  } catch (e) {
+    // 发送失败要清掉刚写入的码，否则会占用 60 秒限频窗口导致用户无法重试
+    await supabase.from('password_reset_codes').delete().eq('user_id', profile.id);
+    return json({ error: e.message }, 502);
   }
-
-  // 手机短信尚未部署
-  return json({ error: '手机验证码功能正在部署中，请使用邮箱找回密码' }, 503);
+  return json({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
 }
 
 async function handleVerify({ contactType, contact, code, newPassword }) {
@@ -185,13 +232,16 @@ async function handleVerify({ contactType, contact, code, newPassword }) {
   if (String(newPassword).length < 6) return json({ error: '新密码至少 6 位' }, 400);
 
   const email = contactType === 'email' || isEmailAddr(contact);
-  const { data: row, error } = await supabase
+  // 取最新一条：历史残留多行时 maybeSingle 会直接抛错，这里用 limit(1) 兜住
+  const { data: rows, error } = await supabase
     .from('password_reset_codes')
     .select('*')
     .eq('contact_type', email ? 'email' : 'phone')
     .eq('contact', contact)
-    .maybeSingle();
+    .order('created_at', { ascending: false })
+    .limit(1);
   if (error) return json({ error: '查询验证码失败' }, 500);
+  const row = rows?.[0];
   if (!row) return json({ error: '验证码不存在或已使用' }, 404);
   if (new Date(row.expires_at) < new Date()) return json({ error: '验证码已过期，请重新获取' }, 410);
   if (row.attempts >= MAX_ATTEMPTS) return json({ error: '尝试次数过多，请重新获取' }, 429);
@@ -201,9 +251,12 @@ async function handleVerify({ contactType, contact, code, newPassword }) {
     await supabase
       .from('password_reset_codes')
       .update({ attempts: row.attempts + 1 })
-      .eq('contact_type', email ? 'email' : 'phone')
-      .eq('contact', contact);
-    return json({ error: '验证码错误' }, 400);
+      .eq('id', row.id);
+    const left = MAX_ATTEMPTS - (row.attempts + 1);
+    return json(
+      { error: left > 0 ? `验证码错误，还可尝试 ${left} 次` : '尝试次数过多，请重新获取验证码' },
+      400
+    );
   }
 
   const { error: updErr } = await supabase.auth.admin.updateUserById(row.user_id, {
