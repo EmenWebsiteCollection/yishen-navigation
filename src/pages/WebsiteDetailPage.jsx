@@ -23,11 +23,14 @@ import { FEEDBACK_TYPES, feedbackLabel, validateAnchor, formatTime, checkTextQuo
 import { MediaPlayer } from '../components/MediaPlayer.jsx';
 import { ImageAnnotator } from '../components/ImageAnnotator.jsx';
 import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
+import { getWorkRevisions, markCommentAdopted } from '../services/revisions.js';
+import { COMMENT_FEEDBACK_TYPES, toggleCommentFeedback } from '../services/commentFeedback.js';
 import {
   getCommentsByWebsite,
   createComment,
   deleteComment,
 } from '../services/comments.js';
+import { supabase } from '../services/supabase.js';
 import '../styles/global.css';
 
 // ---------- 辅助组件 ----------
@@ -62,6 +65,14 @@ const CommentCard = ({
   replySubmitting,
   replyToUsername,
   workDescription = '',
+  feedbackCounts = {},
+  feedbackActive = {},
+  onToggleFeedback,
+  feedbackBusy = false,
+  canAdopt = false,
+  adopted = false,
+  onAdopt,
+  adoptBusy = false,
 }) => {
   const isOwner = currentUserId && (comment.user_id === currentUserId || isAdminUser);
   const isReply = Boolean(replyToUsername);
@@ -189,6 +200,58 @@ const CommentCard = ({
         </div>
       </div>
 
+      {/* Issue #39 P3：评论质量评价 + 采纳 */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '6px' }}>
+        {COMMENT_FEEDBACK_TYPES.map((t) => {
+          const active = !!feedbackActive[t.id];
+          const count = feedbackCounts[t.id] || 0;
+          return (
+            <button
+              key={t.id}
+              onClick={() => onToggleFeedback && onToggleFeedback(comment.id, t.id)}
+              disabled={feedbackBusy || !currentUserId}
+              title={currentUserId ? '' : '登录后可评价'}
+              style={{
+                padding: '2px 10px',
+                borderRadius: '12px',
+                border: '1px solid var(--ym-border)',
+                backgroundColor: active ? 'var(--ym-success)' : 'var(--ym-bg-card)',
+                color: active ? '#fff' : 'var(--ym-text-secondary)',
+                cursor: currentUserId && !feedbackBusy ? 'pointer' : 'not-allowed',
+                fontSize: '11px',
+                opacity: currentUserId ? 1 : 0.6,
+                transition: 'all var(--ym-transition)',
+              }}
+            >
+              {t.label} {count > 0 ? count : ''}
+            </button>
+          );
+        })}
+        {canAdopt && !adopted && (
+          <button
+            onClick={() => onAdopt && onAdopt(comment)}
+            disabled={adoptBusy}
+            style={{
+              padding: '2px 10px',
+              borderRadius: '12px',
+              border: '1px solid var(--ym-accent)',
+              backgroundColor: 'transparent',
+              color: 'var(--ym-accent)',
+              cursor: adoptBusy ? 'not-allowed' : 'pointer',
+              fontSize: '11px',
+              opacity: adoptBusy ? 0.6 : 1,
+            }}
+          >
+            采纳这条建议
+          </button>
+        )}
+        {adopted && (
+          <span style={{ fontSize: '11px', color: 'var(--ym-success)', fontWeight: '500' }}>
+            ✓ 已被作者采纳
+          </span>
+        )}
+      </div>
+
       {/* 回复输入框（展开状态）- 统一使用较小尺寸，所有层级一致 */}
       {isReplying && (
         <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--ym-border)' }}>
@@ -307,6 +370,13 @@ export function WebsiteDetailPage() {
   const [manualSec, setManualSec] = useState('');
   const [mediaUploading, setMediaUploading] = useState(false);
 
+  // Issue #39 P3：评论质量评价 + 作品成长档案
+  const [feedbackMap, setFeedbackMap] = useState({}); // { [commentId]: { counts, active } }
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [adoptBusy, setAdoptBusy] = useState(false);
+  const [revisions, setRevisions] = useState([]);
+  const [revisionsLoading, setRevisionsLoading] = useState(true);
+
   // 评论
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -378,6 +448,89 @@ export function WebsiteDetailPage() {
   useEffect(() => {
     loadComments();
   }, [loadComments]);
+
+  // Issue #39 P3：评论质量评价聚合（一次查询）
+  useEffect(() => {
+    let cancelled = false;
+    const ids = comments.map((c) => c.id);
+    if (ids.length === 0) {
+      setFeedbackMap({});
+      return;
+    }
+    supabase
+      .from('comment_feedback')
+      .select('comment_id, feedback_type, user_id')
+      .in('comment_id', ids)
+      .then(({ data, error }) => {
+        if (cancelled || error) return;
+        const map = {};
+        ids.forEach((cid) => { map[cid] = { counts: {}, active: {} }; });
+        (data || []).forEach((f) => {
+          if (!map[f.comment_id]) return;
+          map[f.comment_id].counts[f.feedback_type] = (map[f.comment_id].counts[f.feedback_type] || 0) + 1;
+          if (user && f.user_id === user.id) map[f.comment_id].active[f.feedback_type] = true;
+        });
+        setFeedbackMap(map);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [comments, user]);
+
+  // Issue #39 P3：作品成长档案（版本快照）
+  useEffect(() => {
+    let cancelled = false;
+    if (id) {
+      setRevisionsLoading(true);
+      getWorkRevisions(id)
+        .then((list) => { if (!cancelled) setRevisions(list); })
+        .catch((e) => { console.warn('加载成长档案失败:', e.message); if (!cancelled) setRevisions([]); })
+        .finally(() => { if (!cancelled) setRevisionsLoading(false); });
+    }
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // ----- 评论质量评价 / 采纳 -----
+  const handleToggleFeedback = async (commentId, type) => {
+    if (!user || feedbackBusy) return;
+    setFeedbackBusy(true);
+    try {
+      const res = await toggleCommentFeedback(commentId, user.id, type);
+      setFeedbackMap((prev) => {
+        const cur = prev[commentId] || { counts: {}, active: {} };
+        const next = {
+          counts: { ...cur.counts },
+          active: { ...cur.active },
+        };
+        if (res.active) {
+          next.counts[type] = (next.counts[type] || 0) + 1;
+          next.active[type] = true;
+        } else {
+          next.counts[type] = Math.max(0, (next.counts[type] || 0) - 1);
+          delete next.active[type];
+        }
+        return { ...prev, [commentId]: next };
+      });
+    } catch (e) {
+      console.error('评价操作失败:', e);
+    } finally {
+      setFeedbackBusy(false);
+    }
+  };
+
+  const handleAdopt = async (comment) => {
+    if (!user || adoptBusy) return;
+    const summary = window.prompt('可选：写一句采纳说明（会记录进成长档案）', '') || '';
+    setAdoptBusy(true);
+    try {
+      await markCommentAdopted(comment.id, id, user.id, summary);
+      await loadComments();
+    } catch (e) {
+      alert(e.message || '采纳失败');
+      console.error(e);
+    } finally {
+      setAdoptBusy(false);
+    }
+  };
 
   // Issue #39 P1：同类型推荐
   useEffect(() => {
@@ -722,6 +875,14 @@ export function WebsiteDetailPage() {
                 replySubmitting={submittingReply}
                 replyToUsername={replyToUsername}
                 workDescription={website?.description || ''}
+                feedbackCounts={feedbackMap[node.id]?.counts || {}}
+                feedbackActive={feedbackMap[node.id]?.active || {}}
+                onToggleFeedback={handleToggleFeedback}
+                feedbackBusy={feedbackBusy}
+                canAdopt={!!user && user.id === website?.user_id && node.user_id !== user.id}
+                adopted={!!node.adopted}
+                onAdopt={handleAdopt}
+                adoptBusy={adoptBusy}
               />
             </div>
           )}
@@ -741,6 +902,14 @@ export function WebsiteDetailPage() {
               onReplyCancel={() => setReplyingTo(null)}
               replySubmitting={submittingReply}
               workDescription={website?.description || ''}
+              feedbackCounts={feedbackMap[node.id]?.counts || {}}
+              feedbackActive={feedbackMap[node.id]?.active || {}}
+              onToggleFeedback={handleToggleFeedback}
+              feedbackBusy={feedbackBusy}
+              canAdopt={!!user && user.id === website?.user_id && node.user_id !== user.id}
+              adopted={!!node.adopted}
+              onAdopt={handleAdopt}
+              adoptBusy={adoptBusy}
             />
           )}
           {node.children && node.children.length > 0 && renderCommentTree(node.children, depth + 1)}
@@ -1474,6 +1643,93 @@ export function WebsiteDetailPage() {
             }}
           >
             登录后即可发表评论
+          </div>
+        )}
+      </div>
+
+      {/* ---------- Issue #39 P3：作品成长档案 ---------- */}
+      <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--ym-border)' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '4px' }}>
+          📜 作品成长档案
+        </h3>
+        <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)', marginBottom: '16px' }}>
+          每次更新自动生成只读快照；被作者采纳的评论会回链到这里。
+        </div>
+
+        {revisionsLoading ? (
+          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>加载成长档案...</div>
+        ) : revisions.length === 0 ? (
+          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>
+            暂无版本记录。作者每次编辑作品都会自动生成快照。
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {revisions.map((rev, idx) => {
+              const prev = idx > 0 ? revisions[idx - 1] : null;
+              const changes = [];
+              if (prev) {
+                if (prev.title !== rev.title) changes.push('标题');
+                if (prev.description !== rev.description) changes.push('描述');
+                if ((prev.image_url || null) !== (rev.image_url || null)) changes.push('封面/图片');
+                if ((prev.cover_url || null) !== (rev.cover_url || null)) changes.push('封面');
+                if (prev.changelog !== rev.changelog) changes.push('更新日志');
+              } else {
+                changes.push('首次发布');
+              }
+              const adoptedComments = (rev.adopted_comment_ids || [])
+                .map((cid) => comments.find((c) => c.id === cid))
+                .filter(Boolean);
+              const labelMap = { first: '第一版', revised: '修改版', final: '最终版' };
+              const isLast = idx === revisions.length - 1;
+              return (
+                <div
+                  key={rev.id}
+                  style={{
+                    padding: '14px 16px',
+                    backgroundColor: isLast ? 'var(--ym-bg-subtle)' : 'var(--ym-bg-card)',
+                    border: `1px solid ${isLast ? 'var(--ym-accent)' : 'var(--ym-border)'}`,
+                    borderRadius: 'var(--ym-radius-sm)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: isLast ? 'var(--ym-accent)' : 'var(--ym-text-primary)' }}>
+                      {labelMap[rev.version_label] || rev.version_label}
+                    </span>
+                    <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>
+                      v{rev.revision_no} · {new Date(rev.created_at).toLocaleString('zh-CN')}
+                    </span>
+                    {isLast && (
+                      <span style={{ fontSize: '11px', color: '#fff', backgroundColor: 'var(--ym-accent)', borderRadius: '10px', padding: '1px 8px' }}>
+                        当前版本
+                      </span>
+                    )}
+                  </div>
+                  {changes.length > 0 && (
+                    <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>
+                      变更：{changes.join(' / ')}
+                    </div>
+                  )}
+                  {rev.note && (
+                    <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', whiteSpace: 'pre-wrap' }}>{rev.note}</div>
+                  )}
+                  {rev.adopted_summary && (
+                    <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>
+                      采纳说明：{rev.adopted_summary}
+                    </div>
+                  )}
+                  {adoptedComments.length > 0 && (
+                    <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginTop: '6px' }}>
+                      ✓ 采纳了 {adoptedComments.length} 条建议：
+                      {adoptedComments.map((c) => (
+                        <span key={c.id} style={{ display: 'inline-block', backgroundColor: 'var(--ym-success-bg)', borderRadius: '6px', padding: '2px 8px', margin: '2px 4px 0 0' }}>
+                          @{c.username}：「{(c.content || '').slice(0, 24)}{(c.content || '').length > 24 ? '…' : ''}」
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

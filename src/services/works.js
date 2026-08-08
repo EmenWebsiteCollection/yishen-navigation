@@ -3,6 +3,7 @@
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
 import { normalizeTagList } from './discovery-logic.js';
+import { createRevisionSnapshot, isRevisionsSupported } from './revisions.js';
 
 // ========== 常量 ==========
 export const WORK_TYPES = [
@@ -515,6 +516,16 @@ export const updateWork = async (id, data) => {
     .select()
     .single();
   if (error) throw error;
+
+  // Issue #39 P3：作品更新后自动生成版本快照（成长档案）
+  try {
+    if (await isRevisionsSupported()) {
+      await createRevisionSnapshot(id, data._revision || {});
+    }
+  } catch (e) {
+    console.warn('创建版本快照失败:', e.message);
+  }
+
   return mapWork(updated);
 };
 

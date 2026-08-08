@@ -19,6 +19,7 @@ import {
   workStatusLabel,
 } from '../services/works.js';
 import { getProfile, updateProfile, getCreatorStats } from '../services/users.js';
+import { getCommenterReputation, reputationScore, reputationBadge } from '../services/commentFeedback.js';
 import { uploadAvatar, uploadCover, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
@@ -51,6 +52,8 @@ const labelStyle = {
 export function ProfilePage() {
   const { user, loading: authLoading, isAnonymous } = useAuth();
   const [tab, setTab] = useState('works');
+  // Issue #39 P3：我的信誉
+  const [reputation, setReputation] = useState({ adopted_count: 0, helpful: 0, insightful: 0, professional: 0, friendly: 0 });
 
   // 我的作品
   const [works, setWorks] = useState([]);
@@ -166,6 +169,14 @@ export function ProfilePage() {
     if (tab === 'favorites') loadFavorites();
     if (tab === 'settings') loadProfile();
   }, [tab, userId, loadFavorites, loadProfile]);
+
+  // Issue #39 P3：我的信誉
+  useEffect(() => {
+    if (!user?.id) return;
+    getCommenterReputation(user.id)
+      .then(setReputation)
+      .catch(() => {});
+  }, [user?.id]);
 
   // ---------- 作品操作 ----------
   const handleToggleFeatured = async (work) => {
@@ -344,6 +355,26 @@ export function ProfilePage() {
               <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', marginTop: '4px' }}>{s.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Issue #39 P3：我的信誉 */}
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', padding: '16px 18px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)' }}>
+          <div style={{ flex: 1, minWidth: '180px' }}>
+            <div style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '6px' }}>
+              {reputationBadge(reputation).emoji} 我的评论者信誉 · {reputationBadge(reputation).label}
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', lineHeight: 1.7 }}>
+              {reputation.adopted_count > 0
+                ? `有 ${reputation.adopted_count} 条建议被作者采纳`
+                : '还没有被采纳的建议，继续给出有价值的反馈吧'}
+              <br />
+              收到评价：有帮助 {reputation.helpful} · 有洞察 {reputation.insightful} · 专业 {reputation.professional} · 友善 {reputation.friendly}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', alignSelf: 'center' }}>
+            <div style={{ fontSize: '22px', fontWeight: '600', color: 'var(--ym-accent)' }}>{reputationScore(reputation)}</div>
+            <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>信誉分</div>
+          </div>
         </div>
 
         {/* Tab 切换 */}
