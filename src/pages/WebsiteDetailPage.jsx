@@ -1,4 +1,4 @@
-// src/pages/WebsiteDetailPage.jsx
+﻿// src/pages/WebsiteDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { TechLoader } from '../components/TechLoader.jsx';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -23,7 +23,7 @@ import {
 } from '../services/works.js';
 import { isFollowing, toggleFollow } from '../services/follows.js';
 import { getDiscoveryRail, setFeatured } from '../services/discovery.js';
-import { FEEDBACK_TYPES, feedbackLabel, validateAnchor, formatTime, checkTextQuoteMismatch } from '../services/comment-logic.js';
+import { FEEDBACK_TYPES, feedbackLabel, FEEDBACK_STATUS, feedbackStatusLabel, validateAnchor, formatTime, checkTextQuoteMismatch } from '../services/comment-logic.js';
 import { MediaPlayer } from '../components/MediaPlayer.jsx';
 import { ImageAnnotator } from '../components/ImageAnnotator.jsx';
 import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
@@ -33,6 +33,7 @@ import {
   getCommentsByWebsite,
   createComment,
   deleteComment,
+  setFeedbackStatus,
 } from '../services/comments.js';
 import { getIdeaById } from '../services/ideas.js';
 import { supabase } from '../services/supabase.js';
@@ -78,6 +79,8 @@ const CommentCard = ({
   adopted = false,
   onAdopt,
   adoptBusy = false,
+  canManageFeedback = false,
+  onSetFeedbackStatus,
 }) => {
   const isOwner = currentUserId && (comment.user_id === currentUserId || isAdminUser);
   const isReply = Boolean(replyToUsername);
@@ -126,6 +129,15 @@ const CommentCard = ({
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
         <span style={{ fontSize: '11px', color: 'var(--ym-accent)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '10px', padding: '2px 10px' }}>
           {feedbackLabel(comment.feedback_type)}
+        <span style={{
+          fontSize: '11px',
+          color: { open: 'var(--ym-text-muted)', resolving: 'var(--ym-accent)', resolved: 'var(--ym-success)', ignored: 'var(--ym-text-muted)' }[comment.feedback_status || 'open'] || 'var(--ym-text-muted)',
+          backgroundColor: { open: 'var(--ym-bg-subtle)', resolving: 'var(--ym-accent-soft, #eef4ff)', resolved: 'var(--ym-success-bg)', ignored: 'transparent' }[comment.feedback_status || 'open'] || 'var(--ym-bg-subtle)',
+          borderRadius: '10px',
+          padding: '2px 10px',
+        }}>
+          {feedbackStatusLabel(comment.feedback_status)}
+        </span>
         </span>
         {comment.anchor && (
           <span style={{ fontSize: '11px', color: 'var(--ym-text-muted)', borderRadius: '10px', padding: '2px 10px', border: '1px dashed var(--ym-border)' }}>
@@ -255,6 +267,28 @@ const CommentCard = ({
             ✓ 已被作者采纳
           </span>
         )}
+        {canManageFeedback && (
+          <span style={{ display: 'inline-flex', gap: '4px', flexWrap: 'wrap', marginLeft: '2px' }}>
+            {FEEDBACK_STATUS.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => onSetFeedbackStatus && onSetFeedbackStatus(comment.id, s.id)}
+                style={{
+                  padding: '2px 10px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--ym-border)',
+                  backgroundColor: (comment.feedback_status || 'open') === s.id ? 'var(--ym-accent)' : 'transparent',
+                  color: (comment.feedback_status || 'open') === s.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </span>
+        )}
+
       </div>
 
       {/* 回复输入框（展开状态）- 统一使用较小尺寸，所有层级一致 */}
@@ -571,6 +605,18 @@ export function WebsiteDetailPage() {
     }
   };
 
+
+  // Issue #11：作者标记反馈处理状态
+  const handleSetFeedbackStatus = async (commentId, status) => {
+    if (!user || isAnonymous) return;
+    try {
+      await setFeedbackStatus(commentId, status, id, user.id);
+      await loadComments();
+    } catch (e) {
+      alert(e.message || '操作失败');
+      console.error(e);
+    }
+  };
   // Issue #39 P1：同类型推荐
   useEffect(() => {
     let cancelled = false;
@@ -933,6 +979,8 @@ export function WebsiteDetailPage() {
                 onToggleFeedback={handleToggleFeedback}
                 feedbackBusy={feedbackBusy}
                 canAdopt={!!user && user.id === website?.user_id && node.user_id !== user.id}
+canManageFeedback={(!!user && user.id === website?.user_id) || isAdminUser}
+onSetFeedbackStatus={handleSetFeedbackStatus}
                 adopted={!!node.adopted}
                 onAdopt={handleAdopt}
                 adoptBusy={adoptBusy}
@@ -960,6 +1008,8 @@ export function WebsiteDetailPage() {
               onToggleFeedback={handleToggleFeedback}
               feedbackBusy={feedbackBusy}
               canAdopt={!!user && user.id === website?.user_id && node.user_id !== user.id}
+canManageFeedback={(!!user && user.id === website?.user_id) || isAdminUser}
+onSetFeedbackStatus={handleSetFeedbackStatus}
               adopted={!!node.adopted}
               onAdopt={handleAdopt}
               adoptBusy={adoptBusy}
@@ -1572,6 +1622,10 @@ export function WebsiteDetailPage() {
         {/* 发表顶级评论 */}
         {user ? (
           <form onSubmit={handleCommentSubmit} style={{ marginTop: '12px' }}>
+            {/* Issue #11：给作者提反馈引导 */}
+            <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginBottom: '8px', lineHeight: 1.6 }}>
+              想给作者提建议或纠错？选一个类型再留言；作者可在每条反馈上标记「处理中 / 已处理」。
+            </div>
             {/* 反馈类型（Issue #39 P2） */}
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
               {FEEDBACK_TYPES.map((f) => {
@@ -1947,3 +2001,4 @@ export function WebsiteDetailPage() {
     </div>
   );
 }
+
