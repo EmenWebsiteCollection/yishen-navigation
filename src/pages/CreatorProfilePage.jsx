@@ -170,7 +170,7 @@ export function CreatorProfilePage() {
               onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
             />
           </div>
-          <div style={{ flex: 1, minWidth: '220px', paddingBottom: '4px' }}>
+          <div className="ym-space-head-info" style={{ flex: 1, minWidth: '220px', paddingBottom: '4px' }}>
             <h1 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '24px', fontWeight: '500', color: 'var(--ym-text-primary)', margin: 0 }}>
               {username}
             </h1>

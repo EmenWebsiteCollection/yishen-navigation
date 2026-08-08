@@ -8,7 +8,7 @@ import { supabase } from '../services/supabase.js';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { PartitionManager } from '../components/PartitionManager.jsx';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 const SkeletonCard = () => (
   <div className="ym-card" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>

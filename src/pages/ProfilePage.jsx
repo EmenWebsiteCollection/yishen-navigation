@@ -432,7 +432,7 @@ export function ProfilePage() {
               <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: '34px' }}>👤</span>
             )}
           </div>
-          <div style={{ flex: 1, minWidth: '220px', paddingBottom: '4px' }}>
+          <div className="ym-space-head-info" style={{ flex: 1, minWidth: '220px', paddingBottom: '4px' }}>
             <h1 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '24px', fontWeight: '600', color: 'var(--ym-text-primary)', margin: 0 }}>
               {me?.email?.replace('@nav.local', '') || '我的主页'}
             </h1>

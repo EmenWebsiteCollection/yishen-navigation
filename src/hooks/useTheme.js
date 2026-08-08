@@ -153,6 +153,7 @@ export function useTheme() {
   useEffect(() => {
     const body = document.body;
     if (bgImage) {
+      body.classList.add('ym-has-bg');
       body.style.backgroundImage = `url("${bgImage}")`;
       body.style.backgroundSize = 'cover';
       body.style.backgroundPosition = 'center';
@@ -163,6 +164,7 @@ export function useTheme() {
         /* 忽略存储异常 */
       }
     } else {
+      body.classList.remove('ym-has-bg');
       body.style.backgroundImage = '';
       body.style.backgroundSize = '';
       body.style.backgroundPosition = '';
