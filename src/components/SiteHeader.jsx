@@ -27,8 +27,10 @@ export function SiteHeader({ onLogin, onRegister }) {
   const navigate = useNavigate();
   const { user, isAnonymous } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const menuRef = useRef(null);
+  const navRef = useRef(null);
 
   const isLoggedIn = Boolean(user && !isAnonymous);
 
@@ -61,6 +63,28 @@ export function SiteHeader({ onLogin, onRegister }) {
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, []);
 
+  // 移动端导航下拉：路由变化时收起
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
+
+  // 移动端导航下拉：点击外部 / Esc 收起
+  useEffect(() => {
+    if (!navOpen) return;
+    const onPointerDown = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setNavOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setNavOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [navOpen]);
+
   const openTheme = () => {
     window.dispatchEvent(new CustomEvent('ym-open-theme'));
   };
@@ -78,7 +102,7 @@ export function SiteHeader({ onLogin, onRegister }) {
   const displayName = user?.email?.replace('@nav.local', '') || user?.email || '';
 
   return (
-    <header className="ym-site-header">
+    <header className="ym-site-header" ref={navRef}>
       <div className="ym-header-inner">
         <div className="ym-header-left">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex' }}>
@@ -194,8 +218,40 @@ export function SiteHeader({ onLogin, onRegister }) {
               登录
             </button>
           )}
+
+          {/* 移动端导航菜单开关（≤640px 显示） */}
+          <button
+            type="button"
+            className="ym-nav-toggle"
+            onClick={() => setNavOpen((o) => !o)}
+            aria-expanded={navOpen}
+            aria-label="导航菜单"
+            title="导航菜单"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              {navOpen ? (
+                <path d="M18 6L6 18M6 6l12 12" />
+              ) : (
+                <path d="M3 6h18M3 12h18M3 18h18" />
+              )}
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* 移动端导航下拉（参考 B 站手机端） */}
+      <nav className={'ym-nav-dropdown' + (navOpen ? ' open' : '')} aria-label="移动端导航菜单">
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className={'ym-nav-dropdown-link' + (pathname === link.to ? ' active' : '')}
+            onClick={() => setNavOpen(false)}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   );
 }
