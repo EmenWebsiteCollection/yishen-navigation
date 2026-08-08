@@ -8,6 +8,7 @@
 //      system prompt 中填写。
 //   3. API key 一律放服务端（Netlify 环境变量），前端不接触。
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // 依力口语人设（占位，团队在代理函数里使用）
 export const YILI_PERSONA_PROMPT = '';
@@ -26,19 +27,26 @@ const getFallback = () => FALLBACK_REPLIES[Math.floor(Math.random() * FALLBACK_R
 const GREETING = '你好，我是依力～想看点什么？可以直接问我，比如「有什么好玩的网站」。';
 
 async function fetchReply(messages) {
-  // 一期：代理函数可能不存在 → 抛错走降级
-  const res = await fetch(CHAT_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, persona: YILI_PERSONA_PROMPT }),
-  });
-  if (!res.ok) throw new Error(`chat endpoint ${res.status}`);
-  const data = await res.json();
-  return data.reply;
+  // 一期：代理函数可能不存在 → 抛错走降级；60s 超时防挂死
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60000);
+  try {
+    const res = await fetch(CHAT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, persona: YILI_PERSONA_PROMPT }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`chat endpoint ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function YiliChatPanel({ open, onClose }) {
-  const [messages, setMessages] = useState(() => [{ role: 'yili', content: GREETING }]);
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState(() => [{ role: 'yili', content: GREETING, actions: [] }]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const bodyRef = useRef(null);
@@ -58,11 +66,11 @@ export function YiliChatPanel({ open, onClose }) {
     setMessages(history);
     setThinking(true);
     try {
-      const reply = await fetchReply(history);
-      setMessages((m) => [...m, { role: 'yili', content: reply }]);
+      const data = await fetchReply(history);
+      setMessages((m) => [...m, { role: 'yili', content: data.reply, actions: data.actions || [] }]);
     } catch (err) {
       console.warn('依力 AI 未就绪，使用本地降级回复:', err);
-      setMessages((m) => [...m, { role: 'yili', content: getFallback() }]);
+      setMessages((m) => [...m, { role: 'yili', content: getFallback(), actions: [] }]);
     } finally {
       setThinking(false);
     }
@@ -83,8 +91,24 @@ export function YiliChatPanel({ open, onClose }) {
 
       <div className="ym-chat-body" ref={bodyRef}>
         {messages.map((m, i) => (
-          <div key={i} className={'ym-chat-msg ' + (m.role === 'user' ? 'user' : 'yili')}>
-            {m.content}
+          <div key={i} className={'ym-chat-msg-wrap' + (m.role === 'user' ? ' user' : ' yili')}>
+            <div className={'ym-chat-msg ' + (m.role === 'user' ? 'user' : 'yili')}>
+              {m.content}
+            </div>
+            {m.actions && m.actions.length > 0 && (
+              <div className="ym-chat-actions">
+                {m.actions.map((a, j) => (
+                  <button
+                    key={j}
+                    type="button"
+                    className="ym-chat-action"
+                    onClick={() => navigate(a.to)}
+                  >
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         {thinking && <div className="ym-chat-msg yili typing">依力正在想…</div>}

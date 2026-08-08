@@ -70,7 +70,7 @@ async function searchWorks(keyword, workType = '', limit = 5) {
   const n = Math.min(Math.max(Number(limit) || 5, 1), 8);
   const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON);
   let query = supabase
-    .from('works')
+    .from('works_with_likes') // 视图：含 like_count（works 表无此列）
     .select('id,title,url,work_type,like_count')
     .ilike('title', `%${String(keyword).slice(0, 50)}%`)
     .order('like_count', { ascending: false })
@@ -118,24 +118,41 @@ async function callLLM(messages) {
     }),
     signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
   });
-  if (!res.ok) throw new Error(`LLM ${res.status}`);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`LLM ${res.status}: ${detail.slice(0, 300)}`);
+  }
   const data = await res.json();
-  return data.choices?.[0]?.message || null;
+  const msg = data.choices?.[0]?.message || null;
+  if (msg && msg.content == null) msg.content = ''; // 部分 API 拒绝 null content
+  return msg;
 }
 
 // ---------- 主流程：工具循环 ----------
+// 契约允许 role='yili'（依力），转发给 LLM 前归一化为 assistant
+function normalizeMessages(messages) {
+  return (Array.isArray(messages) ? messages : []).map((m) => {
+    let role = m.role;
+    if (role === 'yili') role = 'assistant';
+    if (!['system', 'user', 'assistant'].includes(role)) role = 'user';
+    return { role, content: String(m.content ?? '') };
+  });
+}
+
 async function runAgent(messages, persona) {
   const system = persona || ENV.PERSONA || PERSONA_DEFAULT;
-  const history = [{ role: 'system', content: system }, ...messages];
+  const history = [{ role: 'system', content: system }, ...normalizeMessages(messages)];
+  const executedTools = []; // 记录本轮实际执行的工具结果，用于生成跳转按钮
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const msg = await callLLM(history);
-    if (!msg) return '依力开小差了，稍后再试～';
+    if (!msg) return { reply: '依力开小差了，稍后再试～', actions: [] };
 
     if (msg.tool_calls && msg.tool_calls.length > 0) {
       history.push(msg); // assistant 的 tool_calls 消息
       for (const tc of msg.tool_calls) {
         const result = await executeTool(tc.function?.name, tc.function?.arguments);
+        executedTools.push({ name: tc.function?.name, data: result });
         history.push({
           role: 'tool',
           tool_call_id: tc.id,
@@ -145,10 +162,35 @@ async function runAgent(messages, persona) {
       continue; // 下一轮让模型基于工具结果组织回复
     }
 
-    return (msg.content || '').trim() || '……';
+    const reply = (msg.content || '').trim() || '……';
+    return { reply, actions: buildActions(messages, executedTools) };
   }
 
-  return '依力绕晕了，换个问法试试？';
+  return { reply: '依力绕晕了，换个问法试试？', actions: [] };
+}
+
+// ---------- 跳转按钮生成 ----------
+// 搜索结果 → 作品详情按钮；常见意图 → 页面快捷入口
+function buildActions(messages, executedTools) {
+  const actions = [];
+
+  // 1) 搜索工具结果 → 作品跳转（最多 4 个）
+  for (const t of executedTools) {
+    if (t.name === 'search_works' && Array.isArray(t.data?.results)) {
+      for (const w of t.data.results.slice(0, 4)) {
+        actions.push({ label: `《${w.title}》`, to: `/website/${w.id}` });
+      }
+    }
+  }
+
+  // 2) 常见意图 → 页面快捷入口
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user' || m.role === 'yili');
+  const q = String(lastUser?.content || '');
+  if (/联系|反馈|合作|邮箱|微信|qq|投诉|意见/.test(q)) actions.push({ label: '联系我们', to: '/contact' });
+  if (/投稿|发布|上传|提交作品|怎么加/.test(q)) actions.push({ label: '去投稿', to: '/create' });
+  if (/登录|注册|账号|密码|退出/.test(q)) actions.push({ label: '个人中心', to: '/profile' });
+
+  return actions;
 }
 
 // ---------- 入口 ----------
@@ -173,8 +215,8 @@ export default async (req) => {
 
   // 3) 跑 agent
   try {
-    const reply = await runAgent(messages, persona);
-    return json({ reply });
+    const { reply, actions } = await runAgent(messages, persona);
+    return json({ reply, actions });
   } catch (err) {
     console.error('yili-chat error:', err);
     return json({ reply: '依力有点忙，稍等一下～' }, 502);

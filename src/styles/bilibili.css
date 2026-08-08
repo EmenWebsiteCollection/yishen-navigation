@@ -902,6 +902,45 @@ body.ym-has-bg::before {
   color: var(--ym-text-muted);
 }
 
+.ym-chat-msg-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ym-chat-msg-wrap.user {
+  align-items: flex-end;
+}
+
+/* 跳转按钮（搜索结果/快捷入口） */
+.ym-chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.ym-chat-action {
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ym-accent);
+  background-color: transparent;
+  border: 1px solid var(--ym-accent);
+  border-radius: 8px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ym-chat-action:active {
+  background-color: var(--ym-accent);
+  color: var(--ym-accent-text-on);
+}
+
 .ym-chat-input-row {
   display: flex;
   gap: 8px;
