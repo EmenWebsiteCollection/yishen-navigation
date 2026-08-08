@@ -369,7 +369,6 @@ export const getTopRatedWorks = async (limit = 8) => {
   let query = supabase
     .from('works_with_likes')
     .select(VIEW_SELECT)
-    .eq('work_type', 'website')
     .eq('visibility', 'public')
     .order('like_count', { ascending: false })
     .limit(limit);
@@ -381,7 +380,6 @@ export const getTopRatedWorks = async (limit = 8) => {
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('works')
       .select(await getTableSelect())
-      .eq('work_type', 'website')
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
       .limit(limit);
