@@ -3,6 +3,7 @@
 // 纯前端实现，无 Live2D 模型文件依赖。
 import React, { useEffect, useRef, useState } from 'react';
 
+import { YiliChatPanel } from './YiliChatPanel.jsx';
 import { setMascotPos } from '../services/mascotPos.js';
 
 const LINES = [
