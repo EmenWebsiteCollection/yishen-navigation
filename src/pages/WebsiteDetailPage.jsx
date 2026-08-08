@@ -1712,14 +1712,14 @@ export function WebsiteDetailPage() {
           📜 作品成长档案
         </h3>
         <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)', marginBottom: '16px' }}>
-          每次更新自动生成只读快照；被作者采纳的评论会回链到这里。
+          首次上传和每次编辑都会自动生成只读快照；被作者采纳的评论会回链到这里。
         </div>
 
         {revisionsLoading ? (
           <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>加载成长档案...</div>
         ) : revisions.length === 0 ? (
           <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>
-            暂无版本记录。作者每次编辑作品都会自动生成快照。
+            暂无版本记录。首次上传或编辑作品后会自动生成版本快照。
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

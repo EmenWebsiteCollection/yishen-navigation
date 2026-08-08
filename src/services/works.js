@@ -306,7 +306,18 @@ export const createWork = async (payload, userId) => {
     .select()
     .single();
   if (error) throw error;
-  return mapWork(data);
+  const created = mapWork(data);
+
+  // 首次上传也生成版本快照（成长档案），失败不影响作品创建
+  try {
+    if (await isRevisionsSupported()) {
+      await createRevisionSnapshot(data.id);
+    }
+  } catch (e) {
+    console.warn('创建版本快照失败:', e.message);
+  }
+
+  return created;
 };
 
 // ========== 分页查询（首页网站导航，可扩展任意类型） ==========
