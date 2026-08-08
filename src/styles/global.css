@@ -2,6 +2,8 @@
 @import './tokens.css';
 @import './animations.css';
 @import './bilibili.css';
+@import './default.css';
+@import './liquid-glass.css';
 
 * {
   box-sizing: border-box;
@@ -27,10 +29,19 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
 input,
 textarea {
   font-family: inherit;
   outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ym-accent);
+  outline-offset: 3px;
 }
 
 /* 滚动条 */

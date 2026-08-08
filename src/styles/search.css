@@ -14,17 +14,9 @@
   align-items: center;
 }
 
-.ym-search-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--ym-text-muted);
-  pointer-events: none;
-  z-index: 1;
-}
-
 .ym-search-input {
   width: 100%;
-  padding: 10px 36px 10px 38px;
+  padding: 10px 44px 10px 16px;
   border: 1px solid var(--ym-border);
   border-radius: var(--ym-radius-md);
   background-color: var(--ym-bg-card);
@@ -46,16 +38,17 @@
 .ym-search-clear {
   position: absolute;
   right: 8px;
-  width: 24px;
-  height: 24px;
+  min-width: 42px;
+  height: 30px;
+  padding: 0 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--ym-radius-pill, 999px);
   background: transparent;
   color: var(--ym-text-muted);
-  font-size: 16px;
+  font-size: 12px;
   line-height: 1;
   cursor: pointer;
   transition: background-color var(--ym-transition), color var(--ym-transition);
