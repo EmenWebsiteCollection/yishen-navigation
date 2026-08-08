@@ -93,9 +93,11 @@ export function DiscoverPage() {
           emoji="览"
           title="作品发现"
           subtitle="不只是按点赞数推荐——这里有多条入口，让每一件认真创作的作品都有机会被看见。"
+          className="ym-stagger-item"
+          style={{ '--ym-stagger-index': 0 }}
         />
 
-        <section className="ym-discovery-random ym-glass-panel">
+        <section className="ym-discovery-random ym-glass-panel ym-stagger-item" style={{ '--ym-stagger-index': 1 }}>
           <div className="ym-discovery-random-head">
             <div>
               <h2 className="ym-discovery-random-title">今天看点不一样的</h2>
@@ -114,7 +116,7 @@ export function DiscoverPage() {
           {randomHint && !randomWork && <p className="ym-discovery-random-copy ym-random-hint">{randomHint}</p>}
         </section>
 
-        <div className="ym-filter-rail" aria-label="发现入口">
+        <div className="ym-filter-rail ym-stagger-item" aria-label="发现入口" style={{ '--ym-stagger-index': 2 }}>
           {visibleRails.map((item) => (
             <button
               key={item.id}
@@ -152,7 +154,7 @@ export function DiscoverPage() {
         ) : (
           <>
             <div className="ym-grid ym-grid-wide">
-              {works.map((work) => <WorkCard key={work.id} work={work} />)}
+              {works.map((work, i) => <WorkCard key={work.id} work={work} className="ym-stagger-item" style={{ '--ym-stagger-index': i % 12 }} />)}
             </div>
             {works.length >= PAGE_SIZE && (
               <div className="ym-load-more">

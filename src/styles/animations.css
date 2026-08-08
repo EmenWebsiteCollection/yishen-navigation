@@ -35,6 +35,24 @@
   to { transform: scaleX(1); }
 }
 
+/* ── 逐元素错峰入场（iOS 风格）── */
+@keyframes ym-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ym-stagger-item {
+  opacity: 0;
+  animation: ym-stagger-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--ym-stagger-index, 0) * 55ms);
+}
+
 .ym-fade-in {
   animation: ym-fade-in var(--ym-transition) forwards;
 }
@@ -61,8 +79,10 @@
   .ym-scale-in,
   .ym-scale-out,
   .ym-slide-down,
-  .ym-spin {
+  .ym-spin,
+  .ym-stagger-item {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
   }
 }
