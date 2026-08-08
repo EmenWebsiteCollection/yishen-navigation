@@ -13,6 +13,34 @@
 import { createClient } from '@supabase/supabase-js';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 
+// ── 环境变量启动自检 ──
+function checkEnv() {
+  const missing = [];
+  if (!process.env.SUPABASE_URL) missing.push('SUPABASE_URL');
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  const provider = (process.env.EMAIL_PROVIDER || 'generic').toLowerCase();
+  if (provider === 'aliyun') {
+    if (!process.env.ALIYUN_ACCESS_KEY_ID) missing.push('ALIYUN_ACCESS_KEY_ID');
+    if (!process.env.ALIYUN_ACCESS_KEY_SECRET) missing.push('ALIYUN_ACCESS_KEY_SECRET');
+    if (!process.env.EMAIL_FROM) missing.push('EMAIL_FROM（阿里云发信地址）');
+  } else {
+    if (!process.env.EMAIL_API_KEY) missing.push('EMAIL_API_KEY');
+    if (!process.env.EMAIL_FROM) missing.push('EMAIL_FROM');
+    if (provider === 'generic' && !process.env.EMAIL_API_URL) missing.push('EMAIL_API_URL');
+  }
+  return missing;
+}
+
+// 延迟创建：确保环境变量检查在客户端创建之前，避免空值导致静默 502
+function getSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error(`缺少 Supabase 环境变量：${!url ? 'SUPABASE_URL' : ''}${!url && !key ? '、' : ''}${!key ? 'SUPABASE_SERVICE_ROLE_KEY' : ''}`);
+  }
+  return createClient(url, key);
+}
+
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
     status,
@@ -21,11 +49,6 @@ const json = (obj, status = 200) =>
       'Access-Control-Allow-Origin': '*',
     },
   });
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 const CODE_TTL_MS = 10 * 60 * 1000; // 验证码有效期 10 分钟
 const MAX_ATTEMPTS = 5; // 单个验证码最多校验 5 次
@@ -172,19 +195,20 @@ async function handleRequest({ contactType, contact }) {
     return json({ error: '手机验证码功能正在部署中，请使用邮箱找回密码' }, 503);
   }
 
-  const { data: profile, error } = await supabase
+  const sb = getSupabase();
+  const { data: profile, error } = await sb
     .from('profiles')
     .select('id, username')
     .eq(col, contact)
     .maybeSingle();
-  if (error) return json({ error: '查询账号失败' }, 500);
+  if (error) return json({ error: '查询账号失败：' + error.message }, 500);
 
   // 防用户枚举：账号不存在时也返回成功，不透露该联系方式是否已注册。
   // 真实用户会收到邮件，攻击者无法据此判断账号是否存在。
   if (!profile) return json({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
 
   // 发送限频：同一联系方式 60 秒内只允许发一次，防邮件轰炸与发信额度被刷。
-  const { data: last } = await supabase
+  const { data: last } = await sb
     .from('password_reset_codes')
     .select('created_at')
     .eq('contact', contact)
@@ -204,8 +228,8 @@ async function handleRequest({ contactType, contact }) {
   const expiresAt = new Date(Date.now() + CODE_TTL_MS).toISOString();
 
   // 清理该用户旧码，写入新码
-  await supabase.from('password_reset_codes').delete().eq('user_id', profile.id);
-  const { error: insErr } = await supabase
+  await sb.from('password_reset_codes').delete().eq('user_id', profile.id);
+  const { error: insErr } = await sb
     .from('password_reset_codes')
     .insert({
       user_id: profile.id,
@@ -215,13 +239,13 @@ async function handleRequest({ contactType, contact }) {
       expires_at: expiresAt,
       attempts: 0,
     });
-  if (insErr) return json({ error: '生成验证码失败' }, 500);
+  if (insErr) return json({ error: '生成验证码失败：' + insErr.message }, 500);
 
   try {
     await sendCodeEmail(contact, code);
   } catch (e) {
     // 发送失败要清掉刚写入的码，否则会占用 60 秒限频窗口导致用户无法重试
-    await supabase.from('password_reset_codes').delete().eq('user_id', profile.id);
+    await sb.from('password_reset_codes').delete().eq('user_id', profile.id);
     return json({ error: e.message }, 502);
   }
   return json({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
@@ -232,15 +256,16 @@ async function handleVerify({ contactType, contact, code, newPassword }) {
   if (String(newPassword).length < 6) return json({ error: '新密码至少 6 位' }, 400);
 
   const email = contactType === 'email' || isEmailAddr(contact);
+  const sb = getSupabase();
   // 取最新一条：历史残留多行时 maybeSingle 会直接抛错，这里用 limit(1) 兜住
-  const { data: rows, error } = await supabase
+  const { data: rows, error } = await sb
     .from('password_reset_codes')
     .select('*')
     .eq('contact_type', email ? 'email' : 'phone')
     .eq('contact', contact)
     .order('created_at', { ascending: false })
     .limit(1);
-  if (error) return json({ error: '查询验证码失败' }, 500);
+  if (error) return json({ error: '查询验证码失败：' + error.message }, 500);
   const row = rows?.[0];
   if (!row) return json({ error: '验证码不存在或已使用' }, 404);
   if (new Date(row.expires_at) < new Date()) return json({ error: '验证码已过期，请重新获取' }, 410);
@@ -248,7 +273,7 @@ async function handleVerify({ contactType, contact, code, newPassword }) {
 
   const codeHash = sha256(code + row.user_id);
   if (codeHash !== row.code_hash) {
-    await supabase
+    await sb
       .from('password_reset_codes')
       .update({ attempts: row.attempts + 1 })
       .eq('id', row.id);
@@ -259,12 +284,12 @@ async function handleVerify({ contactType, contact, code, newPassword }) {
     );
   }
 
-  const { error: updErr } = await supabase.auth.admin.updateUserById(row.user_id, {
+  const { error: updErr } = await sb.auth.admin.updateUserById(row.user_id, {
     password: newPassword,
   });
   if (updErr) return json({ error: '修改密码失败：' + updErr.message }, 500);
 
-  await supabase.from('password_reset_codes').delete().eq('user_id', row.user_id);
+  await sb.from('password_reset_codes').delete().eq('user_id', row.user_id);
   return json({ ok: true });
 }
 
@@ -280,6 +305,12 @@ export default async (req) => {
     });
   }
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+
+  // ── 启动自检：环境变量缺失时立即返回明确错误，不再静默 502 ──
+  const missing = checkEnv();
+  if (missing.length > 0) {
+    return json({ error: `服务器配置缺失：${missing.join('、')}。请在 Netlify 环境变量中配置后重新部署。` }, 500);
+  }
 
   let body;
   try {
