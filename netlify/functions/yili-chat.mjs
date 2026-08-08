@@ -63,20 +63,88 @@ const TOOLS = [
 ];
 
 // ---------- 工具执行 ----------
-async function searchWorks(keyword, workType = '', limit = 5) {
+
+// 中文简单分词：按常见分隔符 + 双字滑动窗口生成候选词
+// 例："好玩的网站" → ["好玩", "网站", "好玩的", "玩的网"]（取匹配率高的）
+const STOP_WORDS = new Set(['的', '了', '吗', '呢', '吧', '啊', '哦', '嗯', '呀', '嘛', '什么', '怎么', '怎样', '哪些', '有没有', '推荐', '找', '搜', '查', '看看', '一下', '几个', '一些', '一个', '想要', '想', '帮']);
+
+export function tokenizeKeyword(raw) {
+  const s = String(raw || '').trim().slice(0, 30);
+  if (!s) return [];
+  // 先按非中文字符/分隔符切段
+  const segments = s.split(/[^\u4e00-\u9fa5A-Za-z0-9]+/).filter(Boolean);
+  const tokens = new Set();
+  for (const seg of segments) {
+    if (/[A-Za-z0-9]/.test(seg) && !/[\u4e00-\u9fa5]/.test(seg)) {
+      // 纯英文/数字：整体作为一个词
+      tokens.add(seg.toLowerCase());
+    } else {
+      // 含中文：去掉停用词后，按 2-gram 滑窗生成词
+      const cleaned = seg.replace(new RegExp([...STOP_WORDS].join('|'), 'g'), '');
+      if (cleaned.length >= 2) {
+        for (let i = 0; i <= cleaned.length - 2; i++) {
+          const w = cleaned.slice(i, i + 2);
+          if (w && !STOP_WORDS.has(w)) tokens.add(w);
+        }
+      }
+    }
+  }
+  return [...tokens].slice(0, 6);
+}
+
+export async function searchWorks(keyword, workType = '', limit = 5) {
   if (!ENV.SUPABASE_URL || !ENV.SUPABASE_ANON) {
     return { error: '站内搜索未配置（缺少 SUPABASE_URL / SUPABASE_ANON_KEY）' };
   }
   const n = Math.min(Math.max(Number(limit) || 5, 1), 8);
   const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON);
-  let query = supabase
-    .from('works_with_likes') // 视图：含 like_count（works 表无此列）
-    .select('id,title,url,work_type,like_count')
-    .ilike('title', `%${String(keyword).slice(0, 50)}%`)
-    .order('like_count', { ascending: false })
-    .limit(n);
-  if (workType) query = query.eq('work_type', workType);
-  const { data, error } = await query;
+
+  // 多字段模糊匹配（title + description），任一字段命中即可
+  const tokens = tokenizeKeyword(keyword);
+  const base = () =>
+    supabase
+      .from('works_with_likes')
+      .select('id,title,url,work_type,like_count')
+      .order('like_count', { ascending: false })
+      .limit(n);
+
+  let data = null;
+  let error = null;
+
+  if (tokens.length > 0) {
+    // OR 条件：每个 token 匹配 title 或 description（PostgREST or 语法）
+    const orParts = [];
+    for (const t of tokens) {
+      orParts.push(`title.ilike.%${t}%,description.ilike.%${t}%`);
+    }
+    let q = base().or(orParts.join(','));
+    if (workType) q = q.eq('work_type', workType);
+    const r = await q;
+    data = r.data;
+    error = r.error;
+    // 有结果直接返回
+    if (!error && data && data.length > 0) {
+      return {
+        results: data.map((w) => ({
+          id: w.id,
+          title: w.title,
+          type: w.work_type,
+          likes: w.like_count,
+          url: w.url,
+        })),
+      };
+    }
+  }
+
+  // 兜底 1：无 token（纯停用词）或 token 无命中 → 按类型返回热门作品
+  if (!error && (!data || data.length === 0)) {
+    let q = base();
+    if (workType) q = q.eq('work_type', workType);
+    const r = await q;
+    data = r.data;
+    error = r.error;
+  }
+
   if (error) return { error: error.message };
   return {
     results: (data || []).map((w) => ({
