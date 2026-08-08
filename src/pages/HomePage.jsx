@@ -10,6 +10,7 @@ import { RegisterPage } from './RegisterPage.jsx';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { SearchBar } from '../components/SearchBar.jsx';
 import { SiteHeader } from '../components/SiteHeader.jsx';
+import { TechLoader } from '../components/TechLoader.jsx';
 import { getProfile } from '../services/users.js';
 import '../styles/global.css';
 
@@ -237,7 +238,7 @@ export function HomePage() {
   };
 
   if (authLoading) {
-    return <div style={{ textAlign: 'center', marginTop: '200px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
   }
 
   return (

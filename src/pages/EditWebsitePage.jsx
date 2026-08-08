@@ -1,6 +1,7 @@
 ﻿// src/pages/EditWebsitePage.jsx
 // 编辑作品：类型/URL/标题/描述/图片/状态/公开·私密/分组/更新日志
 import React, { useEffect, useState } from 'react';
+import { TechLoader } from '../components/TechLoader.jsx';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS } from '../services/works.js';
@@ -175,7 +176,7 @@ const [videoUrl, setVideoUrl] = useState('');
   };
 
   if (authLoading || loading) {
-    return <div style={{ textAlign: 'center', marginTop: '60px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '60px' }}><TechLoader text="加载中..." /></div>;
   }
 
   if (error && !message) {

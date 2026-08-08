@@ -12,13 +12,14 @@ import { AboutPage } from './pages/AboutPage.jsx';
 import { ChangelogPage } from './pages/ChangelogPage.jsx';
 import { ContactPage } from './pages/ContactPage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
+import { TechLoader } from './components/TechLoader.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { BackToTop } from './components/BackToTop.jsx';
 import { useDevice } from './hooks/useDevice.js';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div style={{ textAlign: 'center', marginTop: '200px' }}>加载中...</div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
   return user ? children : <Navigate to="/" replace />;
 };
 

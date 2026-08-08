@@ -1,5 +1,6 @@
 // src/pages/WebsiteDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
+import { TechLoader } from '../components/TechLoader.jsx';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
@@ -545,7 +546,7 @@ export function WebsiteDetailPage() {
 
   // ---------- 渲染状态 ----------
   if (loading) {
-    return <div style={{ textAlign: 'center', marginTop: '60px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '60px' }}><TechLoader text="加载中..." /></div>;
   }
 
   if (error) {
