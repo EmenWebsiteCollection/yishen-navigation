@@ -221,6 +221,8 @@ body.ym-has-bg::before {
 }
 
 .ym-card-media > img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
