@@ -397,11 +397,11 @@ export function HomePage() {
         }
       />
 
-      <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
+      <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px 40px' }}>
         <HighRatedCarousel />
 
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
@@ -434,7 +434,7 @@ export function HomePage() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
               {websites.map((site, index) => (
                 <div
                   key={site.id}

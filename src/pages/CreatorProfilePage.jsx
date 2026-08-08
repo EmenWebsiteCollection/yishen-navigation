@@ -156,10 +156,10 @@ export function CreatorProfilePage() {
         )}
       </div>
 
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 20px 60px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px 60px' }}>
         {/* 头部：头像 + 用户名 + 介绍 */}
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '-48px', position: 'relative' }}>
-          <div style={{ width: '96px', height: '96px', borderRadius: '50%', overflow: 'hidden', border: '4px solid var(--ym-bg-card)', backgroundColor: 'var(--ym-bg-subtle)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ width: '96px', height: '96px', borderRadius: '50%', overflow: 'hidden', border: '4px solid var(--ym-bg-card)', backgroundColor: 'var(--ym-bg-subtle)', flexShrink: 0, marginTop: '-48px', position: 'relative', zIndex: 1 }}>
             <img
               src={profile.avatar_url || DEFAULT_AVATAR}
               alt={username}
@@ -262,7 +262,7 @@ export function CreatorProfilePage() {
         {featuredWorks.length > 0 && (
           <>
             <SectionTitle>⭐ 代表作品</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
               {featuredWorks.map((w) => <WorkCard key={w.id} work={w} />)}
             </div>
           </>
@@ -280,7 +280,7 @@ export function CreatorProfilePage() {
                 <span style={{ flex: 1, height: '1px', backgroundColor: 'var(--ym-border)' }} />
                 <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>{timeline[year].length} 件</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                 {timeline[year].map((w) => <WorkCard key={w.id} work={w} />)}
               </div>
             </div>
