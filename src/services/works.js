@@ -4,6 +4,7 @@
 import { supabase } from './supabase.js';
 import { normalizeTagList } from './discovery-logic.js';
 import { createRevisionSnapshot, isRevisionsSupported } from './revisions.js';
+import { getPartitionLabel } from './partitions.js';
 
 // ========== 常量 ==========
 export const WORK_TYPES = [
@@ -36,7 +37,10 @@ export const COMMISSION_STATUS = [
 ];
 
 export const workTypeLabel = (type) =>
-  WORK_TYPES.find((t) => t.id === type)?.label || type || '作品';
+  getPartitionLabel(type) ||
+  WORK_TYPES.find((t) => t.id === type)?.label ||
+  type ||
+  '作品';
 
 export const workStatusLabel = (status) =>
   WORK_STATUS.find((s) => s.id === status)?.label || status || '';

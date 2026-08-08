@@ -1,7 +1,8 @@
 // src/pages/ProfilePage.jsx
 // 个人中心：我的作品 / 我的收藏 / 设置（档案 + 分组）
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { TechLoader } from '../components/TechLoader.jsx';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
   getWorksByUser,
@@ -23,6 +24,7 @@ import { getCommenterReputation, reputationScore, reputationBadge } from '../ser
 import { uploadAvatar, uploadCover, validateImageFile } from '../services/screenshot.js';
 import { getMyIdeas, getMyFavoritedIdeas } from '../services/ideas.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
+import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
 const TABS = [
@@ -54,7 +56,8 @@ const labelStyle = {
 
 export function ProfilePage() {
   const { user, loading: authLoading, isAnonymous } = useAuth();
-  const [tab, setTab] = useState('works');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => (searchParams.get('tab') === 'settings' ? 'settings' : 'works'));
   // Issue #39 P3：我的信誉
   const [reputation, setReputation] = useState({ adopted_count: 0, helpful: 0, insightful: 0, professional: 0, friendly: 0 });
 
@@ -192,7 +195,9 @@ export function ProfilePage() {
     loadWorks();
     loadGroups();
     loadStats();
-  }, [userId, loadWorks, loadGroups, loadStats]);
+    loadProfile();
+    getPartitions().catch(() => {});
+  }, [userId, loadWorks, loadGroups, loadStats, loadProfile]);
 
   useEffect(() => {
     if (!userId) return;
@@ -342,7 +347,8 @@ export function ProfilePage() {
       setSaveMsg('✅ 已保存');
       setAvatarFile(null);
       setCoverFile(null);
-      loadProfile();
+      await loadProfile();
+      window.dispatchEvent(new CustomEvent('ym-profile-updated'));
     } catch (err) {
       setSaveMsg(`❌ 保存失败：${err.message || '请稍后重试'}`);
     } finally {
@@ -392,7 +398,7 @@ export function ProfilePage() {
 
   // ---------- 渲染 ----------
   if (authLoading) {
-    return <div style={{ textAlign: 'center', marginTop: '200px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
   }
 
   if (!me) {
@@ -406,24 +412,48 @@ export function ProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <nav style={{ padding: '16px 24px', backgroundColor: 'var(--ym-bg-card)', borderBottom: '1px solid var(--ym-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <Link to="/" style={{ textDecoration: 'none', fontSize: '16px', color: 'var(--ym-text-primary)' }}>← 返回首页</Link>
-        <span style={{ fontSize: '15px', color: 'var(--ym-text-secondary)' }}>个人中心</span>
-      </nav>
+    <div>
+      <div className="ym-space-cover">
+        {profile?.cover_url ? (
+          <img src={profile.cover_url} alt="封面" decoding="async" />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ym-text-muted)', fontSize: '14px' }}>
+            个人中心
+          </div>
+        )}
+      </div>
 
-      <div style={{ maxWidth: '860px', margin: '24px auto', padding: '0 20px 60px' }}>
+      <div className="ym-space-body">
+        <div className="ym-space-head">
+          <div className="ym-space-avatar">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="头像" decoding="async" />
+            ) : (
+              <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: '34px' }}>👤</span>
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: '220px', paddingBottom: '4px' }}>
+            <h1 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '24px', fontWeight: '600', color: 'var(--ym-text-primary)', margin: 0 }}>
+              {me?.email?.replace('@nav.local', '') || '我的主页'}
+            </h1>
+            <p style={{ fontSize: '14px', color: 'var(--ym-text-secondary)', margin: '6px 0 0', lineHeight: 1.6 }}>
+              {profile?.bio || '管理你的作品、收藏与创作者资料'}
+            </p>
+          </div>
+          <Link to="/create" className="ym-btn ym-btn-primary">+ 新建作品</Link>
+        </div>
+
         {/* 统计卡 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+        <div className="ym-stats">
           {[
             { label: '公开作品', value: stats.work_count },
             { label: '累计获赞', value: stats.like_count },
             { label: '被收藏', value: stats.favorite_count },
             { label: '作品评论', value: stats.comment_count },
           ].map((s) => (
-            <div key={s.label} style={{ padding: '14px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--ym-accent)' }}>{s.value}</div>
-              <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', marginTop: '4px' }}>{s.label}</div>
+            <div key={s.label} className="ym-stat">
+              <b>{s.value}</b>
+              <span>{s.label}</span>
             </div>
           ))}
         </div>
@@ -449,29 +479,18 @@ export function ProfilePage() {
         </div>
 
         {/* Tab 切换 */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div className="ym-tabs" role="tablist">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 'var(--ym-radius-sm)',
-                border: '1px solid var(--ym-border)',
-                backgroundColor: tab === t.id ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
-                color: tab === t.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all var(--ym-transition)',
-              }}
+              className={'ym-tab' + (tab === t.id ? ' active' : '')}
+              role="tab"
+              aria-selected={tab === t.id}
             >
               {t.label}
             </button>
           ))}
-          <Link to="/create" style={{ marginLeft: 'auto', padding: '8px 20px', backgroundColor: 'var(--ym-success)', color: '#fff', borderRadius: 'var(--ym-radius-sm)', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
-            + 新建作品
-          </Link>
         </div>
 
         {/* Tab1 我的作品 */}
@@ -502,7 +521,7 @@ export function ProfilePage() {
             </div>
 
             {worksLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
             ) : works.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>暂无作品，点击右上角新建</div>
             ) : (
@@ -582,7 +601,7 @@ export function ProfilePage() {
         {tab === 'favorites' && (
           <div>
             {favoritesLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
             ) : favorites.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>还没有收藏，去详情页点「收藏」吧</div>
             ) : (
@@ -652,7 +671,7 @@ export function ProfilePage() {
         {tab === 'settings' && (
           <div>
             {settingsLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
             ) : (
               <form onSubmit={handleSaveSettings} style={{ backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', padding: '24px' }}>
                 <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', marginBottom: '16px' }}>基本资料</h3>

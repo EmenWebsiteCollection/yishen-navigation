@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { createWork, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS } from '../services/works.js';
+import { createWork, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel } from '../services/works.js';
+import { getPartitions } from '../services/partitions.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import { linkIdeaToWork, getIdeaById } from '../services/ideas.js';
 import '../styles/global.css';
@@ -55,6 +56,7 @@ const [videoUrl, setVideoUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [groups, setGroups] = useState([]);
+  const [partitions, setPartitions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -76,6 +78,7 @@ const [videoUrl, setVideoUrl] = useState('');
     listGroups(user.id)
       .then(setGroups)
       .catch((err) => console.warn('加载分组失败:', err.message));
+    getPartitions().then(setPartitions).catch(() => setPartitions([]));
   }, [user]);
 
   // 处理文件选择
@@ -225,15 +228,8 @@ const [videoUrl, setVideoUrl] = useState('');
   };
 
   return (
-    <div style={{
-      maxWidth: '560px',
-      margin: '60px auto',
-      padding: '32px 28px',
-      backgroundColor: 'var(--ym-bg-card)',
-      borderRadius: 'var(--ym-radius-lg)',
-      border: '1px solid var(--ym-border)',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-    }}>
+    <div className="ym-detail-layout">
+      <div className="ym-section-block" style={{ padding: '28px' }}>
       <h2 style={{
         fontFamily: 'var(--ym-font-display)',
         fontSize: '22px',
@@ -256,25 +252,41 @@ const [videoUrl, setVideoUrl] = useState('');
         <div style={{ marginBottom: '18px' }}>
           <label style={labelStyle}>作品类型</label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {WORK_TYPES.map((t) => (
+            {partitions.map((t) => (
               <button
-                key={t.id}
+                key={t.work_type || t.id}
                 type="button"
-                onClick={() => setWorkType(t.id)}
+                onClick={() => setWorkType(t.work_type)}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '20px',
                   border: '1px solid var(--ym-border)',
-                  backgroundColor: workType === t.id ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
-                  color: workType === t.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                  backgroundColor: workType === t.work_type ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                  color: workType === t.work_type ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
                   cursor: 'pointer',
                   fontSize: '13px',
                   transition: 'all var(--ym-transition)',
                 }}
               >
-                {t.label}
+                {t.name}
               </button>
             ))}
+            {partitions.length === 0 && (
+              <button
+                type="button"
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--ym-accent)',
+                  backgroundColor: 'var(--ym-accent)',
+                  color: 'var(--ym-accent-text-on)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
+              >
+                {workTypeLabel(workType)}
+              </button>
+            )}
           </div>
         </div>
 
@@ -589,6 +601,19 @@ const [videoUrl, setVideoUrl] = useState('');
       <div style={{ marginTop: '16px', textAlign: 'center' }}>
         <Link to="/" style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', textDecoration: 'none' }}>← 返回首页</Link>
       </div>
+      </div>
+
+      <aside className="ym-detail-side">
+        <div className="ym-section-block">
+          <h3 className="ym-section-title" style={{ margin: '0 0 12px' }}>提交提示</h3>
+          <div style={{ fontSize: '13px', lineHeight: 1.8, color: 'var(--ym-text-secondary)' }}>
+            <p>网站类作品必须填写完整 URL（含协议）。</p>
+            <p>不上传大图时，提交网站会自动截取首页作为封面。</p>
+            <p>私密作品只有自己可见，公开作品会展示在首页。</p>
+            <p>演示视频链接留空则不在详情页展示。</p>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 // src/pages/ContactPage.jsx
 import React from 'react';
-import { SiteHeader } from '../components/SiteHeader.jsx';
 import { PageHero } from '../components/PageHero.jsx';
 import '../styles/global.css';
 
@@ -50,10 +49,7 @@ const ContactCard = ({ icon, title, content, href, cta }) => {
 
 export function ContactPage() {
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <SiteHeader />
-
-      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 20px 60px' }}>
+    <div className="ym-main-narrow" style={{ margin: '0 auto' }}>
         <PageHero
           emoji="💌"
           title="联系我们"
@@ -95,7 +91,6 @@ export function ContactPage() {
           <div style={{ fontWeight: '600', color: 'var(--ym-text-primary)', marginBottom: '4px' }}>🧪 测试组反馈渠道</div>
           测试组联系方式：请通过 GitHub Issues 提交 🐛，或在项目仓库 README 中查找对应组长联系方式 📄（联系方式待补充）。
         </div>
-      </div>
     </div>
   );
 }

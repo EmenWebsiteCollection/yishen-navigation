@@ -1,0 +1,97 @@
+/* ========================================================= */
+/* TechLoader 科技风加载组件样式                              */
+/* 跟随主题色 var(--ym-accent)，无主题时回退科技青 #00ffc8    */
+/* ========================================================= */
+
+.tech-loader {
+  position: relative;
+  width: var(--tl-size, 56px);
+  height: var(--tl-size, 56px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 外环：旋转缺口弧 */
+.tl-ring-a {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 200, 0.1);
+  border-top-color: var(--ym-accent, #00ffc8);
+  border-right-color: rgba(0, 255, 200, 0.45);
+  animation: tl-spin 0.9s linear infinite;
+}
+
+/* 内环：反向虚线环 */
+.tl-ring-b {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(56, 189, 248, 0.4);
+  animation: tl-spin 2.6s linear infinite reverse;
+}
+
+/* 虚线扫描段（第三层，微弱旋转） */
+.tl-dashes {
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 1px dotted rgba(0, 255, 200, 0.35);
+  animation: tl-spin 4s linear infinite;
+}
+
+/* 中心呼吸节点 */
+.tl-core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ym-accent, #00ffc8);
+  box-shadow: 0 0 12px var(--ym-accent, rgba(0, 255, 200, 0.9));
+  animation: tl-pulse 1.2s ease-in-out infinite;
+}
+
+/* HUD 四角角标 */
+.tl-corner {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid rgba(0, 255, 200, 0.6);
+}
+.tl-c1 { top: -3px; left: -3px; border-right: none; border-bottom: none; }
+.tl-c2 { top: -3px; right: -3px; border-left: none; border-bottom: none; }
+.tl-c3 { bottom: -3px; left: -3px; border-right: none; border-top: none; }
+.tl-c4 { bottom: -3px; right: -3px; border-left: none; border-top: none; }
+
+/* 下方文字 + 闪烁光标 */
+.tl-text {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--ym-text-secondary, rgba(0, 255, 200, 0.75));
+}
+.tl-text::after {
+  content: '▍';
+  margin-left: 2px;
+  animation: tl-blink 1s steps(2) infinite;
+}
+
+@keyframes tl-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes tl-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.55; }
+}
+@keyframes tl-blink {
+  50% { opacity: 0; }
+}
+
+/* 深色模式兜底：文字用浅色 */
+[data-theme='dark'] .tl-text {
+  color: rgba(0, 255, 200, 0.75);
+}

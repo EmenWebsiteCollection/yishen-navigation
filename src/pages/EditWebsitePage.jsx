@@ -1,9 +1,11 @@
 ﻿// src/pages/EditWebsitePage.jsx
 // 编辑作品：类型/URL/标题/描述/图片/状态/公开·私密/分组/更新日志
 import React, { useEffect, useState } from 'react';
+import { TechLoader } from '../components/TechLoader.jsx';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS, isAdmin, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS } from '../services/works.js';
+import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS, isAdmin, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel } from '../services/works.js';
+import { getPartitions } from '../services/partitions.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
 import '../styles/global.css';
@@ -57,6 +59,7 @@ const [videoUrl, setVideoUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [groups, setGroups] = useState([]);
+  const [partitions, setPartitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -111,6 +114,7 @@ const [videoUrl, setVideoUrl] = useState('');
         setImagePreview(data.image_url || '');
         setMediaUrl(data.media_url || '');
         setGroups(await listGroups(user.id));
+        setPartitions(await getPartitions());
       } catch (err) {
         setError('加载作品信息失败，请稍后重试');
         console.error(err);
@@ -250,7 +254,7 @@ const [videoUrl, setVideoUrl] = useState('');
   };
 
   if (authLoading || loading) {
-    return <div style={{ textAlign: 'center', marginTop: '60px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '60px' }}><TechLoader text="加载中..." /></div>;
   }
 
   if (error && !message) {
@@ -275,15 +279,8 @@ const [videoUrl, setVideoUrl] = useState('');
   const hasImage = imagePreview || imageUrl;
 
   return (
-    <div style={{
-      maxWidth: '560px',
-      margin: '60px auto',
-      padding: '32px 28px',
-      backgroundColor: 'var(--ym-bg-card)',
-      borderRadius: 'var(--ym-radius-lg)',
-      border: '1px solid var(--ym-border)',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-    }}>
+    <div className="ym-detail-layout">
+      <div className="ym-section-block" style={{ padding: '28px' }}>
       <h2 style={{
         fontFamily: 'var(--ym-font-display)',
         fontSize: '22px',
@@ -299,25 +296,41 @@ const [videoUrl, setVideoUrl] = useState('');
         <div style={{ marginBottom: '18px' }}>
           <label style={labelStyle}>作品类型</label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {WORK_TYPES.map((t) => (
+            {partitions.map((t) => (
               <button
-                key={t.id}
+                key={t.work_type || t.id}
                 type="button"
-                onClick={() => setWorkType(t.id)}
+                onClick={() => setWorkType(t.work_type)}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '20px',
                   border: '1px solid var(--ym-border)',
-                  backgroundColor: workType === t.id ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
-                  color: workType === t.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                  backgroundColor: workType === t.work_type ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                  color: workType === t.work_type ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
                   cursor: 'pointer',
                   fontSize: '13px',
                   transition: 'all var(--ym-transition)',
                 }}
               >
-                {t.label}
+                {t.name}
               </button>
             ))}
+            {!partitions.some((t) => t.work_type === workType) && (
+              <button
+                type="button"
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--ym-accent)',
+                  backgroundColor: 'var(--ym-accent)',
+                  color: 'var(--ym-accent-text-on)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
+              >
+                {workTypeLabel(workType)}
+              </button>
+            )}
           </div>
         </div>
 
@@ -637,6 +650,19 @@ const [videoUrl, setVideoUrl] = useState('');
           <Link to={`/website/${id}`} style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', textDecoration: 'none' }}>取消</Link>
         </div>
       </form>
+      </div>
+
+      <aside className="ym-detail-side">
+        <div className="ym-section-block">
+          <h3 className="ym-section-title" style={{ margin: '0 0 12px' }}>编辑提示</h3>
+          <div style={{ fontSize: '13px', lineHeight: 1.8, color: 'var(--ym-text-secondary)' }}>
+            <p>只能编辑自己上传的作品。</p>
+            <p>网站类作品必须保留有效 URL。</p>
+            <p>删除图片并保存后，详情页将不再展示大图。</p>
+            <p>更新日志会展示在作品详情页。</p>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
