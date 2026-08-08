@@ -7,6 +7,7 @@ import { logout } from '../services/auth.js';
 import { supabase } from '../services/supabase.js';
 import { LoginPage } from './LoginPage.jsx';
 import { RegisterPage } from './RegisterPage.jsx';
+import { ForgotPasswordPage } from './ForgotPasswordPage.jsx';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { SearchBar } from '../components/SearchBar.jsx';
 import { SiteHeader } from '../components/SiteHeader.jsx';
@@ -40,6 +41,7 @@ export function HomePage() {
   const [error, setError] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(null);
 
@@ -152,6 +154,14 @@ export function HomePage() {
     setModalClosing(true);
     setTimeout(() => {
       setShowRegisterModal(false);
+      setModalClosing(false);
+    }, 180);
+  };
+
+  const closeForgotModal = () => {
+    setModalClosing(true);
+    setTimeout(() => {
+      setShowForgotModal(false);
       setModalClosing(false);
     }, 180);
   };
@@ -750,6 +760,10 @@ export function HomePage() {
                 setShowLoginModal(false);
                 setShowRegisterModal(true);
               }}
+              onSwitchToForgot={() => {
+                setShowLoginModal(false);
+                setShowForgotModal(true);
+              }}
             />
             <div style={{ textAlign: 'right', marginTop: '16px' }}>
               <button
@@ -816,6 +830,74 @@ export function HomePage() {
             <div style={{ textAlign: 'right', marginTop: '16px' }}>
               <button
                 onClick={closeRegisterModal}
+                style={{
+                  padding: '6px 16px',
+                  backgroundColor: 'transparent',
+                  color: 'var(--ym-text-secondary)',
+                  border: '1px solid var(--ym-border)',
+                  borderRadius: 'var(--ym-radius-sm)',
+                  fontSize: '14px',
+                  transition: 'all var(--ym-transition)',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--ym-text-secondary)';
+                  e.currentTarget.style.color = 'var(--ym-text-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--ym-border)';
+                  e.currentTarget.style.color = 'var(--ym-text-secondary)';
+                }}
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 忘记密码 Modal */}
+      {showForgotModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            animation: 'ym-fade-in var(--ym-transition) forwards',
+          }}
+          onClick={closeForgotModal}
+        >
+          <div
+            className={modalClosing ? 'ym-scale-out' : 'ym-scale-in'}
+            style={{
+              backgroundColor: 'var(--ym-bg-card)',
+              padding: '24px',
+              borderRadius: 'var(--ym-radius-lg)',
+              maxWidth: '420px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ForgotPasswordPage
+              onClose={closeForgotModal}
+              onBackToLogin={() => {
+                setShowForgotModal(false);
+                setShowLoginModal(true);
+              }}
+            />
+            <div style={{ textAlign: 'right', marginTop: '16px' }}>
+              <button
+                onClick={closeForgotModal}
                 style={{
                   padding: '6px 16px',
                   backgroundColor: 'transparent',

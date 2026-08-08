@@ -37,6 +37,21 @@ export const updateProfile = async (userId, data) => {
 };
 
 /**
+ * 绑定/更新当前用户的邮箱与手机号（供找回密码使用）
+ * 调用服务端 SECURITY DEFINER 函数 public.bind_contact。
+ * @param {{email?:string, phone?:string}} contact
+ * @returns {Promise<object>} 更新后的 profile
+ */
+export const bindContact = async ({ email, phone } = {}) => {
+  const { data, error } = await supabase.rpc('bind_contact', {
+    p_email: email || null,
+    p_phone: phone || null,
+  });
+  if (error) throw error;
+  return data;
+};
+
+/**
  * 创作者统计（只统计公开作品）
  * @param {string} userId
  * @returns {Promise<{work_count:number, like_count:number, favorite_count:number, comment_count:number}>}
