@@ -1,4 +1,4 @@
-// src/pages/ProfilePage.jsx
+﻿// src/pages/ProfilePage.jsx
 // 个人中心：我的作品 / 我的收藏 / 设置（档案 + 分组）
 import React, { useEffect, useState, useCallback } from 'react';
 import { TechLoader } from '../components/TechLoader.jsx';
@@ -24,6 +24,7 @@ import { getProfile, updateProfile, getCreatorStats, bindContact } from '../serv
 import { getCommenterReputation, reputationScore, reputationBadge } from '../services/commentFeedback.js';
 import { uploadAvatar, uploadCover, validateImageFile } from '../services/screenshot.js';
 import { getMyIdeas, getMyFavoritedIdeas } from '../services/ideas.js';
+import { getMyMemory, clearMyMemory } from '../services/yiliMemory.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
@@ -104,6 +105,11 @@ export function ProfilePage() {
   // 联系方式（找回密码用）
   const [contactSaving, setContactSaving] = useState(false);
   const [contactMsg, setContactMsg] = useState('');
+
+  // 依力记忆（AI 助手 3.0）
+  const [yiliMemory, setYiliMemory] = useState(null);
+  const [yiliMemoryLoading, setYiliMemoryLoading] = useState(false);
+  const [yiliMemoryMsg, setYiliMemoryMsg] = useState('');
 
   const me = user && !isAnonymous ? user : null;
   const userId = me?.id;
@@ -223,6 +229,22 @@ export function ProfilePage() {
       .then(setReputation)
       .catch(() => {});
   }, [user?.id]);
+
+  const handleClearYiliMemory = async () => {
+    if (!userId) return;
+    if (!window.confirm('确定清除依力记住的所有偏好吗？')) return;
+    setYiliMemoryLoading(true);
+    try {
+      const { error } = await clearMyMemory(userId);
+      if (error) throw error;
+      setYiliMemory(null);
+      setYiliMemoryMsg('✅ 已清除记忆');
+    } catch (err) {
+      setYiliMemoryMsg('❌ 清除失败：' + (err.message || ''));
+    } finally {
+      setYiliMemoryLoading(false);
+    }
+  };
 
   // ---------- 作品操作 ----------
   const handleToggleFeatured = async (work) => {
@@ -797,7 +819,34 @@ export function ProfilePage() {
                   {saving ? '保存中...' : '保存档案'}
                 </button>
 
-                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', margin: '28px 0 16px' }}>分组管理</h3>
+                                {/* 依力记忆（AI 助手 3.0）：展示/清除个性化记忆 */}
+                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', margin: '28px 0 16px' }}>依力记忆（AI 助手）</h3>
+                <div style={{ backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-md)', padding: '16px', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', margin: '0 0 12px' }}>
+                    依力会记住你和她说过的偏好（如「我喜欢科幻」），让推荐更懂你。仅你本人可见，随时可清除；也可在聊天面板右上角用 🧠/💤 开关停用。
+                  </p>
+                  {yiliMemoryLoading ? (
+                    <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+                  ) : yiliMemory?.memory_text ? (
+                    <>
+                      <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px', lineHeight: 1.7, color: 'var(--ym-text-primary)', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-sm)', padding: '12px', margin: '0 0 10px' }}>{yiliMemory.memory_text}</pre>
+                      {Array.isArray(yiliMemory.preferences?.likes) && yiliMemory.preferences.likes.length > 0 && (
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                          {yiliMemory.preferences.likes.map((t) => (
+                            <span key={t} style={{ fontSize: '12px', padding: '2px 10px', borderRadius: '999px', backgroundColor: 'var(--ym-accent-soft)', color: 'var(--ym-accent)' }}>喜欢 {t}</span>
+                          ))}
+                        </div>
+                      )}
+                      <button type="button" onClick={handleClearYiliMemory} disabled={yiliMemoryLoading} style={{ ...smallBtnStyle, color: 'var(--ym-danger)', borderColor: 'var(--ym-danger)' }}>清除记忆</button>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>暂无记忆。和依力聊天时说出你的偏好，她会记住并用于推荐。</div>
+                  )}
+                  {yiliMemoryMsg && (
+                    <div style={{ fontSize: '13px', marginTop: '10px', color: yiliMemoryMsg.startsWith('✅') ? 'var(--ym-success)' : 'var(--ym-danger)' }}>{yiliMemoryMsg}</div>
+                  )}
+                </div>
+<h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', margin: '28px 0 16px' }}>分组管理</h3>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
                   <input value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="新分组名" style={{ ...inputStyle, width: '200px' }} />
                   <button type="button" onClick={handleCreateGroup} style={{ padding: '8px 18px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', border: 'none', borderRadius: 'var(--ym-radius-sm)', cursor: 'pointer' }}>创建分组</button>
@@ -917,3 +966,5 @@ const badgeStyle = (color) => ({
   padding: '2px 8px',
   borderRadius: '10px',
 });
+
+

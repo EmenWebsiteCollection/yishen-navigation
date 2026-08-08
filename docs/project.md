@@ -1,4 +1,4 @@
-# Project.md
+﻿# Project.md
 
 ---
 
@@ -343,6 +343,14 @@ v0.4
 
 ﻿# 更新日志（追加在 v0.3 之前）
 
+## v0.5（2026-08-08）
+
+- 依力 AI 3.0「不微调」方案落地：66 万字课程语料 → 句群切块 → DashScope 嵌入 + 关键词混合检索（RRF）→ 每轮注入依力原话样本（语料样本注射法，替代微调）。
+- 表达 DNA 蒸馏：从语料自动统计语气词（「啊」18.3 次/千字）、口癖（「对不对」1174 次）、句式节奏（问句占 32.6%）→ 常驻风格底座（docs/yili-style-dna.md）。
+- 工具扩展：依力可调用发现 rail / 作品 / 想法 / 创作者 / 平台指南 → 返回结构化 actions（work_card / idea_card / guide_card），前端渲染站点风格卡片，推送不再贴干巴巴超链接。
+- 个性化记忆：user_memories 表（RLS 仅本人）+ 对话自动写入偏好摘要 + 个人中心查看/清除 + 聊天面板 🧠/💤 开关。
+- 数据层：yili_corpus（pgvector + HNSW）+ user_memories + RPC get_yili_samples / save_user_memory / upsert_yili_chunks（迁移 20260808_add_yili_ai_v3.sql）。
+- 降级链：LLM 失败 → 规则版 agentFallback；检索/记忆失败 → 跳过注入，聊天永不因单点故障中断。
 ## v0.4（2026-08-08）
 
 - 想法集中营（Issue #12）：/ideas 想法列表（分类/状态/最新·最热/搜索/分页）、/ideas/new 发布（低摩擦表单 + 发布前相似想法提示）、/ideas/:id 详情（投票一人一票 / 关注 / 评论树 / 进展时间线 / 状态管理）。
@@ -386,3 +394,4 @@ v0.4
 - 建立 AI 协作规范。
 
 npm run dev
+
