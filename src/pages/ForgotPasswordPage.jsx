@@ -206,13 +206,14 @@ export function ForgotPasswordPage({ onClose, onBackToLogin }) {
               onChange={(e) => setContact(e.target.value)}
               placeholder={TABS.find((t) => t.key === tab).placeholder}
               required
-              disabled={sent || tab === 'phone'}
-              style={{ ...inputStyle, ...focusHandlers, flex: 1 }}
+              disabled={tab === 'phone'}
+              {...focusHandlers}
+              style={{ ...inputStyle, flex: 1 }}
             />
             <button
               type="button"
               onClick={handleSend}
-              disabled={loading || cooldown > 0 || sent || tab === 'phone'}
+              disabled={loading || cooldown > 0 || tab === 'phone'}
               style={{
                 padding: '0 14px',
                 whiteSpace: 'nowrap',
@@ -222,11 +223,11 @@ export function ForgotPasswordPage({ onClose, onBackToLogin }) {
                 color: cooldown > 0 ? 'var(--ym-text-muted)' : 'var(--ym-accent)',
                 fontSize: '14px',
                 fontWeight: '500',
-                cursor: (loading || cooldown > 0 || sent) ? 'not-allowed' : 'pointer',
+                cursor: (loading || cooldown > 0 || tab === 'phone') ? 'not-allowed' : 'pointer',
                 opacity: (loading || cooldown > 0) ? 0.6 : 1,
               }}
             >
-              {cooldown > 0 ? `${cooldown}s` : sent ? '已发送' : '获取验证码'}
+              {cooldown > 0 ? `${cooldown}s` : sent ? '重新发送' : '获取验证码'}
             </button>
           </div>
         </div>
@@ -244,7 +245,8 @@ export function ForgotPasswordPage({ onClose, onBackToLogin }) {
             placeholder="6 位数字验证码"
             required
             disabled={tab === 'phone'}
-            style={{ ...inputStyle, ...focusHandlers }}
+            {...focusHandlers}
+            style={inputStyle}
           />
         </div>
 
@@ -259,7 +261,8 @@ export function ForgotPasswordPage({ onClose, onBackToLogin }) {
             required
             minLength={6}
             disabled={tab === 'phone'}
-            style={{ ...inputStyle, ...focusHandlers }}
+            {...focusHandlers}
+            style={inputStyle}
           />
         </div>
 
@@ -273,7 +276,8 @@ export function ForgotPasswordPage({ onClose, onBackToLogin }) {
             onChange={(e) => setConfirm(e.target.value)}
             required
             disabled={tab === 'phone'}
-            style={{ ...inputStyle, ...focusHandlers }}
+            {...focusHandlers}
+            style={inputStyle}
           />
         </div>
 
