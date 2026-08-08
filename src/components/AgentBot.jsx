@@ -13,7 +13,7 @@ import {
 } from '../services/agent.js';
 import '../styles/agent.css';
 
-const QUICK_QUESTIONS = ['推荐网站', '找小说', '怎么投稿', '联系我们'];
+const QUICK_QUESTIONS = ['推荐网站', '找小说', '讲个笑话', '联系我们'];
 
 const CloseIcon = () => (
   <svg

@@ -4,6 +4,8 @@ import {
   AGENT_MAX_QUERY_LENGTH,
   AGENT_INTENTS,
   YILI_PERSONA_PROMPT,
+  DAILY_CHAT_RULES,
+  matchDailyChatRule,
   normalizeAgentQuery,
   extractWorkType,
   classifyAgentIntent,
@@ -46,10 +48,21 @@ t('问候意图', classifyAgentIntent('你好') === AGENT_INTENTS.GREETING);
 t('感谢意图', classifyAgentIntent('谢谢') === AGENT_INTENTS.THANKS);
 t('账号意图', classifyAgentIntent('怎么登录') === AGENT_INTENTS.ACCOUNT);
 t('编辑意图', classifyAgentIntent('怎么修改作品') === AGENT_INTENTS.EDIT);
+t('闲聊-你是谁', classifyAgentIntent('你是谁') === AGENT_INTENTS.CHAT);
+t('闲聊-在吗', classifyAgentIntent('在吗') === AGENT_INTENTS.CHAT);
+t('闲聊-讲笑话', classifyAgentIntent('讲个笑话') === AGENT_INTENTS.CHAT);
+t('闲聊-再见', classifyAgentIntent('再见') === AGENT_INTENTS.CHAT);
+t('闲聊-你能做什么', classifyAgentIntent('你能做什么') === AGENT_INTENTS.CHAT);
+t('关于意图优先于闲聊', classifyAgentIntent('这个平台是做什么的') === AGENT_INTENTS.ABOUT);
 t('兜底意图', classifyAgentIntent('随便聊聊') === AGENT_INTENTS.FALLBACK);
 t('空输入兜底', classifyAgentIntent('') === AGENT_INTENTS.FALLBACK);
 
 console.log('== formatAgentReply ==');
+const chatRule = matchDailyChatRule('再见');
+t('日常规则命中', chatRule && chatRule.id === 'bye');
+t('日常规则列表非空', DAILY_CHAT_RULES.length >= 8);
+const chat = formatAgentReply(AGENT_INTENTS.CHAT, '你是谁', []);
+t('闲聊回复非空', chat.text.length > 0);
 const persona = YILI_PERSONA_PROMPT;
 t('人设包含依力', persona.includes('依力'));
 t('人设要求简短回复', persona.includes('2-3 句'));
