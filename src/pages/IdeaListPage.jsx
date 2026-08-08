@@ -2,7 +2,6 @@
 // Issue #12 想法集中营：列表（分类/状态/排序/搜索/分页）
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { SiteHeader } from '../components/SiteHeader.jsx';
 import { PageHero } from '../components/PageHero.jsx';
 import { IdeaCard } from '../components/IdeaCard.jsx';
 import { getIdeas } from '../services/ideas.js';
@@ -76,7 +75,6 @@ export function IdeaListPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <SiteHeader />
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 20px 60px' }}>
         <PageHero
           emoji="💡"
