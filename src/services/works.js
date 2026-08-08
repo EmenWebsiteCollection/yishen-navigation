@@ -184,6 +184,7 @@ const mapWork = (item) => {
     username: p.username || item.username || '用户',
     avatar_url: p.avatar_url || item.avatar_url || null,
     like_count: item.like_count ?? 0,
+    view_count: item.view_count ?? 0,
     liked_by_user: false,
     favorited_by_user: false,
     // Issue #39 P1 创作标签体系

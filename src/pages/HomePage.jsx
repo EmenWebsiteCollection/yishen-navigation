@@ -44,24 +44,24 @@ function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
             <span>{site.username}</span>
           </Link>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-            <span>❤️ {site.like_count || 0}</span>
-            {user && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onToggleLike(site.id, site.liked_by_user || false); }}
-                disabled={liking}
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  color: site.liked_by_user ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
-                  cursor: liking ? 'not-allowed' : 'pointer',
-                  fontSize: '12px',
-                  fontWeight: site.liked_by_user ? '600' : '400',
-                }}
-              >
-                {site.liked_by_user ? '已赞' : '点赞'}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); if (user) onToggleLike(site.id, site.liked_by_user || false); }}
+              disabled={liking}
+              title={user ? (site.liked_by_user ? '取消点赞' : '点赞') : '登录后点赞'}
+              style={{
+                border: 'none',
+                background: 'none',
+                color: site.liked_by_user ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
+                cursor: liking ? 'not-allowed' : (user ? 'pointer' : 'default'),
+                fontSize: '12px',
+                padding: 0,
+                lineHeight: 1,
+              }}
+            >
+              ❤️ {site.like_count || 0}
+            </button>
+            <span>👁 {site.view_count || 0}</span>
           </span>
         </div>
       </div>
