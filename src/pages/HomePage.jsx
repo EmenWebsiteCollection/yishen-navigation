@@ -44,6 +44,7 @@ function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onO
             <span>{site.username}</span>
           </Link>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+            <span>👁 {site.view_count || 0}</span>
             <span>❤️ {site.like_count || 0}</span>
             {user && (
               <button
