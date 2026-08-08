@@ -104,6 +104,29 @@ async function appendMemory(section, isAll) {
   await writeFile(MEMORY_FILE, existing + '\n' + section + '\n', 'utf8');
 }
 
+// ---- 同步到线上（Netlify Blobs，经 el-memory 函数） ----
+async function syncToRemote() {
+  const url = process.env.EL_MEMORY_SYNC_URL;
+  const token = process.env.EL_MEMORY_TOKEN;
+  if (!url || !token) {
+    console.log('  (未配置 EL_MEMORY_SYNC_URL/EL_MEMORY_TOKEN，跳过线上同步)');
+    return;
+  }
+  try {
+    const content = await readFile(MEMORY_FILE, 'utf8');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ content }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) throw new Error(`同步失败 HTTP ${res.status}: ${(await res.text()).slice(0, 150)}`);
+    console.log('  ✅ 已同步到线上依力记忆');
+  } catch (err) {
+    console.error('  ⚠️ 线上同步失败（不影响本地文件）:', err.message);
+  }
+}
+
 // ---- 主流程 ----
 async function main() {
   const isAll = process.argv.includes('--all');
@@ -134,6 +157,7 @@ async function main() {
   await appendMemory(section, isAll);
   await writeFile(STATE_FILE, JSON.stringify({ lastCheck: now }), 'utf8');
   console.log(`✅ 已写入 ${works.length} 条记忆到 el-ai-memory.md`);
+  await syncToRemote();
   console.log('--- 生成内容预览 ---\n' + section.slice(0, 500));
 }
 

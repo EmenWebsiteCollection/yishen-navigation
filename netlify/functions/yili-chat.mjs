@@ -207,9 +207,36 @@ function normalizeMessages(messages) {
   });
 }
 
+// ---------- 记忆库加载 ----------
+// 从 Netlify Blobs 读取作品记忆 + 网站结构，拼入 system prompt
+// 拉取失败时静默降级（不影响对话主流程）
+const MEMORY_CACHE_TTL_MS = 10 * 60 * 1000; // 10 分钟缓存，避免每次对话都读 blob
+let memoryCache = null;
+let memoryCacheAt = 0;
+
+async function loadMemory() {
+  const now = Date.now();
+  if (memoryCache && now - memoryCacheAt < MEMORY_CACHE_TTL_MS) return memoryCache;
+  try {
+    const { getStore } = await import('@netlify/blobs');
+    const store = getStore('el-memory');
+    const content = await store.get('memory.md', { type: 'text' });
+    memoryCache = (content || '').trim();
+    memoryCacheAt = now;
+    return memoryCache;
+  } catch {
+    return ''; // 本地/降级环境没有 blobs，返回空
+  }
+}
+
 async function runAgent(messages, persona) {
   const system = persona || ENV.PERSONA || PERSONA_DEFAULT;
-  const history = [{ role: 'system', content: system }, ...normalizeMessages(messages)];
+  // 记忆库：让依力了解站内作品与网站结构
+  const memory = await loadMemory();
+  const systemWithMemory = memory
+    ? `${system}\n\n【站内记忆库】以下是站内已收录作品的摘要与网站结构，回答站内作品/板块问题时优先参考：\n${memory.slice(0, 12000)}\n\n（以上记忆库由每 3 小时自动更新，若与用户问题无关可忽略）`
+    : system;
+  const history = [{ role: 'system', content: systemWithMemory }, ...normalizeMessages(messages)];
   const executedTools = []; // 记录本轮实际执行的工具结果，用于生成跳转按钮
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
