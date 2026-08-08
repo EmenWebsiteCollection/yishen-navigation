@@ -6,8 +6,6 @@ import { useAuth } from '../hooks/useAuth.js';
 import { getDiscoveryRail, getRandomWork } from '../services/discovery.js';
 import { DISCOVERY_RAILS } from '../services/discovery-logic.js';
 import { WorkCard } from '../components/WorkCard.jsx';
-import { SiteHeader } from '../components/SiteHeader.jsx';
-import { SearchBar } from '../components/SearchBar.jsx';
 import '../styles/global.css';
 
 const PAGE_SIZE = 12;
@@ -95,7 +93,6 @@ export function DiscoverPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <SiteHeader center={<SearchBar />} />
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 20px 60px' }}>
         <div style={{ marginBottom: '24px' }}>
           <h1 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '26px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '8px' }}>

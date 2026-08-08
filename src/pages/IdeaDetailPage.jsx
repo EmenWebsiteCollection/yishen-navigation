@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { SiteHeader } from '../components/SiteHeader.jsx';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import {
   getIdeaById,
@@ -444,7 +443,6 @@ export function IdeaDetailPage() {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-        <SiteHeader />
         <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ym-text-muted)' }}>加载中…</div>
       </div>
     );
@@ -453,7 +451,6 @@ export function IdeaDetailPage() {
   if (error || !idea) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-        <SiteHeader />
         <div style={{ maxWidth: '560px', margin: '60px auto', padding: '32px 28px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
           <p style={{ color: 'var(--ym-danger)' }}>{error || '想法不存在'}</p>
           <Link to="/ideas" style={{ color: 'var(--ym-accent)', fontSize: '14px', textDecoration: 'none' }}>← 返回想法集中营</Link>
@@ -467,7 +464,6 @@ export function IdeaDetailPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <SiteHeader />
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 20px 60px' }}>
         <div style={{ marginTop: '32px', marginBottom: '12px' }}>
           <Link to="/ideas" style={{ fontSize: '14px', color: 'var(--ym-text-secondary)', textDecoration: 'none' }}>← 返回想法集中营</Link>

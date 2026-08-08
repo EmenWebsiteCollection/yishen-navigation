@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { SiteHeader } from '../components/SiteHeader.jsx';
 import { PageHero } from '../components/PageHero.jsx';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import { createIdea, findSimilarIdeas } from '../services/ideas.js';
@@ -106,7 +105,6 @@ export function IdeaCreatePage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <SiteHeader />
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 20px 60px' }}>
         <PageHero emoji="✍️" title="发布想法" subtitle="描述你的脑洞，别担心它太小——被看见的种子会发芽" />
 
