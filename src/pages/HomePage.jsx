@@ -81,7 +81,9 @@ export function HomePage() {
   const [showPartitionManager, setShowPartitionManager] = useState(false);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
+  // pageSize 也同步到 URL（?size=20），刷新后保持每页数量
+  const pageSize = parseInt(searchParams.get('size') || String(PAGE_SIZE_DEFAULT), 10);
+  const normalizedSize = [10, 20, 50].includes(pageSize) ? pageSize : PAGE_SIZE_DEFAULT;
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const likedRefs = useRef({});
@@ -109,9 +111,9 @@ export function HomePage() {
     try {
       setLoading(true);
       setError(null);
-      const { works: data, total } = await getWorks({ page, pageSize, type });
+      const { works: data, total } = await getWorks({ page, pageSize: normalizedSize, type });
       setTotalItems(total);
-      setTotalPages(Math.ceil(total / pageSize) || 1);
+      setTotalPages(Math.ceil(total / normalizedSize) || 1);
 
       if (user) {
         try {
@@ -209,10 +211,9 @@ export function HomePage() {
   };
 
   const handlePageSizeChange = (size) => {
-    if (size === pageSize) return;
-    setPageSize(size);
-    // 页码可能超出新页数上限，回到第 1 页重新加载
-    const params = { page: '1' };
+    if (size === normalizedSize) return;
+    // 每页数量写入 URL，页码回到第 1 页（避免超出新页数上限）
+    const params = { page: '1', size: String(size) };
     if (partitionId !== 'all') params.partition = partitionId;
     setSearchParams(params);
   };
@@ -288,7 +289,7 @@ export function HomePage() {
 
       {loading ? (
         <div className="ym-grid">
-          {Array.from({ length: pageSize }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: normalizedSize }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : error ? (
         <div className="ym-alert ym-alert-error">{error}</div>
@@ -306,7 +307,7 @@ export function HomePage() {
                 site={site}
                 index={index}
                 page={currentPage}
-                pageSize={pageSize}
+                pageSize={normalizedSize}
                 user={isLoggedIn ? user : null}
                 liking={likingRefs.current[site.id]}
                 onToggleLike={handleLikeToggle}
@@ -321,7 +322,7 @@ export function HomePage() {
             totalItems={totalItems}
             itemLabel="个作品"
             onPageChange={handlePageChange}
-            pageSize={pageSize}
+            pageSize={normalizedSize}
             onPageSizeChange={handlePageSizeChange}
           />
         </>

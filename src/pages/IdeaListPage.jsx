@@ -7,12 +7,22 @@ import { getIdeas } from '../services/ideas.js';
 import { IDEA_CATEGORIES, IDEA_STATUSES } from '../services/idea-logic.js';
 
 const PAGE_SIZE_DEFAULT = 10;
+const PAGE_SIZE_KEY = 'ym-page-size';
+
+function readPageSize() {
+  try {
+    const saved = parseInt(sessionStorage.getItem(PAGE_SIZE_KEY) || '', 10);
+    return [10, 20, 50].includes(saved) ? saved : PAGE_SIZE_DEFAULT;
+  } catch {
+    return PAGE_SIZE_DEFAULT;
+  }
+}
 
 export function IdeaListPage() {
   const [ideas, setIdeas] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
+  const [pageSize, setPageSize] = useState(readPageSize);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('');
@@ -70,6 +80,11 @@ export function IdeaListPage() {
 
   const handlePageSizeChange = (size) => {
     if (size === pageSize) return;
+    try {
+      sessionStorage.setItem(PAGE_SIZE_KEY, String(size));
+    } catch {
+      /* 隐私模式等场景忽略 */
+    }
     setPageSize(size);
     setPage(1);
   };
