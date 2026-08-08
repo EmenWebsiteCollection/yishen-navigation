@@ -9,7 +9,7 @@ import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { PartitionManager } from '../components/PartitionManager.jsx';
 import { Pagination } from '../components/Pagination.jsx';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_DEFAULT = 10;
 
 const SkeletonCard = () => (
   <div className="ym-card" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>
@@ -21,11 +21,11 @@ const SkeletonCard = () => (
   </div>
 );
 
-function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
+function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onOpen }) {
   return (
     <div className="ym-card" onClick={onOpen} style={{ cursor: 'pointer' }}>
       <div className="ym-card-media">
-        <span className="ym-card-badge">{String((page - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}</span>
+        <span className="ym-card-badge">{String((page - 1) * pageSize + index + 1).padStart(2, '0')}</span>
         <div className="ym-card-media-fallback">{(site.title || '网').trim()[0]}</div>
         {site.image_url && (
           <img src={site.image_url} alt={site.title} loading="lazy" decoding="async"
@@ -81,6 +81,7 @@ export function HomePage() {
   const [showPartitionManager, setShowPartitionManager] = useState(false);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const likedRefs = useRef({});
@@ -108,9 +109,9 @@ export function HomePage() {
     try {
       setLoading(true);
       setError(null);
-      const { works: data, total } = await getWorks({ page, pageSize: PAGE_SIZE, type });
+      const { works: data, total } = await getWorks({ page, pageSize, type });
       setTotalItems(total);
-      setTotalPages(Math.ceil(total / PAGE_SIZE) || 1);
+      setTotalPages(Math.ceil(total / pageSize) || 1);
 
       if (user) {
         try {
@@ -207,6 +208,15 @@ export function HomePage() {
     });
   };
 
+  const handlePageSizeChange = (size) => {
+    if (size === pageSize) return;
+    setPageSize(size);
+    // 页码可能超出新页数上限，回到第 1 页重新加载
+    const params = { page: '1' };
+    if (partitionId !== 'all') params.partition = partitionId;
+    setSearchParams(params);
+  };
+
   if (authLoading) {
     return <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
   }
@@ -278,7 +288,7 @@ export function HomePage() {
 
       {loading ? (
         <div className="ym-grid">
-          {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: pageSize }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : error ? (
         <div className="ym-alert ym-alert-error">{error}</div>
@@ -296,6 +306,7 @@ export function HomePage() {
                 site={site}
                 index={index}
                 page={currentPage}
+                pageSize={pageSize}
                 user={isLoggedIn ? user : null}
                 liking={likingRefs.current[site.id]}
                 onToggleLike={handleLikeToggle}
@@ -304,7 +315,15 @@ export function HomePage() {
             ))}
           </div>
 
-          <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} itemLabel="个作品" onPageChange={handlePageChange} />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemLabel="个作品"
+            onPageChange={handlePageChange}
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </>
       )}
 

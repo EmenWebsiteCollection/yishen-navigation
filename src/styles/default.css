@@ -672,6 +672,38 @@
   text-align: center;
 }
 
+.ym-pagination-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.ym-pagination-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ym-text-muted);
+  font-size: 13px;
+}
+
+.ym-pagination-size select {
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--ym-border);
+  background-color: var(--ym-bg-card);
+  color: var(--ym-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ym-pagination-size select:focus-visible {
+  outline: 2px solid var(--ym-accent);
+  outline-offset: 1px;
+}
+
 /* ---------- 移动端：新顶栏分区 ---------- */
 @media (max-width: 1080px) {
   .ym-header-links,
