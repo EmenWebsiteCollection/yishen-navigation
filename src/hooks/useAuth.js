@@ -2,6 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase.js';
 
+// 匿名登录未启用（Anonymous sign-ins disabled）时，游客每次初始化都会尝试
+// 匿名登录并失败——这是预期路径而非异常。首次 warn 一次便于诊断，之后静默防刷屏。
+let anonymousLoginWarned = false;
+
 export function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,13 +21,19 @@ export function useAuth() {
     try {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
-        console.warn('匿名登录失败:', error.message);
+        if (!anonymousLoginWarned) {
+          console.warn('匿名登录失败:', error.message);
+          anonymousLoginWarned = true;
+        }
         return null;
       }
 
       return data.user;
     } catch (err) {
-      console.warn('匿名登录异常:', err.message);
+      if (!anonymousLoginWarned) {
+        console.warn('匿名登录异常:', err.message);
+        anonymousLoginWarned = true;
+      }
       return null;
     }
   }, []);
@@ -47,7 +57,7 @@ export function useAuth() {
         setIsAnonymous(checkIsAnonymous(currentUser));
 
       } else {
-        console.warn('⚠️ 无法获取用户，设置 user 为 null');
+        // 匿名登录失败时 user 为 null 是预期路径（signInAnonymously 已报过诊断）
         setUser(null);
         setIsAnonymous(false);
       }
