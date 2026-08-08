@@ -7,8 +7,9 @@ import { getPartitions } from '../services/partitions.js';
 import { supabase } from '../services/supabase.js';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { PartitionManager } from '../components/PartitionManager.jsx';
+import { Pagination } from '../components/Pagination.jsx';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 10;
 
 const SkeletonCard = () => (
   <div className="ym-card" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>
@@ -25,11 +26,10 @@ function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
     <div className="ym-card" onClick={onOpen} style={{ cursor: 'pointer' }}>
       <div className="ym-card-media">
         <span className="ym-card-badge">{String((page - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}</span>
-        {site.image_url ? (
+        <div className="ym-card-media-fallback">{(site.title || '网').trim()[0]}</div>
+        {site.image_url && (
           <img src={site.image_url} alt={site.title} loading="lazy" decoding="async"
             onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-        ) : (
-          <div className="ym-card-media-fallback">{(site.title || '网').trim()[0]}</div>
         )}
       </div>
       <div className="ym-card-body">
@@ -44,24 +44,24 @@ function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
             <span>{site.username}</span>
           </Link>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); if (user) onToggleLike(site.id, site.liked_by_user || false); }}
-              disabled={liking}
-              title={user ? (site.liked_by_user ? '取消点赞' : '点赞') : '登录后点赞'}
-              style={{
-                border: 'none',
-                background: 'none',
-                color: site.liked_by_user ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
-                cursor: liking ? 'not-allowed' : (user ? 'pointer' : 'default'),
-                fontSize: '12px',
-                padding: 0,
-                lineHeight: 1,
-              }}
-            >
-              ❤️ {site.like_count || 0}
-            </button>
-            <span>👁 {site.view_count || 0}</span>
+            <span>❤️ {site.like_count || 0}</span>
+            {user && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onToggleLike(site.id, site.liked_by_user || false); }}
+                disabled={liking}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  color: site.liked_by_user ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
+                  cursor: liking ? 'not-allowed' : 'pointer',
+                  fontSize: '12px',
+                  fontWeight: site.liked_by_user ? '600' : '400',
+                }}
+              >
+                {site.liked_by_user ? '已赞' : '点赞'}
+              </button>
+            )}
           </span>
         </div>
       </div>
@@ -85,6 +85,7 @@ export function HomePage() {
   const [totalItems, setTotalItems] = useState(0);
   const likedRefs = useRef({});
   const likingRefs = useRef({});
+  const listTopRef = useRef(null);
 
   const partitionId = searchParams.get('partition') || 'all';
   const activePartition = partitions.find((p) => p.id === partitionId) || null;
@@ -150,7 +151,7 @@ export function HomePage() {
   }, [searchParams, user, partitionsLoaded, activeType]);
 
   const handleLikeToggle = async (websiteId, currentLiked) => {
-    if (!user || isAnonymous || likingRefs.current[websiteId]) return;
+    if (!user || likingRefs.current[websiteId]) return;
     const newLiked = !currentLiked;
     setWebsites((prev) =>
       prev.map((site) =>
@@ -191,26 +192,12 @@ export function HomePage() {
     const params = { page: String(newPage) };
     if (partitionId !== 'all') params.partition = partitionId;
     setSearchParams(params);
-    window.scrollTo(0, 0);
-  };
-
-  const getPaginationRange = () => {
-    const total = totalPages;
-    const range = [];
-    const rangeWithDots = [];
-    for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= currentPage - 2 && i <= currentPage + 2)) range.push(i);
-    }
-    let l;
-    range.forEach((i) => {
-      if (l) {
-        if (i - l === 2) rangeWithDots.push(l + 1);
-        else if (i - l !== 1) rangeWithDots.push('...');
-      }
-      rangeWithDots.push(i);
-      l = i;
+    window.requestAnimationFrame(() => {
+      listTopRef.current?.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+      });
     });
-    return rangeWithDots;
   };
 
   if (authLoading) {
@@ -218,75 +205,38 @@ export function HomePage() {
   }
 
   return (
-    <div>
+    <div className="ym-home-page">
       <HighRatedCarousel />
 
-      <div style={{ display: 'grid', gap: '12px', marginBottom: '8px' }}>
+      <div className="ym-home-feature-grid">
         <Link
           to="/ideas"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            flexWrap: 'wrap',
-            padding: '16px 20px',
-            borderRadius: 'var(--ym-radius-md)',
-            backgroundColor: 'var(--ym-bg-card)',
-            border: '1px solid var(--ym-border)',
-            textDecoration: 'none',
-            transition: 'all var(--ym-transition)',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--ym-border-strong)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--ym-border)'; e.currentTarget.style.boxShadow = 'none'; }}
+          className="ym-home-feature ym-glass-panel"
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '28px' }}>💡</span>
+          <div className="ym-home-feature-copy">
             <div>
-              <div style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)' }}>想法集中营</div>
-              <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>把脑洞说出来：点赞、收藏、讨论，被看中的想法会变成作品</div>
+              <strong>想法集中营</strong>
+              <p>把脑洞说出来：点赞、收藏、讨论，被看中的想法会变成作品</p>
             </div>
           </div>
-          <span style={{ padding: '6px 16px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', fontSize: '13px', fontWeight: '500' }}>去逛逛 →</span>
+          <span className="ym-btn ym-btn-primary ym-btn-sm">去逛逛</span>
         </Link>
 
         <Link
           to="/discover"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            flexWrap: 'wrap',
-            textDecoration: 'none',
-            padding: '16px 20px',
-            backgroundColor: 'var(--ym-bg-card)',
-            border: '1px solid var(--ym-border)',
-            borderRadius: 'var(--ym-radius-md)',
-            transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--ym-accent)';
-            e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--ym-border)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
+          className="ym-home-feature ym-glass-panel"
         >
           <div>
-            <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '4px' }}>
-              ✨ 作品发现
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}>
+            <strong>作品发现</strong>
+            <p>
               本周新锐 · 编辑精选 · 小众宝藏 · 零评论作品 · 每日随机……不只按点赞数推荐
-            </div>
+            </p>
           </div>
-          <span style={{ color: 'var(--ym-accent)', fontSize: '14px', whiteSpace: 'nowrap' }}>去看看 →</span>
+          <span className="ym-btn ym-btn-sm">去看看</span>
         </Link>
       </div>
 
-      <div className="ym-flex-between" style={{ marginBottom: '8px' }}>
+      <div ref={listTopRef} className="ym-flex-between ym-list-anchor" style={{ marginBottom: '8px' }}>
         <h2 className="ym-section-title" style={{ margin: '24px 0 12px' }}>全部作品</h2>
         {isLoggedIn && (
           <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={() => setShowPartitionManager(true)}>
@@ -347,35 +297,7 @@ export function HomePage() {
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '28px', flexWrap: 'wrap' }}>
-              <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)}>
-                上一页
-              </button>
-              {getPaginationRange().map((item, idx) =>
-                item === '...' ? (
-                  <span key={`dots-${idx}`} style={{ color: 'var(--ym-text-muted)', padding: '0 4px' }}>…</span>
-                ) : (
-                  <button
-                    key={item}
-                    type="button"
-                    className={'ym-btn ym-btn-sm' + (item === currentPage ? ' ym-btn-primary' : ' ym-btn-ghost')}
-                    disabled={item === currentPage}
-                    onClick={() => handlePageChange(item)}
-                  >
-                    {item}
-                  </button>
-                )
-              )}
-              <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>
-                下一页
-              </button>
-            </div>
-          )}
-
-          <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '13px', color: 'var(--ym-text-muted)' }}>
-            共 {totalItems} 个作品，第 {currentPage}/{totalPages} 页
-          </div>
+          <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} itemLabel="个作品" onPageChange={handlePageChange} />
         </>
       )}
 

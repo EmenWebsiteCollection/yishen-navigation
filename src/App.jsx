@@ -1,6 +1,6 @@
 // src/App.jsx
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth.js';
 import { HomePage } from './pages/HomePage.jsx';
 import { CreateWebsitePage } from './pages/CreateWebsitePage.jsx';
@@ -40,7 +40,48 @@ function App() {
       <BackToTop />
       <YiliMascot />
       <AppShell>
-        <Routes>
+        <AnimatedRoutes />
+      </AppShell>
+    </>
+  );
+}
+
+const ROUTE_ORDER = ['/', '/ideas', '/discover', '/about', '/changelog', '/contact'];
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  const [displayLocation, setDisplayLocation] = useState(location);
+  const [phase, setPhase] = useState('is-entering');
+  const [direction, setDirection] = useState(1);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (location.pathname === displayLocation.pathname) {
+      setDisplayLocation(location);
+      return undefined;
+    }
+
+    const currentIndex = ROUTE_ORDER.indexOf(displayLocation.pathname);
+    const nextIndex = ROUTE_ORDER.indexOf(location.pathname);
+    setDirection(currentIndex >= 0 && nextIndex >= 0 && nextIndex < currentIndex ? -1 : 1);
+    setPhase('is-exiting');
+    window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      setDisplayLocation(location);
+      setPhase('is-entering');
+    }, 120);
+    return () => window.clearTimeout(timerRef.current);
+  }, [location, displayLocation.pathname]);
+
+  return (
+    <div
+      className={`ym-route-stage ${phase}`}
+      style={{
+        '--ym-route-enter-offset': `${direction * 10}px`,
+        '--ym-route-exit-offset': `${direction * -5}px`,
+      }}
+    >
+      <Routes location={displayLocation}>
           <Route path="/" element={<HomePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/website/:id" element={<WebsiteDetailPage />} />
@@ -64,9 +105,8 @@ function App() {
           <Route path="/changelog" element={<ChangelogPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AppShell>
-    </>
+      </Routes>
+    </div>
   );
 }
 
