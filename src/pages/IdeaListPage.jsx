@@ -72,7 +72,7 @@ export function IdeaListPage() {
       <div className="ym-page-container">
         <PageHero
           emoji="光"
-          title="想法集中营"
+          title="灵感"
           subtitle="把脑洞说出来：点赞、收藏、讨论，被看中的想法会变成作品"
         />
 

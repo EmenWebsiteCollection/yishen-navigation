@@ -1,5 +1,5 @@
 // src/services/ideas.js
-// Issue #12「想法集中营」：想法发布 / 投票(一人一票) / 收藏(=关注) / 评论 /
+// Issue #12「灵感」：想法发布 / 投票(一人一票) / 收藏(=关注) / 评论 /
 // 进展时间线 / 相似想法提示 / 管理员合并 / 想法→作品孵化闭环
 import { supabase } from './supabase.js';
 import { normalizeQuery, escapeLike } from './search.js';

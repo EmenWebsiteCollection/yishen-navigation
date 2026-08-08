@@ -453,7 +453,7 @@ export function IdeaDetailPage() {
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
         <div style={{ maxWidth: '560px', margin: '60px auto', padding: '32px 28px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
           <p style={{ color: 'var(--ym-danger)' }}>{error || '想法不存在'}</p>
-          <Link to="/ideas" style={{ color: 'var(--ym-accent)', fontSize: '14px', textDecoration: 'none' }}>← 返回想法集中营</Link>
+          <Link to="/ideas" style={{ color: 'var(--ym-accent)', fontSize: '14px', textDecoration: 'none' }}>← 返回灵感</Link>
         </div>
       </div>
     );
@@ -466,7 +466,7 @@ export function IdeaDetailPage() {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 20px 60px' }}>
         <div style={{ marginTop: '32px', marginBottom: '12px' }}>
-          <Link to="/ideas" style={{ fontSize: '14px', color: 'var(--ym-text-secondary)', textDecoration: 'none' }}>← 返回想法集中营</Link>
+          <Link to="/ideas" style={{ fontSize: '14px', color: 'var(--ym-text-secondary)', textDecoration: 'none' }}>← 返回灵感</Link>
         </div>
 
         {/* 主卡片 */}

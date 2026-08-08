@@ -8,7 +8,7 @@ import { getProfile } from '../services/users.js';
 
 const NAV_LINKS = [
   { to: '/', label: '首页' },
-  { to: '/ideas', label: '想法集中营' },
+  { to: '/ideas', label: '灵感' },
   { to: '/discover', label: '发现' },
   { to: '/about', label: '关于' },
   { to: '/changelog', label: '更新记录' },
