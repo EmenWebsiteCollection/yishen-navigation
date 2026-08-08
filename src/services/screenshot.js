@@ -1,7 +1,9 @@
 ﻿// src/services/screenshot.js
 import { supabase } from './supabase.js';
 
-// 自动截图接口（Microlink 免费接口，无需 API Key，支持 CORS）
+// 截图代理接口（Netlify Function，服务端转发 Microlink，隐藏客户端直连）
+const SCREENSHOT_PROXY_URL = '/.netlify/functions/screenshot';
+// 降级直连地址（代理不可用时才使用）
 const SCREENSHOT_API_URL =
   import.meta.env.VITE_SCREENSHOT_API_URL || 'https://api.microlink.io/';
 
@@ -40,15 +42,32 @@ export const fetchWebsiteScreenshot = async (url, userId = null, retries = 2) =>
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 16000);
-      const res = await fetch(`${SCREENSHOT_API_URL}?${params.toString()}`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        console.warn(`截图请求失败 (尝试 ${attempt + 1}/${retries}): HTTP ${res.status}`);
-        continue;
+      // 优先走 Netlify Function 代理（隐藏第三方直连）；代理不可用时降级直连
+      let res = null;
+      let proxyTried = false;
+      try {
+        res = await fetch(`${SCREENSHOT_PROXY_URL}?${params.toString()}`, { signal: controller.signal });
+        proxyTried = true;
+      } catch (proxyErr) {
+        console.warn('截图代理不可用，降级直连:', proxyErr.message);
       }
+      if (!res || !res.ok) {
+        clearTimeout(timeoutId);
+        if (proxyTried && res) {
+          console.warn(`截图代理失败 (尝试 ${attempt + 1}/${retries}): HTTP ${res.status}`);
+        }
+        // 降级直连 Microlink
+        const directRes = await fetch(`${SCREENSHOT_API_URL}?${params.toString()}`, {
+          signal: AbortSignal.timeout(16000),
+        });
+        if (!directRes.ok) {
+          console.warn(`截图直连失败 (尝试 ${attempt + 1}/${retries}): HTTP ${directRes.status}`);
+          continue;
+        }
+        res = directRes;
+      }
+      clearTimeout(timeoutId);
 
       const json = await res.json();
       if (json.status !== 'success' || !json.data?.screenshot?.url) {

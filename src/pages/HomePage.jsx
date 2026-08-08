@@ -150,7 +150,7 @@ export function HomePage() {
   }, [searchParams, user, partitionsLoaded, activeType]);
 
   const handleLikeToggle = async (websiteId, currentLiked) => {
-    if (!user || likingRefs.current[websiteId]) return;
+    if (!user || isAnonymous || likingRefs.current[websiteId]) return;
     const newLiked = !currentLiked;
     setWebsites((prev) =>
       prev.map((site) =>
