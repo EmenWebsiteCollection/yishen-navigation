@@ -1434,6 +1434,23 @@
   font-size: 13px;
   cursor: pointer;
 }
+
+[data-theme="macos"] .ym-pagination-custom-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-theme="macos"] .ym-pagination-custom-size input {
+  width: 54px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--ym-glass-edge-soft);
+  background-color: rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha));
+  color: var(--ym-text-primary);
+  font-size: 13px;
+  text-align: center;
+}
 /* Footer and floating controls */
 [data-theme="macos"] .ym-site-footer {
 

@@ -6,7 +6,8 @@
 
 // 静态回退列表（与 scripts/fetch-contributors.mjs 及 Netlify 函数的 ROLES 对应）
 const STATIC_CONTRIBUTORS = [
-  { name: 'JosiahBristow', github: 'JosiahBristow', role: '项目管理 / 核心架构', contributions: 0 },
+  { name: 'xiuerfanhhh-ship-it', github: 'xiuerfanhhh-ship-it', role: '项目管理 / 核心架构', contributions: 0 },
+  { name: 'JosiahBristow', github: 'JosiahBristow', role: '网站功能开发', contributions: 0 },
   { name: 'BobHieuro', github: 'BobHieuro', role: '功能开发 / 数据库', contributions: 0 },
   { name: 'Raicco-Raydd', github: 'Raicco-Raydd', role: '前端 UI / 交互', contributions: 0 },
   { name: 'pengyudeng92-dev', github: 'pengyudeng92-dev', role: '功能开发', contributions: 0 },

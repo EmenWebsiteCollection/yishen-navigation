@@ -13,7 +13,8 @@ const TOKEN = process.env.GITHUB_TOKEN || '';
 
 // 各贡献者的职责说明（按 GitHub 用户名匹配，仅用于展示；与 Netlify 函数里的 ROLES 保持一致）
 const ROLES = {
-  'JosiahBristow': '项目管理 / 核心架构',
+  'xiuerfanhhh-ship-it': '项目管理 / 核心架构',
+  'JosiahBristow': '网站功能开发',
   'BobHieuro': '功能开发 / 数据库',
   'Raicco-Raydd': '前端 UI / 交互',
   'pengyudeng92-dev': '功能开发',

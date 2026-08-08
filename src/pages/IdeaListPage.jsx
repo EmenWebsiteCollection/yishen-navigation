@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHero } from '../components/PageHero.jsx';
 import { IdeaCard } from '../components/IdeaCard.jsx';
-import { Pagination } from '../components/Pagination.jsx';
+import { Pagination, PAGE_SIZE_MAX } from '../components/Pagination.jsx';
 import { getIdeas } from '../services/ideas.js';
 import { IDEA_CATEGORIES, IDEA_STATUSES } from '../services/idea-logic.js';
 
@@ -12,7 +12,7 @@ const PAGE_SIZE_KEY = 'ym-page-size';
 function readPageSize() {
   try {
     const saved = parseInt(sessionStorage.getItem(PAGE_SIZE_KEY) || '', 10);
-    return [10, 20, 50].includes(saved) ? saved : PAGE_SIZE_DEFAULT;
+    return Number.isFinite(saved) && saved >= 1 && saved <= PAGE_SIZE_MAX ? saved : PAGE_SIZE_DEFAULT;
   } catch {
     return PAGE_SIZE_DEFAULT;
   }

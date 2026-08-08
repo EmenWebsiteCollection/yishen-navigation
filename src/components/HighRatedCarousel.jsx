@@ -78,7 +78,7 @@ export function HighRatedCarousel() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getTopRatedWorks(8);
+        const data = await getTopRatedWorks(8, { diversify: true });
         if (!cancelled) setSites(data);
       } catch (err) {
         console.warn('加载高分网站失败:', err);

@@ -7,7 +7,7 @@ import { getPartitions } from '../services/partitions.js';
 import { supabase } from '../services/supabase.js';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { PartitionManager } from '../components/PartitionManager.jsx';
-import { Pagination } from '../components/Pagination.jsx';
+import { Pagination, PAGE_SIZE_MAX } from '../components/Pagination.jsx';
 
 const PAGE_SIZE_DEFAULT = 10;
 
@@ -89,7 +89,9 @@ export function HomePage() {
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   // pageSize 也同步到 URL（?size=20），刷新后保持每页数量
   const pageSize = parseInt(searchParams.get('size') || String(PAGE_SIZE_DEFAULT), 10);
-  const normalizedSize = [10, 20, 50].includes(pageSize) ? pageSize : PAGE_SIZE_DEFAULT;
+  const normalizedSize = Number.isFinite(pageSize)
+    ? Math.min(PAGE_SIZE_MAX, Math.max(1, pageSize))
+    : PAGE_SIZE_DEFAULT;
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const likedRefs = useRef({});
@@ -193,6 +195,7 @@ export function HomePage() {
   const handlePartitionClick = (id) => {
     if (id === partitionId) return;
     const params = { page: '1' };
+    if (normalizedSize !== PAGE_SIZE_DEFAULT) params.size = String(normalizedSize);
     if (id !== 'all') params.partition = id;
     setSearchParams(params);
     window.requestAnimationFrame(() => {
@@ -206,6 +209,7 @@ export function HomePage() {
   const handlePageChange = (newPage) => {
     if (newPage === currentPage || newPage < 1 || newPage > totalPages) return;
     const params = { page: String(newPage) };
+    if (normalizedSize !== PAGE_SIZE_DEFAULT) params.size = String(normalizedSize);
     if (partitionId !== 'all') params.partition = partitionId;
     setSearchParams(params);
     window.requestAnimationFrame(() => {

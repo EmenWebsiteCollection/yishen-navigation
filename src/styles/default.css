@@ -704,6 +704,32 @@
   outline-offset: 1px;
 }
 
+.ym-pagination-custom-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ym-pagination-custom-size input {
+  width: 54px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--ym-border);
+  background-color: var(--ym-bg-card);
+  color: var(--ym-text-primary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.ym-pagination-custom-size input:focus {
+  border-color: var(--ym-border-strong);
+  outline: none;
+}
+
+.ym-pagination-custom-size .ym-page-confirm {
+  padding: 4px 10px;
+}
+
 /* ---------- 移动端：新顶栏分区 ---------- */
 @media (max-width: 1080px) {
   .ym-header-links,

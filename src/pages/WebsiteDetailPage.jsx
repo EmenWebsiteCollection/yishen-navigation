@@ -453,7 +453,7 @@ export function WebsiteDetailPage() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getTopRatedWorks(6);
+        const data = await getTopRatedWorks(6, { diversify: true });
         if (!cancelled) setTopRated(data);
       } catch (err) {
         console.warn('加载高分榜单失败:', err);
