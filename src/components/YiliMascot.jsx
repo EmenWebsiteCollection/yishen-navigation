@@ -99,7 +99,7 @@ export function YiliMascot() {
     // 单击：收起冒泡，交给 AI 助手开启对话
     setBubble(null);
     clearTimeout(bubbleTimerRef.current);
-    window.dispatchEvent(new CustomEvent('ym-agent-toggle'));
+    setChatOpen(true);
   };
 
   const mascotStyle = {

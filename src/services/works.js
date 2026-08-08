@@ -544,11 +544,13 @@ export const deleteWork = async (id) => {
 };
 
 // ========== 快捷操作 ==========
+// Issue #50：精选仅管理员可设。走 set_featured RPC（内部 is_admin() 校验），
+// 不再直接 UPDATE works（避免绕过管理员校验 + 005 迁移已列级收回 featured 列权限）。
 export const setWorkFeatured = async (id, featured) => {
-  const { error } = await supabase
-    .from('works')
-    .update({ featured: !!featured })
-    .eq('id', id);
+  const { error } = await supabase.rpc('set_featured', {
+    p_work_id: id,
+    p_featured: !!featured,
+  });
   if (error) throw error;
 };
 

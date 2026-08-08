@@ -222,7 +222,7 @@ export function HomePage() {
         >
           <div className="ym-home-feature-copy">
             <div>
-              <strong>想法集中营</strong>
+              <strong>灵感</strong>
               <p>把脑洞说出来：点赞、收藏、讨论，被看中的想法会变成作品</p>
             </div>
           </div>

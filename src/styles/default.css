@@ -41,18 +41,12 @@
 }
 
 .ym-logo-mark {
-  display: grid;
+  display: block;
   width: 34px;
   height: 34px;
   flex: 0 0 auto;
-  place-items: center;
   border-radius: 8px;
-  background-color: var(--ym-accent);
-  color: var(--ym-accent-text-on);
-  font-family: var(--ym-font-display);
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 1;
+  object-fit: cover;
 }
 
 .ym-logo-name {

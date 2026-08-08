@@ -41,14 +41,25 @@
   animation: tl-spin 4s linear infinite;
 }
 
-/* 中心呼吸节点 */
+/* 中心「神」字：旋转加载 */
 .tl-core {
-  width: 8px;
-  height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--ym-accent, #00ffc8);
-  box-shadow: 0 0 12px var(--ym-accent, rgba(0, 255, 200, 0.9));
-  animation: tl-pulse 1.2s ease-in-out infinite;
+  font-family: var(--ym-font-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ym-accent, #00ffc8);
+  text-shadow: 0 0 12px var(--ym-accent, rgba(0, 255, 200, 0.9));
+  animation: tl-core-spin 1.4s linear infinite;
+}
+
+@keyframes tl-core-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* HUD 四角角标 */
@@ -82,10 +93,6 @@
 
 @keyframes tl-spin {
   to { transform: rotate(360deg); }
-}
-@keyframes tl-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.55; }
 }
 @keyframes tl-blink {
   50% { opacity: 0; }

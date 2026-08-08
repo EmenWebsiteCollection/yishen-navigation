@@ -9,6 +9,7 @@
 //   3. API key 一律放服务端（Netlify 环境变量），前端不接触。
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getRuleReply } from '../services/agentFallback.js';
 
 // 依力口语人设（占位，团队在代理函数里使用）
 export const YILI_PERSONA_PROMPT = '';
@@ -16,20 +17,17 @@ export const YILI_PERSONA_PROMPT = '';
 // AI 代理函数地址（一期留空占位，函数上线后即生效）
 const CHAT_ENDPOINT = '/.netlify/functions/yili-chat';
 
-// 本地降级回复（代理函数不可用时，保证 UI 可演示）
-const FALLBACK_REPLIES = [
-  '唔…我的 AI 大脑还没装好，这句话我接不上 😅 等接入后就能陪你好好聊了。',
-  '现在我只能说几句固定台词，不过很快就能学会聊天啦！',
-  '这个话题我先记下了，等 AI 上线第一时间回答你～',
-];
-const getFallback = () => FALLBACK_REPLIES[Math.floor(Math.random() * FALLBACK_REPLIES.length)];
+// AI 请求超时：10s 内没回就降级到规则版，避免干等
+const AI_TIMEOUT_MS = 10000;
 
 const GREETING = '你好，我是依力～想看点什么？可以直接问我，比如「有什么好玩的网站」。';
 
+// 先试 AI 代理函数，失败/超时则降级为规则版回答（离线模式）
 async function fetchReply(messages) {
-  // 一期：代理函数可能不存在 → 抛错走降级；60s 超时防挂死
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  const query = String(lastUser?.content || '');
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 60000);
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
   try {
     const res = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
@@ -38,7 +36,13 @@ async function fetchReply(messages) {
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`chat endpoint ${res.status}`);
-    return await res.json();
+    const data = await res.json();
+    if (!data.reply) throw new Error('empty reply');
+    return data;
+  } catch (err) {
+    console.warn('依力 AI 不可用，降级到规则版:', err);
+    const rule = await getRuleReply(query);
+    return { reply: rule.text || '唔…依力现在有点状况，稍后再试试？', actions: [], offline: true };
   } finally {
     clearTimeout(timer);
   }
@@ -67,10 +71,18 @@ export function YiliChatPanel({ open, onClose }) {
     setThinking(true);
     try {
       const data = await fetchReply(history);
-      setMessages((m) => [...m, { role: 'yili', content: data.reply, actions: data.actions || [] }]);
+      setMessages((m) => [
+        ...m,
+        {
+          role: 'yili',
+          content: data.reply,
+          actions: data.actions || [],
+          offline: !!data.offline,
+        },
+      ]);
     } catch (err) {
-      console.warn('依力 AI 未就绪，使用本地降级回复:', err);
-      setMessages((m) => [...m, { role: 'yili', content: getFallback(), actions: [] }]);
+      console.warn('依力回复失败:', err);
+      setMessages((m) => [...m, { role: 'yili', content: '唔…依力刚才卡了一下，稍等再试？', actions: [], offline: true }]);
     } finally {
       setThinking(false);
     }
@@ -94,6 +106,11 @@ export function YiliChatPanel({ open, onClose }) {
           <div key={i} className={'ym-chat-msg-wrap' + (m.role === 'user' ? ' user' : ' yili')}>
             <div className={'ym-chat-msg ' + (m.role === 'user' ? 'user' : 'yili')}>
               {m.content}
+              {m.offline && (
+                <span className="ym-chat-offline-tag" title="AI 服务不可用，当前为规则版回答">
+                  离线模式
+                </span>
+              )}
             </div>
             {m.actions && m.actions.length > 0 && (
               <div className="ym-chat-actions">
