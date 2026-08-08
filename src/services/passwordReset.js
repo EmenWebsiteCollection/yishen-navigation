@@ -1,7 +1,20 @@
 // src/services/passwordReset.js
-// 找回密码：调用 Supabase Edge Function（password-reset）
-// 仅用匿名 key 即可调用，邮件/短信密钥都在服务端，不暴露给前端。
-import { supabase } from './supabase.js';
+// 找回密码：调用 Netlify Function（/.netlify/functions/password-reset）
+// 邮件/短信密钥都在服务端（Netlify 环境变量），不暴露给前端。
+// 本地可用 import.meta.env.VITE_PASSWORD_RESET_URL 覆盖端点（如用 netlify dev 时的地址）。
+const ENDPOINT =
+  import.meta.env.VITE_PASSWORD_RESET_URL || '/.netlify/functions/password-reset';
+
+async function post(body) {
+  const res = await fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `请求失败 (${res.status})`);
+  return data;
+}
 
 /**
  * 请求发送验证码
@@ -9,11 +22,7 @@ import { supabase } from './supabase.js';
  * @param {string} contact 邮箱或手机号
  */
 export const requestResetCode = async (contactType, contact) => {
-  const { data, error } = await supabase.functions.invoke('password-reset', {
-    body: { action: 'request', contactType, contact },
-  });
-  if (error) throw error;
-  return data;
+  return post({ action: 'request', contactType, contact });
 };
 
 /**
@@ -24,9 +33,5 @@ export const requestResetCode = async (contactType, contact) => {
  * @param {string} newPassword 新密码（至少 6 位）
  */
 export const verifyResetCode = async (contactType, contact, code, newPassword) => {
-  const { data, error } = await supabase.functions.invoke('password-reset', {
-    body: { action: 'verify', contactType, contact, code, newPassword },
-  });
-  if (error) throw error;
-  return data;
+  return post({ action: 'verify', contactType, contact, code, newPassword });
 };
