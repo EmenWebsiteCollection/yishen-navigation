@@ -1,4 +1,4 @@
-// src/services/comment-logic.js
+﻿// src/services/comment-logic.js
 // Issue #39 P2：结构化评论 + 局部批注纯逻辑（无副作用，Node 直跑可测）
 
 export const FEEDBACK_TYPES = [
@@ -24,6 +24,22 @@ export const CREATOR_FEEDBACK_MODES = [
   { id: 'no_suggestion', label: '暂不接受修改建议' },
 ];
 
+// 反馈处理状态（Issue #11 闭环：作者标记处理进度）
+export const FEEDBACK_STATUS = [
+  { id: 'open', label: '待处理' },
+  { id: 'resolving', label: '处理中' },
+  { id: 'resolved', label: '已处理' },
+  { id: 'ignored', label: '已忽略' },
+];
+
+export const FEEDBACK_STATUS_BY_ID = Object.fromEntries(FEEDBACK_STATUS.map((s) => [s.id, s]));
+export const feedbackStatusLabel = (id) => FEEDBACK_STATUS_BY_ID[id]?.label || '待处理';
+
+export const validateFeedbackStatus = (status) => {
+  if (!status) return 'open';
+  if (!FEEDBACK_STATUS_BY_ID[status]) throw new Error('未知的反馈状态');
+  return status;
+};
 export const validateFeedbackType = (type) => {
   if (!type) return 'appreciate';
   if (!FEEDBACK_BY_ID[type]) throw new Error('未知的反馈类型');
@@ -95,3 +111,4 @@ export const formatTime = (sec) => {
   const r = s % 60;
   return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
 };
+
