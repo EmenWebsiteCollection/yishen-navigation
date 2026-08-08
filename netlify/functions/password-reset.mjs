@@ -5,10 +5,13 @@
 //
 // 需配置的环境变量（Netlify 后台 Site settings → Environment variables）：
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-//   EMAIL_PROVIDER(resend|sendgrid|generic), EMAIL_API_KEY, EMAIL_FROM
-//   （可选）EMAIL_API_URL —— 当 EMAIL_PROVIDER=generic 时指向你的转发接口
+//   EMAIL_PROVIDER：resend | sendgrid | aliyun | generic
+//   resend/sendgrid/generic 用：EMAIL_API_KEY, EMAIL_FROM
+//     （generic 另需 EMAIL_API_URL 指向你的转发接口）
+//   aliyun 用：ALIYUN_ACCESS_KEY_ID, ALIYUN_ACCESS_KEY_SECRET, EMAIL_FROM(发信地址)
+//     （可选）ALIYUN_REGION_ID，默认 cn-hangzhou
 import { createClient } from '@supabase/supabase-js';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
@@ -29,6 +32,14 @@ const MAX_ATTEMPTS = 5;
 
 function sha256(text) {
   return createHash('sha256').update(text).digest('hex');
+}
+
+// 阿里云 RPC 签名专用编码（RFC3986 + 阿里云特殊处理）
+function aliyunEncode(str) {
+  return encodeURIComponent(str)
+    .replace(/\+/g, '%20')
+    .replace(/\*/g, '%2A')
+    .replace(/%7E/g, '~');
 }
 
 function genCode() {
@@ -68,6 +79,50 @@ async function sendCodeEmail(email, code) {
       }),
     });
     if (!res.ok) throw new Error(`邮件发送失败: ${res.status} ${await res.text()}`);
+  } else if (provider === 'aliyun') {
+    const akId = process.env.ALIYUN_ACCESS_KEY_ID;
+    const akSecret = process.env.ALIYUN_ACCESS_KEY_SECRET;
+    const accountName = from; // 发信地址（DirectMail 控制台验证过的地址）
+    if (!akId || !akSecret || !accountName) {
+      throw new Error('阿里云邮件未配置（ALIYUN_ACCESS_KEY_ID / ALIYUN_ACCESS_KEY_SECRET / EMAIL_FROM）');
+    }
+    const region = process.env.ALIYUN_REGION_ID || 'cn-hangzhou';
+    const params = {
+      Action: 'SingleSendMail',
+      Version: '2015-11-23',
+      AccessKeyId: akId,
+      RegionId: region,
+      Format: 'JSON',
+      SignatureMethod: 'HMAC-SHA1',
+      SignatureVersion: '1.0',
+      SignatureNonce: randomUUID(),
+      Timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+      AccountName: accountName,
+      ToAddress: email,
+      Subject: subject,
+      HtmlBody: html,
+      AddressType: '1',
+      ReplyToAddress: 'false',
+      FromAlias: '依神网站汇总',
+    };
+    const sortedKeys = Object.keys(params).sort();
+    const canonical = sortedKeys
+      .map((k) => `${aliyunEncode(k)}=${aliyunEncode(params[k])}`)
+      .join('&');
+    const stringToSign = `GET&${aliyunEncode('/')}&${aliyunEncode(canonical)}`;
+    const signature = createHmac('sha1', akSecret + '&')
+      .update(stringToSign, 'utf8')
+      .digest('base64');
+    const allParams = { ...params, Signature: signature };
+    const query = Object.keys(allParams)
+      .sort()
+      .map((k) => `${aliyunEncode(k)}=${aliyunEncode(allParams[k])}`)
+      .join('&');
+    const endpoint = `https://dm.aliyuncs.com/?${query}`;
+    const res = await fetch(endpoint, { method: 'GET' });
+    if (!res.ok) throw new Error(`阿里云邮件发送失败: ${res.status} ${await res.text()}`);
+    const data = await res.json().catch(() => ({}));
+    if (data.Code) throw new Error(`阿里云邮件发送失败: ${data.Code} ${data.Message || ''}`);
   } else {
     // generic：POST 到你自己的转发接口（body: { to, subject, html, apiKey }）
     const url = process.env.EMAIL_API_URL;
