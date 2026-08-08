@@ -28,7 +28,7 @@ export async function embedText(text, apiKey, { dimension = 1024 } = {}) {
 }
 
 // 混合检索：关键词（tokenizeKeyword）+ 向量（embedText）→ RPC RRF 融合
-export async function getYiliSamples(query, { supabase, limit = 5, apiKey } = {}) {
+export async function getYiliSamples(query, { supabase, limit = 6, apiKey } = {}) {
   if (!query || !String(query).trim()) return { samples: [], error: null };
   const tokens = tokenizeKeyword(query);
   let embedding = null;
@@ -51,4 +51,5 @@ export async function getStyleBlock(query, { supabase, limit = 5, apiKey } = {})
   const { samples, error } = await getYiliSamples(query, { supabase, limit, apiKey });
   return { block: buildStyleBlock(samples), samples, error };
 }
+
 

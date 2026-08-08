@@ -478,7 +478,7 @@ async function runAgent(messages, { persona = '', userId = null, idToken = null 
       try {
         const { block } = await getYiliSamples(query, {
           supabase,
-          limit: 5,
+          limit: 6,
           apiKey: ENV.DASHSCOPE_API_KEY,
         });
         styleBlock = block;
@@ -650,6 +650,7 @@ export default async (req) => {
     return json({ reply: fb.reply, actions: fb.actions }, 200);
   }
 };
+
 
 
 

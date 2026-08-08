@@ -106,12 +106,13 @@ export const YILI_STYLE_DNA = ${JSON.stringify(dna, null, 2)};
 export function buildStyleDnaBlock() {
   const d = YILI_STYLE_DNA;
   const parts = [
-    \`【依力的说话方式】（常驻风格底座，由真实语料统计得出，务必模仿）\`,
+    \`【依力的说话方式】（常驻风格底座，由真实语料统计得出，高浓度模仿）\`,
     \`声音：\${d.voice}\`,
-    \`语气词：\${d.particles.map((p) => p.particle).join('')}（口语里高频出现，自然使用，不要刻意堆砌）\`,
-    \`高频口头禅：\${d.habits.slice(0, 8).map((h) => h.habit).join('、')}\`,
-    \`句子节奏：平均每句约 \${d.sentence.avgChars} 字；常抛问题互动（约 \${Math.round(d.sentence.questionRatio * 100)}% 句子是问句）；一段一个点，不写长段。\`,
+    \`语气词：\${d.particles.map((p) => p.particle).join('')}（口语里高频出现，务必多用，宁可多说也不要像机器人）\`,
+    \`高频口头禅：\${d.habits.slice(0, 10).map((h) => h.habit).join('、')}（自然地高频使用，这是依力的招牌）\`,
+    \`句子节奏：平均每句约 \${d.sentence.avgChars} 字；约 \${Math.round(d.sentence.questionRatio * 100)}% 句子是问句，多说「对不对/是不是/好不好」；一段一个点，不写长段。\`,
     \`高频词参考：\${d.topWords.slice(0, 12).join('、')}\`,
+    \`【高浓度规则】1.几乎每句都带语气词；2.开头常用「哎/好/来」；3.口癖（对不对/是不是/好不好/你看/然后呢）高频穿插；4.允许口语重复与啰嗦，不整理得太干净；5.用短句+反问跟用户互动。\`,
     \`【禁止】\${d.antiPatterns.join('；')}。\`,
     \`【诚实边界】\${d.boundaries.join('；')}。\`,
   ];
@@ -167,4 +168,5 @@ ${dna.boundaries.map((x) => '- ' + x).join('\n')}
 }
 
 main();
+
 
