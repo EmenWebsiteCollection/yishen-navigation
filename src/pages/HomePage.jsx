@@ -21,7 +21,8 @@ const SkeletonCard = () => (
   </div>
 );
 
-function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onOpen }) {
+function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onRequireLogin, onOpen }) {
+  const isLiked = site.liked_by_user || false;
   return (
     <div className="ym-card ym-stagger-item" onClick={onOpen} style={{ '--ym-stagger-index': index % 10, cursor: 'pointer' }}>
       <div className="ym-card-media">
@@ -44,24 +45,29 @@ function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onO
             <span>{site.username}</span>
           </Link>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-            <span>❤️ {site.like_count || 0}</span>
-            {user && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onToggleLike(site.id, site.liked_by_user || false); }}
-                disabled={liking}
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  color: site.liked_by_user ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
-                  cursor: liking ? 'not-allowed' : 'pointer',
-                  fontSize: '12px',
-                  fontWeight: site.liked_by_user ? '600' : '400',
-                }}
-              >
-                {site.liked_by_user ? '已赞' : '点赞'}
-              </button>
-            )}
+            <span>👁 {site.view_count || 0}</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!user) {
+                  onRequireLogin();
+                  return;
+                }
+                onToggleLike(site.id, isLiked);
+              }}
+              disabled={liking}
+              style={{
+                border: 'none',
+                background: 'none',
+                color: isLiked ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
+                cursor: liking ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: isLiked ? '600' : '400',
+              }}
+            >
+              {isLiked ? '♥' : '♡'} {site.like_count || 0}
+            </button>
           </span>
         </div>
       </div>
@@ -313,6 +319,7 @@ export function HomePage() {
                 user={isLoggedIn ? user : null}
                 liking={likingRefs.current[site.id]}
                 onToggleLike={handleLikeToggle}
+                onRequireLogin={() => navigate('/login')}
                 onOpen={() => navigate(`/website/${site.id}`)}
               />
             ))}
