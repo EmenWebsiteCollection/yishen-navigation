@@ -17,6 +17,7 @@ import {
   createComment,
   deleteComment,
 } from '../services/comments.js';
+import { getIdeaById } from '../services/ideas.js';
 import '../styles/global.css';
 
 // ---------- 辅助组件 ----------
@@ -259,6 +260,9 @@ export function WebsiteDetailPage() {
 
   // 回复状态
   const [replyingTo, setReplyingTo] = useState(null);
+
+  // 孵化源头（作品 source_idea_id 非空时显示）
+  const [sourceIdea, setSourceIdea] = useState(null);
   const [replyContent, setReplyContent] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
 
@@ -481,6 +485,16 @@ export function WebsiteDetailPage() {
     return roots;
   };
 
+  useEffect(() => {
+    if (!website?.source_idea_id) {
+      setSourceIdea(null);
+      return;
+    }
+    getIdeaById(website.source_idea_id)
+      .then((idea) => setSourceIdea(idea))
+      .catch(() => setSourceIdea(null));
+  }, [website?.source_idea_id]);
+
   const commentTree = buildCommentTree(comments);
 
   // 递归渲染评论（无限深度，通过缩进控制，但所有回复输入框尺寸一致）
@@ -623,6 +637,15 @@ export function WebsiteDetailPage() {
         boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
       }}
     >
+      {sourceIdea && (
+        <Link
+          to={`/ideas/${sourceIdea.id}`}
+          style={{ display: 'block', textDecoration: 'none', marginBottom: '16px', padding: '10px 14px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-success-bg)', color: 'var(--ym-success)', fontSize: '14px' }}
+        >
+          💡 孵化自想法「{sourceIdea.title}」→ 查看想法
+        </Link>
+      )}
+
       {/* ---------- 顶部：面包屑 + 访问按钮 ---------- */}
       <div
         style={{
