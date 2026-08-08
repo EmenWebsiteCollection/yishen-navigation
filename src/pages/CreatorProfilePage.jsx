@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getProfile, getCreatorStats } from '../services/users.js';
 import { getWorksByUser, workTypeLabel } from '../services/works.js';
+import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
 const DEFAULT_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"%3E%3Crect width="128" height="128" fill="%23EDE3CC"/%3E%3Ctext x="64" y="78" font-family="Arial" font-size="44" fill="%239C6B2E" text-anchor="middle"%3E?%3C/text%3E%3C/svg%3E';
@@ -94,6 +95,7 @@ export function CreatorProfilePage() {
         getCreatorStats(id),
         getWorksByUser(id, { currentUserId: user?.id, pageSize: 100 }),
       ]);
+      getPartitions().catch(() => {});
       setStats(s);
       setWorks(list);
     } catch (err) {

@@ -20,6 +20,7 @@ import {
 } from '../services/works.js';
 import { getProfile, updateProfile, getCreatorStats } from '../services/users.js';
 import { uploadAvatar, uploadCover, validateImageFile } from '../services/screenshot.js';
+import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
 const TABS = [
@@ -161,6 +162,7 @@ export function ProfilePage() {
     loadGroups();
     loadStats();
     loadProfile();
+    getPartitions().catch(() => {});
   }, [userId, loadWorks, loadGroups, loadStats, loadProfile]);
 
   useEffect(() => {

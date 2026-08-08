@@ -224,6 +224,14 @@ select {
     flex-basis: 150px;
   }
 
+  .ym-carousel-slide {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ym-carousel-slide > div:first-child {
+    min-height: 200px !important;
+  }
+
   .ym-space-cover {
     height: 140px;
   }

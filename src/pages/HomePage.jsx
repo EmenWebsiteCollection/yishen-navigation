@@ -1,10 +1,12 @@
-// 首页：高分榜单 + B 站式网站卡片信息流。
+// 首页：高分轮播 + 可配置分区 Tab + B 站式网站卡片信息流。
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getWorks, likeWork, unlikeWork } from '../services/works.js';
+import { getPartitions } from '../services/partitions.js';
 import { supabase } from '../services/supabase.js';
-import { TopRankStrip } from '../components/TopRankStrip.jsx';
+import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
+import { PartitionManager } from '../components/PartitionManager.jsx';
 
 const PAGE_SIZE = 10;
 
@@ -20,15 +22,9 @@ const SkeletonCard = () => (
 
 function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
   return (
-    <div
-      className="ym-card"
-      onClick={onOpen}
-      style={{ cursor: 'pointer' }}
-    >
+    <div className="ym-card" onClick={onOpen} style={{ cursor: 'pointer' }}>
       <div className="ym-card-media">
-        <span className="ym-card-badge">
-          {String((page - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}
-        </span>
+        <span className="ym-card-badge">{String((page - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}</span>
         {site.image_url ? (
           <img src={site.image_url} alt={site.title} loading="lazy" decoding="async"
             onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -39,12 +35,7 @@ function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
       <div className="ym-card-body">
         <div className="ym-card-title">{site.title}</div>
         <div className="ym-card-meta">
-          <Link
-            to={`/user/${site.user_id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="ym-card-author"
-            style={{ textDecoration: 'none' }}
-          >
+          <Link to={`/user/${site.user_id}`} onClick={(e) => e.stopPropagation()} className="ym-card-author" style={{ textDecoration: 'none' }}>
             {site.avatar_url ? (
               <img className="ym-avatar ym-avatar-sm" src={site.avatar_url} alt="" loading="lazy" decoding="async" />
             ) : (
@@ -57,10 +48,7 @@ function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
             {user && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleLike(site.id, site.liked_by_user || false);
-                }}
+                onClick={(e) => { e.stopPropagation(); onToggleLike(site.id, site.liked_by_user || false); }}
                 disabled={liking}
                 style={{
                   border: 'none',
@@ -88,6 +76,9 @@ export function HomePage() {
   const [websites, setWebsites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [partitions, setPartitions] = useState([]);
+  const [partitionsLoaded, setPartitionsLoaded] = useState(false);
+  const [showPartitionManager, setShowPartitionManager] = useState(false);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const [totalPages, setTotalPages] = useState(1);
@@ -95,11 +86,28 @@ export function HomePage() {
   const likedRefs = useRef({});
   const likingRefs = useRef({});
 
-  const loadWebsites = async (page) => {
+  const partitionId = searchParams.get('partition') || 'all';
+  const activePartition = partitions.find((p) => p.id === partitionId) || null;
+  const activeType = activePartition ? activePartition.work_type : null;
+  const isLoggedIn = Boolean(user && !isAnonymous);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const list = await getPartitions();
+      if (!cancelled) {
+        setPartitions(list);
+        setPartitionsLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const loadWebsites = async (page, type) => {
     try {
       setLoading(true);
       setError(null);
-      const { works: data, total } = await getWorks({ page, pageSize: PAGE_SIZE });
+      const { works: data, total } = await getWorks({ page, pageSize: PAGE_SIZE, type });
       setTotalItems(total);
       setTotalPages(Math.ceil(total / PAGE_SIZE) || 1);
 
@@ -136,9 +144,10 @@ export function HomePage() {
   };
 
   useEffect(() => {
+    if (!partitionsLoaded) return;
     const page = parseInt(searchParams.get('page') || '1', 10);
-    if (page > 0) loadWebsites(page);
-  }, [searchParams, user]);
+    if (page > 0) loadWebsites(page, activeType);
+  }, [searchParams, user, partitionsLoaded, activeType]);
 
   const handleLikeToggle = async (websiteId, currentLiked) => {
     if (!user || likingRefs.current[websiteId]) return;
@@ -146,17 +155,12 @@ export function HomePage() {
     setWebsites((prev) =>
       prev.map((site) =>
         site.id === websiteId
-          ? {
-              ...site,
-              like_count: newLiked ? site.like_count + 1 : site.like_count - 1,
-              liked_by_user: newLiked,
-            }
+          ? { ...site, like_count: newLiked ? site.like_count + 1 : site.like_count - 1, liked_by_user: newLiked }
           : site
       )
     );
     likedRefs.current[websiteId] = newLiked;
     likingRefs.current[websiteId] = true;
-
     try {
       if (newLiked) await likeWork(websiteId, user.id);
       else await unlikeWork(websiteId, user.id);
@@ -165,11 +169,7 @@ export function HomePage() {
       setWebsites((prev) =>
         prev.map((site) =>
           site.id === websiteId
-            ? {
-                ...site,
-                like_count: currentLiked ? site.like_count + 1 : site.like_count - 1,
-                liked_by_user: currentLiked,
-              }
+            ? { ...site, like_count: currentLiked ? site.like_count + 1 : site.like_count - 1, liked_by_user: currentLiked }
             : site
         )
       );
@@ -180,9 +180,17 @@ export function HomePage() {
     }
   };
 
+  const handlePartitionClick = (id) => {
+    const params = { page: '1' };
+    if (id !== 'all') params.partition = id;
+    setSearchParams(params);
+  };
+
   const handlePageChange = (newPage) => {
     if (newPage === currentPage || newPage < 1 || newPage > totalPages) return;
-    setSearchParams({ page: newPage });
+    const params = { page: String(newPage) };
+    if (partitionId !== 'all') params.partition = partitionId;
+    setSearchParams(params);
     window.scrollTo(0, 0);
   };
 
@@ -211,7 +219,40 @@ export function HomePage() {
 
   return (
     <div>
-      <TopRankStrip />
+      <HighRatedCarousel />
+
+      <div className="ym-flex-between" style={{ marginBottom: '8px' }}>
+        <h2 className="ym-section-title" style={{ margin: '24px 0 12px' }}>全部作品</h2>
+        {isLoggedIn && (
+          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={() => setShowPartitionManager(true)}>
+            管理分区
+          </button>
+        )}
+      </div>
+
+      <div className="ym-tabs" role="tablist" aria-label="作品分区">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={partitionId === 'all'}
+          className={'ym-tab' + (partitionId === 'all' ? ' active' : '')}
+          onClick={() => handlePartitionClick('all')}
+        >
+          全部
+        </button>
+        {partitions.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            role="tab"
+            aria-selected={partitionId === p.id}
+            className={'ym-tab' + (partitionId === p.id ? ' active' : '')}
+            onClick={() => handlePartitionClick(p.id)}
+          >
+            {p.name}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <div className="ym-grid">
@@ -221,8 +262,8 @@ export function HomePage() {
         <div className="ym-alert ym-alert-error">{error}</div>
       ) : websites.length === 0 ? (
         <div className="ym-empty">
-          <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '6px' }}>这里还没有网站</div>
-          <div>点击右上角提交第一个网站</div>
+          <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '6px' }}>这个分区还没有作品</div>
+          <div>点击右上角提交第一个作品</div>
         </div>
       ) : (
         <>
@@ -233,7 +274,7 @@ export function HomePage() {
                 site={site}
                 index={index}
                 page={currentPage}
-                user={user && !isAnonymous ? user : null}
+                user={isLoggedIn ? user : null}
                 liking={likingRefs.current[site.id]}
                 onToggleLike={handleLikeToggle}
                 onOpen={() => navigate(`/website/${site.id}`)}
@@ -268,10 +309,20 @@ export function HomePage() {
           )}
 
           <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '13px', color: 'var(--ym-text-muted)' }}>
-            共 {totalItems} 个网站，第 {currentPage}/{totalPages} 页
+            共 {totalItems} 个作品，第 {currentPage}/{totalPages} 页
           </div>
         </>
       )}
+
+      <PartitionManager
+        open={showPartitionManager}
+        onClose={() => setShowPartitionManager(false)}
+        onChanged={() => {
+          getPartitions().then(setPartitions);
+          const page = parseInt(searchParams.get('page') || '1', 10);
+          loadWebsites(page, activeType);
+        }}
+      />
     </div>
   );
 }

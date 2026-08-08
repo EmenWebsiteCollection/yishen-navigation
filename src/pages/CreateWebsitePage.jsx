@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { createWork, listGroups, WORK_TYPES, WORK_STATUS } from '../services/works.js';
+import { createWork, listGroups, WORK_STATUS, workTypeLabel } from '../services/works.js';
+import { getPartitions } from '../services/partitions.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
@@ -42,6 +43,7 @@ const [videoUrl, setVideoUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [groups, setGroups] = useState([]);
+  const [partitions, setPartitions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -51,6 +53,7 @@ const [videoUrl, setVideoUrl] = useState('');
     listGroups(user.id)
       .then(setGroups)
       .catch((err) => console.warn('加载分组失败:', err.message));
+    getPartitions().then(setPartitions).catch(() => setPartitions([]));
   }, [user]);
 
   // 处理文件选择
@@ -188,25 +191,41 @@ const [videoUrl, setVideoUrl] = useState('');
         <div style={{ marginBottom: '18px' }}>
           <label style={labelStyle}>作品类型</label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {WORK_TYPES.map((t) => (
+            {partitions.map((t) => (
               <button
-                key={t.id}
+                key={t.work_type || t.id}
                 type="button"
-                onClick={() => setWorkType(t.id)}
+                onClick={() => setWorkType(t.work_type)}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '20px',
                   border: '1px solid var(--ym-border)',
-                  backgroundColor: workType === t.id ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
-                  color: workType === t.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                  backgroundColor: workType === t.work_type ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                  color: workType === t.work_type ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
                   cursor: 'pointer',
                   fontSize: '13px',
                   transition: 'all var(--ym-transition)',
                 }}
               >
-                {t.label}
+                {t.name}
               </button>
             ))}
+            {partitions.length === 0 && (
+              <button
+                type="button"
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--ym-accent)',
+                  backgroundColor: 'var(--ym-accent)',
+                  color: 'var(--ym-accent-text-on)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
+              >
+                {workTypeLabel(workType)}
+              </button>
+            )}
           </div>
         </div>
 

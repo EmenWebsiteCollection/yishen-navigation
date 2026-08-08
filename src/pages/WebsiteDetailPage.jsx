@@ -12,6 +12,7 @@ import {
   favoriteWork,
   unfavoriteWork,
   getTopRatedWorks,
+  workTypeLabel,
 } from '../services/works.js';
 import {
   getCommentsByWebsite,
@@ -752,6 +753,7 @@ export function WebsiteDetailPage() {
         </Link>
         <Chip label="创建" value={new Date(website.created_at).toLocaleString('zh-CN')} />
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
+        <Chip label="分区" value={workTypeLabel(website.work_type)} />
       </div>
 
       {/* ---------- 演示视频 ---------- */}
