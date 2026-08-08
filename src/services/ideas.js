@@ -4,6 +4,7 @@
 import { supabase } from './supabase.js';
 import { normalizeQuery, escapeLike } from './search.js';
 import { getProfile } from './users.js';
+import { isAdmin as isAdminRpc } from './works.js';;
 
 // ========== 常量与纯逻辑（定义见 idea-logic.js，Node 可直测） ==========
 import {
@@ -244,8 +245,7 @@ export const createIdea = async (payload, userId) => {
 // ========== 状态变更 + 进展时间线 ==========
 const canManageIdea = async (idea, userId) => {
   if (!userId) return false;
-  const profile = await getProfile(userId);
-  const isAdmin = profile?.is_admin === true;
+  const isAdmin = await isAdminRpc(userId);
   return idea.user_id === userId || isAdmin;
 };
 
@@ -364,10 +364,8 @@ export const createIdeaComment = async (ideaId, userId, content, parentId = null
 };
 
 export const deleteIdeaComment = async (commentId) => {
-  const { error } = await supabase
-    .from('idea_comments')
-    .delete()
-    .eq('id', commentId);
+  // 走 RPC（本人或管理员校验），绕开 PostgREST DELETE 通道故障
+  const { error } = await supabase.rpc('rpc_delete_idea_comment', { comment_id: commentId });
   if (error) throw error;
 };
 
@@ -388,8 +386,8 @@ export const findSimilarIdeas = async (query, { limit = 5 } = {}) => {
 // ========== 管理员合并（防重复分裂票数） ==========
 export const mergeIdeas = async (targetId, sourceIds, adminUserId) => {
   if (!adminUserId) throw new Error('请先登录');
-  const profile = await getProfile(adminUserId);
-  if (profile?.is_admin !== true) throw new Error('需要管理员权限才能合并想法');
+  const isAdminFlag = await isAdminRpc(adminUserId);
+  if (!isAdminFlag) throw new Error('需要管理员权限才能合并想法');
   if (!Array.isArray(sourceIds) || sourceIds.length === 0) {
     throw new Error('至少需要选择一个要合并的想法');
   }
@@ -422,7 +420,7 @@ export const linkIdeaToWork = async (ideaId, workId, userId) => {
   if (!work) throw new Error('作品不存在');
 
   // 作品侧回写孵化来源（仅作品 owner 或管理员可改，失败不阻断）
-  if (work.user_id === userId || (await getProfile(userId))?.is_admin) {
+  if (work.user_id === userId || await isAdminRpc(userId)) {
     const { error: srcErr } = await supabase
       .from('works')
       .update({ source_idea_id: ideaId })

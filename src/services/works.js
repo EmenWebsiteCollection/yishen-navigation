@@ -91,12 +91,9 @@ export const normalizeUrl = (url) => {
 export const isAdmin = async (userId) => {
   if (!userId) return false;
   try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .maybeSingle();
-    return !!data?.is_admin;
+    // 走 SECURITY DEFINER RPC（基于 auth.uid() 判定），不再直读 is_admin 列
+    const { data } = await supabase.rpc('is_admin');
+    return !!data;
   } catch (e) {
     return false;
   }
@@ -122,9 +119,12 @@ const TABLE_SELECT_META = `
 // works_with_likes 视图字段（视图已 join profiles）
 // ⚠️ 视图未包含 video_url（列表页不需要），若需列表展示需由团队重建视图并补列
 const VIEW_SELECT = `
-  id, url, title, description, image_url, cover_url, work_type,
-  featured, status, visibility, group_id, changelog,
-  created_at, updated_at, user_id, view_count, like_count, username, avatar_url
+  id, url, title, description, image_url, cover_url, media_url,
+  work_type, featured, status, visibility, group_id, changelog,
+  tags, styles, tools, creative_type, completion, seeking_collab,
+  derivative_allowed, commercial_use, ai_degree, audience, content_warning,
+  created_at, updated_at, user_id, view_count, source_idea_id, video_url,
+  like_count, username, avatar_url
 `;
 
 // 运行时探测 works.video_url 列是否存在（结果缓存，避免每次请求都探测）
@@ -323,6 +323,9 @@ export const createWork = async (payload, userId) => {
 
 // ========== 分页查询（首页网站导航，可扩展任意类型） ==========
 export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', userId = null } = {}) => {
+  // 分页参数钳制，防止 416/超大请求
+  page = Math.max(1, Math.floor(Number(page) || 1));
+  pageSize = Math.min(50, Math.max(1, Math.floor(Number(pageSize) || 10)));
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -406,7 +409,6 @@ export const getWorkById = async (id, currentUserId = null) => {
     .maybeSingle();
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
     // 视图不可用时降级到表直查（点赞数单独获取，失败为 0）
     const { data: tableData, error: tableError } = await supabase
       .from('works')
@@ -414,7 +416,6 @@ export const getWorkById = async (id, currentUserId = null) => {
       .eq('id', id)
       .maybeSingle();
     if (tableError) {
-      if (tableError.code === 'PGRST116') return null;
       throw tableError;
     }
     if (!tableData) return null;
@@ -611,7 +612,7 @@ export const hasLikedWork = async (workId, userId) => {
       .eq('website_id', workId)
       .eq('user_id', userId)
       .maybeSingle();
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return !!data;
   } catch (e) {
     console.warn('检查点赞状态失败:', e.message);
@@ -623,7 +624,10 @@ export const likeWork = async (workId, userId) => {
   const { error } = await supabase
     .from('website_likes')
     .insert({ website_id: workId, user_id: userId });
-  if (error) throw error;
+  if (error) {
+    if (error.code === '23505') throw new Error('你已经点过赞了');
+    throw error;
+  }
 };
 
 export const unlikeWork = async (workId, userId) => {
@@ -654,7 +658,7 @@ export const hasFavoritedWork = async (workId, userId) => {
       .eq('work_id', workId)
       .eq('user_id', userId)
       .maybeSingle();
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return !!data;
   } catch (e) {
     console.warn('检查收藏状态失败:', e.message);

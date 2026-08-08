@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth.js';
 import { getPartitions, createPartition, deletePartition } from '../services/partitions.js';
+import { isAdmin } from '../services/works.js';
 
 export function PartitionManager({ open, onClose, onChanged }) {
   const { user, isAnonymous } = useAuth();
@@ -11,6 +12,14 @@ export function PartitionManager({ open, onClose, onChanged }) {
   const [message, setMessage] = useState('');
 
   const isLoggedIn = Boolean(user && !isAnonymous);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  useEffect(() => {
+    if (user?.id) {
+      isAdmin(user.id).then(setIsAdminUser).catch(() => setIsAdminUser(false));
+    } else {
+      setIsAdminUser(false);
+    }
+  }, [user?.id]);
 
   const load = async () => {
     try {
@@ -34,6 +43,10 @@ export function PartitionManager({ open, onClose, onChanged }) {
     setMessage('');
     if (!isLoggedIn) {
       setMessage('请先登录后再添加分区');
+      return;
+    }
+    if (!isAdminUser) {
+      setMessage('仅管理员可添加分区');
       return;
     }
     setBusy(true);
@@ -71,6 +84,8 @@ export function PartitionManager({ open, onClose, onChanged }) {
 
         {!isLoggedIn ? (
           <div className="ym-alert ym-alert-error">请先登录后再管理分区。</div>
+        ) : !isAdminUser ? (
+          <div className="ym-alert ym-alert-error">仅管理员可管理分区。</div>
         ) : (
           <form onSubmit={handleCreate} style={{ marginBottom: '18px' }}>
             <div className="ym-form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
@@ -96,7 +111,7 @@ export function PartitionManager({ open, onClose, onChanged }) {
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-sm)' }}>
               <span style={{ flex: 1, fontSize: '14px', color: 'var(--ym-text-primary)' }}>{p.name}</span>
               <span className="ym-chip" style={{ fontSize: '12px' }}>{p.work_type}</span>
-              {isLoggedIn && p.created_by === user.id && (
+              {isAdminUser && (
                 <button type="button" className="ym-btn ym-btn-danger ym-btn-sm" onClick={() => handleDelete(p)}>
                   删除
                 </button>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import { isAdmin as isAdminRpc } from '../services/works.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import {
   getIdeaById,
@@ -83,6 +84,7 @@ const UpdateItem = ({ update }) => {
 const IdeaCommentCard = ({
   comment,
   currentUserId,
+  isAdminUser,
   onDelete,
   onReplyClick,
   isReplying,
@@ -93,7 +95,7 @@ const IdeaCommentCard = ({
   replySubmitting,
   replyToUsername,
 }) => {
-  const isOwner = currentUserId && comment.user_id === currentUserId;
+  const isOwner = currentUserId && (comment.user_id === currentUserId || isAdminUser);
   const isReply = Boolean(replyToUsername);
   return (
     <div style={{ padding: '14px 18px', backgroundColor: 'var(--ym-bg-card)', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', marginBottom: '12px' }}>
@@ -214,8 +216,9 @@ export function IdeaDetailPage() {
       setUpdates(u);
       setComments(c);
       if (user) {
-        const p = await getProfile(user.id);
-        setIsAdmin(p?.is_admin === true);
+        // is_admin 列已对客户端撤销 SELECT，改走 SECURITY DEFINER RPC
+        const adminFlag = await isAdminRpc(user.id).catch(() => false);
+        setIsAdmin(!!adminFlag);
       } else {
         setIsAdmin(false);
       }
@@ -420,6 +423,7 @@ export function IdeaDetailPage() {
           <IdeaCommentCard
             comment={node}
             currentUserId={user?.id}
+            isAdminUser={isAdmin}
             onDelete={handleDeleteComment}
             onReplyClick={(cid) => {
               setReplyingTo(cid);

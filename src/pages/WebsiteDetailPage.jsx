@@ -593,7 +593,8 @@ export function WebsiteDetailPage() {
 
   // ----- 关注/取关 -----
   const handleFollowToggle = async () => {
-    if (!user || isAnonymous || followingLoading || !website) return;
+    if (!user || isAnonymous) { alert('请先登录后再关注创作者'); return; }
+    if (followingLoading || !website) return;
     setFollowingLoading(true);
     try {
       const res = await toggleFollow(user.id, website.user_id);
@@ -701,7 +702,8 @@ export function WebsiteDetailPage() {
 
   // ----- 点赞 -----
   const handleLikeToggle = async () => {
-    if (!user || isAnonymous || likeToggling) return;
+    if (!user || isAnonymous) { alert('请先登录后再点赞'); return; }
+    if (likeToggling) return;
     setLikeToggling(true);
     try {
       if (likedByUser) {
@@ -722,7 +724,8 @@ export function WebsiteDetailPage() {
 
   // ----- 收藏 -----
   const handleFavoriteToggle = async () => {
-    if (!user || isAnonymous || favoriteToggling) return;
+    if (!user || isAnonymous) { alert('请先登录后再收藏'); return; }
+    if (favoriteToggling) return;
     setFavoriteToggling(true);
     try {
       if (favoritedByUser) {
@@ -794,7 +797,8 @@ export function WebsiteDetailPage() {
 
   // ----- 发表回复 -----
   const handleReplySubmit = async () => {
-    if (!user || isAnonymous || !replyingTo) return;
+    if (!user || isAnonymous) { alert('请先登录后再回复'); return; }
+    if (!replyingTo) return;
     const trimmed = replyContent.trim();
     if (!trimmed) {
       alert('回复不能为空');
@@ -812,7 +816,7 @@ export function WebsiteDetailPage() {
 
     setSubmittingReply(true);
     try {
-      await createComment(id, user.id, trimmed, replyingTo);
+      await createComment(id, user.id, trimmed, { parentId: replyingTo, feedbackType: 'appreciate', anchor: null });
       setReplyContent('');
       setReplyingTo(null);
       await loadComments();
