@@ -8,6 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRuleReply } from '../services/agentFallback.js';
+import { subscribeMascotPos } from '../services/mascotPos.js';
 import { supabase } from '../services/supabase.js';
 import { ChatActionCard } from './ChatActionCard.jsx';
 
@@ -80,7 +81,27 @@ export function YiliChatPanel({ open, onClose }) {
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
   const [memoryEnabled, setMemoryEnabled] = useState(isMemoryEnabled);
+  const [mascotPos, setMascotPosState] = useState(null);
   const bodyRef = useRef(null);
+
+  useEffect(() => subscribeMascotPos(setMascotPosState), []);
+
+  // 对话框位置跟随看板郎：默认贴其左/右侧，空间不足时翻转到另一侧
+  const panelStyle = (() => {
+    if (!open || !mascotPos) return null;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const { x, y, w, h } = mascotPos;
+    const panelW = Math.min(320, vw - 28);
+    const panelH = Math.min(440, vh - 120);
+    const gap = 12;
+    let left = x - panelW - gap;
+    let top = y + h / 2 - panelH / 2;
+    if (left < 12) left = x + w + gap;
+    left = Math.max(12, Math.min(left, vw - panelW - 12));
+    top = Math.max(12, Math.min(top, vh - panelH - 12));
+    return { left, top, width: panelW, height: panelH };
+  })();
 
   useEffect(() => {
     if (open && bodyRef.current) {
@@ -125,7 +146,11 @@ export function YiliChatPanel({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <section className="ym-chat-panel" aria-label="和依力聊天">
+    <section
+      className="ym-chat-panel"
+      aria-label="和依力聊天"
+      style={window.innerWidth <= 640 ? undefined : panelStyle}
+    >
       <header className="ym-chat-header">
         <span className={'ym-chat-status' + (thinking ? ' thinking' : '')} aria-hidden="true" />
         <span className="ym-chat-title">依力</span>
