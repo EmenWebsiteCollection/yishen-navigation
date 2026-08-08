@@ -45,6 +45,21 @@ export const normalizeUrl = (url) => {
   return url.trim().replace(/\/+$/, '');
 };
 
+// 内部辅助：判断当前用户是否为管理员（profiles.is_admin）
+export const isAdmin = async (userId) => {
+  if (!userId) return false;
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .maybeSingle();
+    return !!data?.is_admin;
+  } catch (e) {
+    return false;
+  }
+};
+
 // works 表直查字段（含 profiles 关联）。
 // ⚠️ video_url 列依赖迁移 20260808_add_works_video_url.sql，未执行前数据库无此列，
 //    因此拆成「基础字段」+「video_url」，查询前运行时探测列是否存在，缺列时自动降级。
@@ -118,7 +133,7 @@ export const checkUrlExists = async (url) => {
     .select('id')
     .eq('url', normalized)
     .maybeSingle();
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error) throw error;
   return !!data;
 };
 
@@ -150,14 +165,6 @@ export const createWork = async (payload, userId) => {
     if (exists) throw new Error('该网址已存在，无法重复创建。');
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('id', userId)
-    .maybeSingle();
-  if (profileError) throw new Error('用户资料获取失败，请重新登录。');
-  if (!profile) throw new Error('用户资料不存在，请重新登录。');
-
   const insertRow = {
     url: trimmedUrl,
     title: trimmedTitle,
@@ -172,7 +179,6 @@ export const createWork = async (payload, userId) => {
     user_id: userId,
   };
   if (await isVideoUrlSupported()) insertRow.video_url = video_url?.trim() || null;
-
   const { data, error } = await supabase
     .from('works')
     .insert([insertRow])
@@ -259,20 +265,46 @@ export const getTopRatedWorks = async (limit = 8) => {
 
 // ========== 获取单个作品 ==========
 export const getWorkById = async (id, currentUserId = null) => {
+  // 优先走视图（like_count 一次拿全，游客也能看到点赞数）
   const { data, error } = await supabase
-    .from('works')
-    .select(await getTableSelect())
+    .from('works_with_likes')
+    .select(VIEW_SELECT)
     .eq('id', id)
     .maybeSingle();
 
   if (error) {
     if (error.code === 'PGRST116') return null;
-    throw error;
+    // 视图不可用时降级到表直查（点赞数单独获取，失败为 0）
+    const { data: tableData, error: tableError } = await supabase
+      .from('works')
+      .select(await getTableSelect())
+      .eq('id', id)
+      .maybeSingle();
+    if (tableError) {
+      if (tableError.code === 'PGRST116') return null;
+      throw tableError;
+    }
+    if (!tableData) return null;
+    const work = mapWork(tableData);
+    work.like_count = await getWorkLikeCount(id);
+    if (currentUserId) {
+      work.liked_by_user = await hasLikedWork(id, currentUserId);
+      work.favorited_by_user = await hasFavoritedWork(id, currentUserId);
+    }
+    return work;
   }
   if (!data) return null;
 
   const work = mapWork(data);
-  work.like_count = await getWorkLikeCount(id);
+  // 视图不含 video_url，列存在时单独补查（探测结果有缓存，无额外开销）
+  if (await isVideoUrlSupported()) {
+    const { data: v } = await supabase
+      .from('works')
+      .select('video_url')
+      .eq('id', id)
+      .maybeSingle();
+    work.video_url = v?.video_url || null;
+  }
   if (currentUserId) {
     work.liked_by_user = await hasLikedWork(id, currentUserId);
     work.favorited_by_user = await hasFavoritedWork(id, currentUserId);
@@ -374,7 +406,7 @@ export const updateWork = async (id, data) => {
 
 // ========== 删除作品 ==========
 export const deleteWork = async (id) => {
-  const { error } = await supabase.from('works').delete().eq('id', id);
+  const { error } = await supabase.rpc('rpc_delete_website', { website_id: id });
   if (error) throw error;
 };
 
@@ -435,11 +467,7 @@ export const likeWork = async (workId, userId) => {
 };
 
 export const unlikeWork = async (workId, userId) => {
-  const { error } = await supabase
-    .from('website_likes')
-    .delete()
-    .eq('website_id', workId)
-    .eq('user_id', userId);
+  const { error } = await supabase.rpc('rpc_unlike', { target_website_id: workId });
   if (error) throw error;
 };
 
@@ -482,11 +510,7 @@ export const favoriteWork = async (workId, userId) => {
 };
 
 export const unfavoriteWork = async (workId, userId) => {
-  const { error } = await supabase
-    .from('favorites')
-    .delete()
-    .eq('work_id', workId)
-    .eq('user_id', userId);
+  const { error } = await supabase.rpc('rpc_unfavorite', { target_work_id: workId });
   if (error) throw error;
 };
 
@@ -549,7 +573,7 @@ export const renameGroup = async (groupId, name) => {
 };
 
 export const deleteGroup = async (groupId) => {
-  const { error } = await supabase.from('groups').delete().eq('id', groupId);
+  const { error } = await supabase.rpc('rpc_delete_group', { target_group_id: groupId });
   if (error) throw error;
 };
 
