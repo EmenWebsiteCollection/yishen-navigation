@@ -341,4 +341,14 @@ select {
     top: -5px;
     right: -5px;
   }
+
+  /* AI 对话面板：移动端改为底部弹层 */
+  .ym-chat-panel {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: auto;
+    height: min(60vh, 480px);
+    border-radius: 14px;
+  }
 }

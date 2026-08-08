@@ -2,6 +2,7 @@
 // 依力看板郎（yili.jpg）：角落固定、可拖拽、点击冒泡对话、眨眼呼吸动画、可收起。
 // 纯前端实现，无 Live2D 模型文件依赖。
 import React, { useEffect, useRef, useState } from 'react';
+import { YiliChatPanel } from './YiliChatPanel.jsx';
 
 const LINES = [
   '你好，我是依力 🤙',
@@ -17,6 +18,7 @@ const getRandomLine = () => LINES[Math.floor(Math.random() * LINES.length)];
 export function YiliMascot() {
   const [open, setOpen] = useState(true); // 看板郎本体是否显示
   const [bubble, setBubble] = useState(null); // 对话气泡内容
+  const [chatOpen, setChatOpen] = useState(false); // AI 对话面板是否展开
   const [pos, setPos] = useState(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem('ym-mascot-pos') || 'null');
@@ -72,10 +74,8 @@ export function YiliMascot() {
       setDragging(false);
       return; // 拖动过，不触发点击
     }
-    // 单击：显示一句新的话
-    setBubble(getRandomLine());
-    clearTimeout(bubbleTimerRef.current);
-    bubbleTimerRef.current = setTimeout(() => setBubble(null), 5000);
+    // 单击：打开 AI 对话面板（Issue #56）
+    setChatOpen(true);
   };
 
   const mascotStyle = {
@@ -162,12 +162,16 @@ export function YiliMascot() {
             onClick={() => {
               setOpen(false);
               setBubble(null);
+              setChatOpen(false);
             }}
           >
             ✕
           </button>
         </div>
       )}
+
+      {/* AI 对话面板（Issue #56 一期） */}
+      <YiliChatPanel open={chatOpen} onClose={() => setChatOpen(false)} />
     </>
   );
 }
