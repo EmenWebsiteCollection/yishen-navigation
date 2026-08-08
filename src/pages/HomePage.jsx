@@ -9,6 +9,7 @@ import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { PartitionManager } from '../components/PartitionManager.jsx';
 
 const PAGE_SIZE = 10;
+const PAGINATION_ANCHOR_STEP = 10;
 
 const SkeletonCard = () => (
   <div className="ym-card" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>
@@ -79,6 +80,7 @@ export function HomePage() {
   const [partitions, setPartitions] = useState([]);
   const [partitionsLoaded, setPartitionsLoaded] = useState(false);
   const [showPartitionManager, setShowPartitionManager] = useState(false);
+  const [pageInput, setPageInput] = useState('');
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const [totalPages, setTotalPages] = useState(1);
@@ -187,6 +189,7 @@ export function HomePage() {
   };
 
   const handlePageChange = (newPage) => {
+    setPageInput('');
     if (newPage === currentPage || newPage < 1 || newPage > totalPages) return;
     const params = { page: String(newPage) };
     if (partitionId !== 'all') params.partition = partitionId;
@@ -194,18 +197,29 @@ export function HomePage() {
     window.scrollTo(0, 0);
   };
 
+  const handlePageJump = () => {
+    const nextPage = parseInt(pageInput, 10);
+    if (!Number.isInteger(nextPage)) return;
+    handlePageChange(Math.min(totalPages, Math.max(1, nextPage)));
+  };
+
   const getPaginationRange = () => {
     const total = totalPages;
-    const range = [];
-    const rangeWithDots = [];
-    for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= currentPage - 2 && i <= currentPage + 2)) range.push(i);
+    const isAnchor = (n) => n > 0 && n % PAGINATION_ANCHOR_STEP === 0;
+    const pages = new Set([1, total]);
+    for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+      if (i >= 1 && i <= total) pages.add(i);
     }
+    for (let i = PAGINATION_ANCHOR_STEP; i <= total; i += PAGINATION_ANCHOR_STEP) {
+      pages.add(i);
+    }
+    const range = [...pages].sort((a, b) => a - b);
+    const rangeWithDots = [];
     let l;
     range.forEach((i) => {
       if (l) {
         if (i - l === 2) rangeWithDots.push(l + 1);
-        else if (i - l !== 1) rangeWithDots.push('...');
+        else if (i - l !== 1 && !(isAnchor(l) && isAnchor(i) && i - l === PAGINATION_ANCHOR_STEP)) rangeWithDots.push('...');
       }
       rangeWithDots.push(i);
       l = i;
@@ -369,6 +383,31 @@ export function HomePage() {
               )}
               <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>
                 下一页
+              </button>
+              <input
+                className="ym-input"
+                type="number"
+                min={1}
+                max={totalPages}
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePageJump();
+                  }
+                }}
+                aria-label="输入页码跳转"
+                placeholder="页码"
+                style={{ width: '68px', padding: '5px 8px', textAlign: 'center', flexShrink: 0 }}
+              />
+              <button
+                type="button"
+                className="ym-btn ym-btn-ghost ym-btn-sm"
+                disabled={!pageInput}
+                onClick={handlePageJump}
+              >
+                跳转
               </button>
             </div>
           )}
