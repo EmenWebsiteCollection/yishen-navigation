@@ -78,7 +78,8 @@ begin
     auth.uid(),
     coalesce(v_username, 'user'),
     nullif(p_email, ''),
-    nullif(p_phone, '')
+    nullif(p_phone, ''),
+    now() -- 修复：补上第 5 个值（之前缺失导致 INSERT has more target columns than expressions）
   )
   on conflict (id) do update
     set email = coalesce(nullif(p_email, ''), profiles.email),
