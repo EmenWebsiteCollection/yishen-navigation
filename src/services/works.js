@@ -45,13 +45,16 @@ export const normalizeUrl = (url) => {
   return url.trim().replace(/\/+$/, '');
 };
 
-// works 表直查字段（含 profiles 关联）
-const TABLE_SELECT = `
-  id, url, title, description, image_url, cover_url, video_url, work_type,
+// works 表直查字段（含 profiles 关联）。
+// ⚠️ video_url 列依赖迁移 20260808_add_works_video_url.sql，未执行前数据库无此列，
+//    因此拆成「基础字段」+「video_url」，查询前运行时探测列是否存在，缺列时自动降级。
+const TABLE_SELECT_CORE = `
+  id, url, title, description, image_url, cover_url, work_type,
   featured, status, visibility, group_id, changelog,
   created_at, updated_at, user_id,
   profiles ( username, avatar_url )
 `;
+const TABLE_SELECT_FULL = `${TABLE_SELECT_CORE}, video_url`;
 
 // works_with_likes 视图字段（视图已 join profiles）
 // ⚠️ 视图未包含 video_url（列表页不需要），若需列表展示需由团队重建视图并补列
@@ -60,6 +63,25 @@ const VIEW_SELECT = `
   featured, status, visibility, group_id, changelog,
   created_at, updated_at, user_id, like_count, username, avatar_url
 `;
+
+// 运行时探测 works.video_url 列是否存在（结果缓存，避免每次请求都探测）
+let _videoUrlSupported = null;
+export const isVideoUrlSupported = async () => {
+  if (_videoUrlSupported !== null) return _videoUrlSupported;
+  try {
+    const { error } = await supabase.from('works').select('video_url').limit(1);
+    _videoUrlSupported = !error;
+  } catch {
+    _videoUrlSupported = false;
+  }
+  return _videoUrlSupported;
+};
+
+// 返回当前可用的 works 直查 select：列存在时含 video_url，否则降级为基础字段
+const getTableSelect = async () => {
+  const ok = await isVideoUrlSupported();
+  return ok ? TABLE_SELECT_FULL : TABLE_SELECT_CORE;
+};
 
 const mapWork = (item) => {
   const p = item.profiles || {};
@@ -136,24 +158,24 @@ export const createWork = async (payload, userId) => {
   if (profileError) throw new Error('用户资料获取失败，请重新登录。');
   if (!profile) throw new Error('用户资料不存在，请重新登录。');
 
+  const insertRow = {
+    url: trimmedUrl,
+    title: trimmedTitle,
+    description: description?.trim() || null,
+    image_url: image_url || null,
+    cover_url: cover_url || null,
+    work_type: trimmedType,
+    status: status || null,
+    visibility: visibility === 'private' ? 'private' : 'public',
+    group_id: group_id || null,
+    changelog: changelog?.trim() || null,
+    user_id: userId,
+  };
+  if (await isVideoUrlSupported()) insertRow.video_url = video_url?.trim() || null;
+
   const { data, error } = await supabase
     .from('works')
-    .insert([
-      {
-        url: trimmedUrl,
-        title: trimmedTitle,
-        description: description?.trim() || null,
-        image_url: image_url || null,
-        cover_url: cover_url || null,
-        video_url: video_url?.trim() || null,
-        work_type: trimmedType,
-        status: status || null,
-        visibility: visibility === 'private' ? 'private' : 'public',
-        group_id: group_id || null,
-        changelog: changelog?.trim() || null,
-        user_id: userId,
-      },
-    ])
+    .insert([insertRow])
     .select()
     .single();
   if (error) throw error;
@@ -179,7 +201,7 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
     console.warn('⚠️ 视图查询失败，使用降级方案:', error.message);
     let fallbackQuery = supabase
       .from('works')
-      .select(TABLE_SELECT, { count: 'exact' });
+      .select(await getTableSelect(), { count: 'exact' });
     if (type) fallbackQuery = fallbackQuery.eq('work_type', type);
     fallbackQuery = fallbackQuery.eq('visibility', 'public');
     if (userId) fallbackQuery = fallbackQuery.eq('user_id', userId);
@@ -216,7 +238,7 @@ export const getTopRatedWorks = async (limit = 8) => {
     console.warn('⚠️ 高分作品视图查询失败，使用降级方案:', error.message);
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('works')
-      .select(TABLE_SELECT)
+      .select(await getTableSelect())
       .eq('work_type', 'website')
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
@@ -239,7 +261,7 @@ export const getTopRatedWorks = async (limit = 8) => {
 export const getWorkById = async (id, currentUserId = null) => {
   const { data, error } = await supabase
     .from('works')
-    .select(TABLE_SELECT)
+    .select(await getTableSelect())
     .eq('id', id)
     .maybeSingle();
 
@@ -335,7 +357,7 @@ export const updateWork = async (id, data) => {
   };
   if (image_url !== undefined) patch.image_url = image_url || null;
   if (cover_url !== undefined) patch.cover_url = cover_url || null;
-  if (video_url !== undefined) patch.video_url = video_url?.trim() || null;
+  if (video_url !== undefined && (await isVideoUrlSupported())) patch.video_url = video_url?.trim() || null;
   if (status !== undefined) patch.status = status || null;
   if (group_id !== undefined) patch.group_id = group_id || null;
   if (featured !== undefined) patch.featured = !!featured;
@@ -470,9 +492,10 @@ export const unfavoriteWork = async (workId, userId) => {
 
 // 我的收藏列表（本人收藏的作品）
 export const getMyFavoriteWorks = async (userId) => {
+  const workSelect = (await getTableSelect()).replace(/\s+/g, ' ');
   const { data, error } = await supabase
     .from('favorites')
-    .select(`id, created_at, works ( ${TABLE_SELECT.replace(/\s+/g, ' ')} )`)
+    .select(`id, created_at, works ( ${workSelect} )`)
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
   if (error) throw error;
