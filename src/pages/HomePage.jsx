@@ -11,6 +11,7 @@ import { ForgotPasswordPage } from './ForgotPasswordPage.jsx';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { SearchBar } from '../components/SearchBar.jsx';
 import { SiteHeader } from '../components/SiteHeader.jsx';
+import { TechLoader } from '../components/TechLoader.jsx';
 import { getProfile } from '../services/users.js';
 import '../styles/global.css';
 
@@ -247,7 +248,7 @@ export function HomePage() {
   };
 
   if (authLoading) {
-    return <div style={{ textAlign: 'center', marginTop: '200px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
   }
 
   return (
@@ -284,21 +285,38 @@ export function HomePage() {
                 )}
                 {user.email?.replace('@nav.local', '') || user.email}
                 {!isAnonymous && (
-                  <Link
-                    to='/profile'
-                    style={{
-                      padding: '6px 16px',
-                      backgroundColor: 'transparent',
-                      color: 'var(--ym-text-secondary)',
-                      border: '1px solid var(--ym-border)',
-                      borderRadius: 'var(--ym-radius-sm)',
-                      fontSize: '14px',
-                      textDecoration: 'none',
-                      transition: 'all var(--ym-transition)',
-                    }}
-                  >
-                    个人中心
-                  </Link>
+                  <>
+                    <Link
+                      to={`/user/${user.id}`}
+                      style={{
+                        padding: '6px 16px',
+                        backgroundColor: 'transparent',
+                        color: 'var(--ym-text-secondary)',
+                        border: '1px solid var(--ym-border)',
+                        borderRadius: 'var(--ym-radius-sm)',
+                        fontSize: '14px',
+                        textDecoration: 'none',
+                        transition: 'all var(--ym-transition)',
+                      }}
+                    >
+                      我的主页
+                    </Link>
+                    <Link
+                      to='/profile'
+                      style={{
+                        padding: '6px 16px',
+                        backgroundColor: 'transparent',
+                        color: 'var(--ym-text-secondary)',
+                        border: '1px solid var(--ym-border)',
+                        borderRadius: 'var(--ym-radius-sm)',
+                        fontSize: '14px',
+                        textDecoration: 'none',
+                        transition: 'all var(--ym-transition)',
+                      }}
+                    >
+                      个人中心
+                    </Link>
+                  </>
                 )}
               </span>
               <Link
@@ -390,7 +408,7 @@ export function HomePage() {
         }
       />
 
-      <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
+      <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px 40px' }}>
         <HighRatedCarousel />
 
         {/* 想法集中营入口 */}
@@ -461,7 +479,7 @@ export function HomePage() {
         </Link>
 
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
@@ -494,7 +512,7 @@ export function HomePage() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
               {websites.map((site, index) => (
                 <div
                   key={site.id}

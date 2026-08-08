@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getProfile, getCreatorStats } from '../services/users.js';
 import { getWorksByUser, workTypeLabel } from '../services/works.js';
+import { TechLoader } from '../components/TechLoader.jsx';
 import '../styles/global.css';
 
 const DEFAULT_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"%3E%3Crect width="128" height="128" fill="%23EDE3CC"/%3E%3Ctext x="64" y="78" font-family="Arial" font-size="44" fill="%239C6B2E" text-anchor="middle"%3E?%3C/text%3E%3C/svg%3E';
@@ -120,7 +121,7 @@ export function CreatorProfilePage() {
   }, [profile?.bg_color, profile?.accent_color]);
 
   if (loading) {
-    return <div style={{ textAlign: 'center', marginTop: '200px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
   }
 
   if (error || !profile) {
@@ -156,10 +157,10 @@ export function CreatorProfilePage() {
         )}
       </div>
 
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 20px 60px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px 60px' }}>
         {/* 头部：头像 + 用户名 + 介绍 */}
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '-48px', position: 'relative' }}>
-          <div style={{ width: '96px', height: '96px', borderRadius: '50%', overflow: 'hidden', border: '4px solid var(--ym-bg-card)', backgroundColor: 'var(--ym-bg-subtle)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ width: '96px', height: '96px', borderRadius: '50%', overflow: 'hidden', border: '4px solid var(--ym-bg-card)', backgroundColor: 'var(--ym-bg-subtle)', flexShrink: 0, marginTop: '-48px', position: 'relative', zIndex: 1 }}>
             <img
               src={profile.avatar_url || DEFAULT_AVATAR}
               alt={username}
@@ -262,7 +263,7 @@ export function CreatorProfilePage() {
         {featuredWorks.length > 0 && (
           <>
             <SectionTitle>⭐ 代表作品</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
               {featuredWorks.map((w) => <WorkCard key={w.id} work={w} />)}
             </div>
           </>
@@ -280,7 +281,7 @@ export function CreatorProfilePage() {
                 <span style={{ flex: 1, height: '1px', backgroundColor: 'var(--ym-border)' }} />
                 <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>{timeline[year].length} 件</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                 {timeline[year].map((w) => <WorkCard key={w.id} work={w} />)}
               </div>
             </div>

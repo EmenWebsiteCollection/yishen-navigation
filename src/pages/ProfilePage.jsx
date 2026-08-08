@@ -1,6 +1,7 @@
 // src/pages/ProfilePage.jsx
 // 个人中心：我的作品 / 我的收藏 / 设置（档案 + 分组）
 import React, { useEffect, useState, useCallback } from 'react';
+import { TechLoader } from '../components/TechLoader.jsx';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
@@ -392,7 +393,7 @@ export function ProfilePage() {
 
   // ---------- 渲染 ----------
   if (authLoading) {
-    return <div style={{ textAlign: 'center', marginTop: '200px', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
   }
 
   if (!me) {
@@ -502,7 +503,7 @@ export function ProfilePage() {
             </div>
 
             {worksLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
             ) : works.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>暂无作品，点击右上角新建</div>
             ) : (
@@ -582,7 +583,7 @@ export function ProfilePage() {
         {tab === 'favorites' && (
           <div>
             {favoritesLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
             ) : favorites.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>还没有收藏，去详情页点「收藏」吧</div>
             ) : (
@@ -652,7 +653,7 @@ export function ProfilePage() {
         {tab === 'settings' && (
           <div>
             {settingsLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
             ) : (
               <form onSubmit={handleSaveSettings} style={{ backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', padding: '24px' }}>
                 <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', marginBottom: '16px' }}>基本资料</h3>
