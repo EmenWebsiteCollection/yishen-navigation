@@ -1,4 +1,4 @@
-// src/pages/WebsiteDetailPage.jsx
+﻿// src/pages/WebsiteDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { TechLoader } from '../components/TechLoader.jsx';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -1195,6 +1195,11 @@ export function WebsiteDetailPage() {
         )}
         <Chip label="创建" value={new Date(website.created_at).toLocaleString('zh-CN')} />
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
+        {website.deploy_url && (
+          <a href={website.deploy_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "4px 12px", backgroundColor: "var(--ym-accent)", color: "var(--ym-accent-text-on)", borderRadius: "20px", fontSize: "13px", fontWeight: "500", textDecoration: "none" }}>
+            🔗 在线预览
+          </a>
+        )}
         <Chip label="分区" value={workTypeLabel(website.work_type)} />
       </div>
 

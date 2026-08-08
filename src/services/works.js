@@ -1,4 +1,4 @@
-// src/services/works.js
+﻿// src/services/works.js
 // 作品（works）服务层：由原 websites.js 演进而来。
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
@@ -123,7 +123,7 @@ const VIEW_SELECT = `
   work_type, featured, status, visibility, group_id, changelog,
   tags, styles, tools, creative_type, completion, seeking_collab,
   derivative_allowed, commercial_use, ai_degree, audience, content_warning,
-  created_at, updated_at, user_id, view_count, source_idea_id, video_url,
+  created_at, updated_at, user_id, view_count, source_idea_id, video_url, deploy_url, deploy_updated_at,
   like_count, username, avatar_url
 `;
 
@@ -759,3 +759,4 @@ export const incrementView = async (workId) => {
     console.warn('浏览量计数失败:', e.message);
   }
 };
+
