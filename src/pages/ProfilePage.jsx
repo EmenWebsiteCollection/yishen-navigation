@@ -6,7 +6,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
   getWorksByUser,
-  setWorkFeatured,
+  isAdmin,
   setWorkVisibility,
   deleteWork,
   listGroups,
@@ -25,6 +25,7 @@ import { uploadAvatar, uploadCover, validateImageFile } from '../services/screen
 import { getMyIdeas, getMyFavoritedIdeas } from '../services/ideas.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import { getPartitions } from '../services/partitions.js';
+import { setFeatured } from '../services/discovery.js';
 import '../styles/global.css';
 
 const TABS = [
@@ -58,6 +59,8 @@ export function ProfilePage() {
   const { user, loading: authLoading, isAnonymous } = useAuth();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(() => (searchParams.get('tab') === 'settings' ? 'settings' : 'works'));
+  // Issue #50：精选仅限管理员
+  const [isAdminUser, setIsAdminUser] = useState(false);
   // Issue #39 P3：我的信誉
   const [reputation, setReputation] = useState({ adopted_count: 0, helpful: 0, insightful: 0, professional: 0, friendly: 0 });
 
@@ -214,10 +217,17 @@ export function ProfilePage() {
       .catch(() => {});
   }, [user?.id]);
 
+  // Issue #50：精选仅限管理员
+  useEffect(() => {
+    if (user?.id) {
+      isAdmin(user.id).then(setIsAdminUser).catch(() => setIsAdminUser(false));
+    }
+  }, [user?.id]);
+
   // ---------- 作品操作 ----------
   const handleToggleFeatured = async (work) => {
     try {
-      await setWorkFeatured(work.id, !work.featured);
+      await setFeatured(work.id, !work.featured);
       setWorks((prev) => prev.map((w) => (w.id === work.id ? { ...w, featured: !w.featured } : w)));
     } catch (err) {
       alert(err.message || '操作失败');
@@ -560,9 +570,11 @@ export function ProfilePage() {
                         <option key={g.id} value={g.id}>{g.name}</option>
                       ))}
                     </select>
-                    <button onClick={() => handleToggleFeatured(w)} style={smallBtnStyle}>
-                      {w.featured ? '取消精选' : '设精选'}
-                    </button>
+                    {isAdminUser && (
+                      <button onClick={() => handleToggleFeatured(w)} style={smallBtnStyle}>
+                        {w.featured ? '取消精选' : '设精选'}
+                      </button>
+                    )}
                     <button onClick={() => handleToggleVisibility(w)} style={smallBtnStyle}>
                       {w.visibility === 'private' ? '设为公开' : '设为私密'}
                     </button>

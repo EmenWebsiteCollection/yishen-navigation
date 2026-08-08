@@ -544,13 +544,9 @@ export const deleteWork = async (id) => {
 };
 
 // ========== 快捷操作 ==========
-export const setWorkFeatured = async (id, featured) => {
-  const { error } = await supabase
-    .from('works')
-    .update({ featured: !!featured })
-    .eq('id', id);
-  if (error) throw error;
-};
+// Issue #50：精选权限仅限管理员——已删除直改 works.featured 的旁路（setWorkFeatured），
+// 精选统一走 discovery.js 的 setFeatured → set_featured RPC（RPC 内 is_admin 校验）。
+// 历史旁路：任何登录用户可经 works 表 RLS（works_update_own）把自己作品设为精选。
 
 export const setWorkMeta = async (id, meta) => {
   const normalized = normalizeWorkMeta(meta);
