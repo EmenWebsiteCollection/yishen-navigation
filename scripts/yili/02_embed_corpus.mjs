@@ -15,10 +15,10 @@ import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
 const CHUNKS_JSON = fileURLToPath(new URL('./corpus_chunks.json', import.meta.url));
-const ENV_LOCAL = new URL('../../.env.local', import.meta.url).pathname;
-const EMBED_URL = 'https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding';
+const ENV_LOCAL = fileURLToPath(new URL('../../.env.local', import.meta.url));
+const EMBED_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
 const MGMT_URL = 'https://api.supabase.com/v1/projects/{ref}/database/query';
-const BATCH = 25;
+const BATCH = 10; // DashScope 兼容端点批量上限随文本长度收紧，取 10 最稳
 const MAX_RETRY = 3;
 
 function loadEnvLocal() {
@@ -42,7 +42,6 @@ async function embedBatch(texts, apiKey) {
   const body = {
     model: 'text-embedding-v4',
     input: texts,
-    parameters: { dimension: 1024, text_type: 'document' },
   };
   let lastErr = null;
   for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
@@ -57,7 +56,8 @@ async function embedBatch(texts, apiKey) {
         throw new Error(`HTTP ${res.status}: ${detail.slice(0, 200)}`);
       }
       const data = await res.json();
-      const embeddings = (data?.output?.embeddings || []).slice().sort((a, b) => a.text_index - b.text_index);
+      // OpenAI 兼容响应：{ data: [{ embedding, index }], usage: { total_tokens } }
+      const embeddings = (data?.data || []).slice().sort((a, b) => (a.index || 0) - (b.index || 0));
       return {
         vectors: embeddings.map((e) => e.embedding),
         totalTokens: data?.usage?.total_tokens || 0,
@@ -172,4 +172,8 @@ main().catch((err) => {
   console.error('嵌入失败:', err.message);
   process.exit(1);
 });
+
+
+
+
 

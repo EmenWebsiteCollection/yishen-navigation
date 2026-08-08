@@ -5,7 +5,7 @@
 //   - getStyleBlock：直接产出可注入 system 的风格样本块
 import { tokenizeKeyword, buildStyleBlock, pickStyleSamples } from './yili-retrieval-logic.mjs';
 
-const EMBED_URL = 'https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding';
+const EMBED_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings';
 
 // 查询嵌入（text_type=query）。无 key/失败返回 null，绝不抛错阻断主流程。
 export async function embedText(text, apiKey, { dimension = 1024 } = {}) {
@@ -16,7 +16,6 @@ export async function embedText(text, apiKey, { dimension = 1024 } = {}) {
     body: JSON.stringify({
       model: 'text-embedding-v4',
       input: [String(text).slice(0, 500)],
-      parameters: { dimension, text_type: 'query' },
     }),
   });
   if (!res.ok) {
@@ -25,7 +24,7 @@ export async function embedText(text, apiKey, { dimension = 1024 } = {}) {
     return null;
   }
   const data = await res.json();
-  return data?.output?.embeddings?.[0]?.embedding || null;
+  return data?.data?.[0]?.embedding || null; // OpenAI 兼容响应格式
 }
 
 // 混合检索：关键词（tokenizeKeyword）+ 向量（embedText）→ RPC RRF 融合
@@ -52,3 +51,4 @@ export async function getStyleBlock(query, { supabase, limit = 5, apiKey } = {})
   const { samples, error } = await getYiliSamples(query, { supabase, limit, apiKey });
   return { block: buildStyleBlock(samples), samples, error };
 }
+
