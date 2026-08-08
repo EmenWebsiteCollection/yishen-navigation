@@ -27,17 +27,28 @@ async function readState() {
   }
 }
 
-// ---- 查询新作品 ----
+// ---- 查询新作品（分页循环，全量补读） ----
 async function fetchNewWorks(supabase, lastCheck) {
-  let q = supabase
-    .from('works')
-    .select('id,title,description,url,work_type,created_at,user_id')
-    .order('created_at', { ascending: true })
-    .limit(BATCH_SIZE);
-  if (lastCheck) q = q.gt('created_at', lastCheck);
-  const { data, error } = await q;
-  if (error) throw new Error('查询作品失败: ' + error.message);
-  return data || [];
+  const all = [];
+  const from = 0;
+  let offset = from;
+  // 全量模式最多读 300 条（防失控）；增量模式只读最近 BATCH_SIZE 条
+  const maxTotal = lastCheck ? BATCH_SIZE : 300;
+  while (all.length < maxTotal) {
+    let q = supabase
+      .from('works')
+      .select('id,title,description,url,work_type,created_at,user_id')
+      .order('created_at', { ascending: true })
+      .range(offset, offset + BATCH_SIZE - 1);
+    if (lastCheck) q = q.gt('created_at', lastCheck);
+    const { data, error } = await q;
+    if (error) throw new Error('查询作品失败: ' + error.message);
+    const rows = data || [];
+    all.push(...rows);
+    if (rows.length < BATCH_SIZE) break;
+    offset += BATCH_SIZE;
+  }
+  return all;
 }
 
 // ---- LLM 阅读并生成记忆条目 ----
@@ -66,9 +77,9 @@ ${list}`;
       model: LLM_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
-      max_tokens: 1200,
+      max_tokens: 3000,
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(60000),
   });
   if (!res.ok) throw new Error(`LLM ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
@@ -76,27 +87,33 @@ ${list}`;
 }
 
 // ---- 追加到记忆文件 ----
-async function appendMemory(section) {
+// all 模式（--all）：重建整个记忆库；否则追加
+async function appendMemory(section, isAll) {
+  const header =
+    '# 依力 AI 作品记忆库\n\n> 自动记录：每 3 小时扫描新上传作品并生成记忆条目。\n> 本文件供依力 AI 参考站内作品信息，由 el-ai-memory.mjs 自动维护。\n\n---\n\n';
+  if (isAll) {
+    await writeFile(MEMORY_FILE, header + section + '\n', 'utf8');
+    return;
+  }
   let existing = '';
   try {
     existing = await readFile(MEMORY_FILE, 'utf8');
   } catch {
     // 文件不存在，创建新文件
   }
-  const header = existing
-    ? ''
-    : '# 依力 AI 作品记忆库\n\n> 自动记录：每 3 小时扫描新上传作品并生成记忆条目。\n> 本文件供依力 AI 参考站内作品信息，由 el-ai-memory.mjs 自动维护。\n\n---\n\n';
-  await writeFile(MEMORY_FILE, header + existing + '\n' + section + '\n', 'utf8');
+  await writeFile(MEMORY_FILE, existing + '\n' + section + '\n', 'utf8');
 }
 
 // ---- 主流程 ----
 async function main() {
+  const isAll = process.argv.includes('--all');
   if (!SUPABASE_URL || !SUPABASE_ANON) throw new Error('缺少 SUPABASE 配置');
   if (!LLM_API_KEY) throw new Error('缺少 LLM_API_KEY');
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
   const state = await readState();
-  const works = await fetchNewWorks(supabase, state.lastCheck);
+  // --all 全量重建（忽略 lastCheck，读全部作品）；否则只读上次检查后的新作品
+  const works = await fetchNewWorks(supabase, isAll ? null : state.lastCheck);
   const now = new Date().toISOString();
 
   if (works.length === 0) {
@@ -105,9 +122,16 @@ async function main() {
     return;
   }
 
-  console.log(`[${now}] 发现 ${works.length} 个新作品，开始阅读...`);
-  const section = await summarizeWorks(works);
-  await appendMemory(section);
+  console.log(`[${now}] ${isAll ? '全量重建' : '增量'}：发现 ${works.length} 个作品，开始阅读...`);
+  // 分批阅读：每批 BATCH_SIZE 个，避免单次 LLM 输出超限被截断
+  let section = '';
+  for (let i = 0; i < works.length; i += BATCH_SIZE) {
+    const batch = works.slice(i, i + BATCH_SIZE);
+    console.log(`  批次 ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(works.length / BATCH_SIZE)}：${batch.length} 个...`);
+    const chunk = await summarizeWorks(batch);
+    section += (section ? '\n' : '') + chunk;
+  }
+  await appendMemory(section, isAll);
   await writeFile(STATE_FILE, JSON.stringify({ lastCheck: now }), 'utf8');
   console.log(`✅ 已写入 ${works.length} 条记忆到 el-ai-memory.md`);
   console.log('--- 生成内容预览 ---\n' + section.slice(0, 500));
