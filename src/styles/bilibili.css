@@ -795,3 +795,193 @@ body.ym-has-bg::before {
     animation: none !important;
   }
 }
+
+/* ---------- 依力 AI 对话面板（Issue #56 一期） ---------- */
+.ym-chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 132px;
+  z-index: 950;
+  width: 320px;
+  height: 440px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--ym-bg-card);
+  border: 1px solid var(--ym-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.ym-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ym-border);
+  background-color: var(--ym-bg-page);
+}
+
+.ym-chat-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--ym-accent);
+  flex-shrink: 0;
+}
+
+.ym-chat-status.thinking {
+  background-color: #f59e0b;
+  animation: ym-chat-pulse 1s ease-in-out infinite;
+}
+
+@keyframes ym-chat-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.ym-chat-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ym-text-primary);
+}
+
+.ym-chat-hint {
+  font-size: 12px;
+  color: var(--ym-text-muted);
+}
+
+.ym-chat-close {
+  margin-left: auto;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--ym-text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ym-chat-close:hover {
+  background-color: var(--ym-bg-subtle);
+}
+
+.ym-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ym-chat-msg {
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ym-chat-msg.user {
+  align-self: flex-end;
+  background-color: var(--ym-accent);
+  color: var(--ym-accent-text-on);
+  border-bottom-right-radius: 4px;
+}
+
+.ym-chat-msg.yili {
+  align-self: flex-start;
+  background-color: var(--ym-bg-subtle);
+  color: var(--ym-text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.ym-chat-msg.typing {
+  color: var(--ym-text-muted);
+}
+
+.ym-chat-msg-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ym-chat-msg-wrap.user {
+  align-items: flex-end;
+}
+
+/* 跳转按钮（搜索结果/快捷入口） */
+.ym-chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.ym-chat-action {
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ym-accent);
+  background-color: transparent;
+  border: 1px solid var(--ym-accent);
+  border-radius: 8px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ym-chat-action:active {
+  background-color: var(--ym-accent);
+  color: var(--ym-accent-text-on);
+}
+
+.ym-chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--ym-border);
+  background-color: var(--ym-bg-page);
+}
+
+.ym-chat-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 16px;
+  color: var(--ym-text-primary);
+  background-color: var(--ym-bg-card);
+  border: 1px solid var(--ym-border);
+  border-radius: 10px;
+  outline: none;
+}
+
+.ym-chat-input:focus {
+  border-color: var(--ym-accent);
+}
+
+.ym-chat-send {
+  flex-shrink: 0;
+  min-width: 56px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 10px;
+  background-color: var(--ym-accent);
+  color: var(--ym-accent-text-on);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ym-chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
