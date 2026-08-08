@@ -55,34 +55,34 @@
 }
 
 /* ========================================================= */
-/* 主题：Catppuccin（Latte）                                 */
+/* 主题：Catppuccin（Mocha）                                 */
 /* ========================================================= */
 [data-theme="catppuccin"] {
-  --ym-bg-page: #E6E9EF;
-  --ym-bg-card: #EFF1F5;
-  --ym-bg-subtle: #DCE0E8;
+  --ym-bg-page: #1E1E2E;
+  --ym-bg-card: #313244;
+  --ym-bg-subtle: #45475A;
 
-  --ym-accent: #1E66F5;
-  --ym-accent-hover: #1A59DC;
-  --ym-accent-text-on: #FFFFFF;
+  --ym-accent: #89B4FA;
+  --ym-accent-hover: #6FA6F5;
+  --ym-accent-text-on: #1E1E2E;
 
-  --ym-danger: #D20F39;
-  --ym-danger-hover: #B10E30;
-  --ym-danger-bg: #F6D9DE;
-  --ym-danger-text-on: #FFFFFF;
+  --ym-danger: #F38BA8;
+  --ym-danger-hover: #E2738F;
+  --ym-danger-bg: #3A2430;
+  --ym-danger-text-on: #1E1E2E;
 
-  --ym-success: #40A02B;
-  --ym-success-bg: #DFEBD6;
-  --ym-success-text-on: #FFFFFF;
+  --ym-success: #A6E3A1;
+  --ym-success-bg: #22302A;
+  --ym-success-text-on: #1E1E2E;
 
-  --ym-text-primary: #4C4F69;
-  --ym-text-secondary: #6C6F85;
-  --ym-text-muted: #9CA0B0;
+  --ym-text-primary: #CDD6F4;
+  --ym-text-secondary: #A6ADC8;
+  --ym-text-muted: #7F849C;
 
-  --ym-border: #CCD0DA;
-  --ym-border-strong: #1E66F5;
+  --ym-border: #45475A;
+  --ym-border-strong: #89B4FA;
 
-  --ym-focus-ring: rgba(30, 102, 245, 0.12);
+  --ym-focus-ring: rgba(137, 180, 250, 0.18);
 }
 
 /* ========================================================= */

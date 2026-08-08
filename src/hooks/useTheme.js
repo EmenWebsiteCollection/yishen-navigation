@@ -8,7 +8,7 @@ export const CUSTOM_THEME_ID = 'custom';
 
 export const THEMES = [
   { id: 'default', name: '依神默认', accent: '#9C6B2E', bg: '#F3EAD8' },
-  { id: 'catppuccin', name: 'Catppuccin', accent: '#1E66F5', bg: '#E6E9EF' },
+  { id: 'catppuccin', name: 'Catppuccin', accent: '#89B4FA', bg: '#1E1E2E' },
   { id: 'tokyonight', name: 'Tokyo Night', accent: '#7AA2F7', bg: '#16161E' },
   { id: 'onedark', name: 'One Dark', accent: '#61AFEF', bg: '#21252B' },
   { id: 'dracula', name: 'Dracula', accent: '#BD93F9', bg: '#21222C' },
