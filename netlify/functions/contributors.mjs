@@ -38,17 +38,38 @@ function mapContributors(users) {
   }));
 }
 
+// 读取缓存：Blobs 未启用/失败时返回 null，不影响实时抓取
+async function readCache(store) {
+  try {
+    return await store.get(CACHE_KEY, { type: 'json' });
+  } catch (e) {
+    console.warn('读取贡献者缓存失败:', e.message);
+    return null;
+  }
+}
+
+// 写入缓存：失败只告警，不影响本次响应
+async function writeCache(store, payload) {
+  try {
+    await store.set(CACHE_KEY, JSON.stringify(payload));
+  } catch (e) {
+    console.warn('写入贡献者缓存失败:', e.message);
+  }
+}
+
 export default async (req) => {
   if (req.method !== 'GET') return new Response('Method Not Allowed', { status: 405 });
 
   try {
     const store = getStore('contributors');
-    const cached = await store.get(CACHE_KEY, { type: 'json' });
+    const cached = await readCache(store);
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
       return json({ cached: true, fetchedAt: cached.fetchedAt, contributors: cached.contributors });
     }
 
     // 拉取全部贡献者（仓库规模小，100 条足够；追加 headers 说明这是 Netlify 函数发起的请求）
+    // 生产环境建议在 Netlify 后台配置 GITHUB_TOKEN（GitHub 个人令牌，只读 public_repo 即可），
+    // 可把未鉴权限流从 60 次/时提高到 5000 次/时，避免限流导致回退缓存。
     const res = await fetch(
       `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors?per_page=100`,
       {
@@ -61,7 +82,7 @@ export default async (req) => {
     );
 
     if (!res.ok) {
-      // GitHub 失败：若已有缓存则回退缓存，否则返回错误
+      // GitHub 失败：若已有缓存则回退缓存（标记 stale），否则返回错误
       if (cached) return json({ cached: true, stale: true, fetchedAt: cached.fetchedAt, contributors: cached.contributors });
       return json({ error: `GitHub API 请求失败: HTTP ${res.status}` }, 502);
     }
@@ -69,7 +90,7 @@ export default async (req) => {
     const users = await res.json();
     const contributors = mapContributors(users);
 
-    await store.set(CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), contributors }));
+    await writeCache(store, { fetchedAt: Date.now(), contributors });
 
     return json({ cached: false, fetchedAt: Date.now(), contributors });
   } catch (err) {

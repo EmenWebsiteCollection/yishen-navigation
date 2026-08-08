@@ -100,13 +100,17 @@ const TeamMember = ({ member }) => {
 
 export function AboutPage() {
   const [contributors, setContributors] = useState(null);
+  const [fetchedAt, setFetchedAt] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     getContributors()
-      .then((list) => {
-        if (!cancelled) setContributors(list);
+      .then((data) => {
+        if (!cancelled) {
+          setContributors(data.contributors);
+          setFetchedAt(data.fetchedAt);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -115,6 +119,16 @@ export function AboutPage() {
       cancelled = true;
     };
   }, []);
+
+  const formatSyncedAt = (ts) => {
+    if (!ts) return null;
+    try {
+      const d = new Date(ts);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    } catch {
+      return null;
+    }
+  };
 
   return (
     <div className="ym-main-narrow" style={{ margin: '0 auto' }}>
@@ -177,7 +191,10 @@ export function AboutPage() {
                 ))}
               </div>
               <p style={{ marginTop: '16px', fontSize: '13px', color: 'var(--ym-text-muted)' }}>
-                🙏 贡献者数据来自 GitHub API 实时同步，感谢每一位为这个项目贡献过代码、建议与反馈的伙伴。
+                {fetchedAt
+                  ? <>🙏 贡献者数据来自 GitHub API 实时同步 · 最近同步：{formatSyncedAt(fetchedAt)}</>
+                  : '🙏 当前展示为内置贡献者列表，部署后将自动从 GitHub 实时同步'}
+                ，感谢每一位为这个项目贡献过代码、建议与反馈的伙伴。
               </p>
             </>
           )}

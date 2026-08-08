@@ -3,3 +3,4 @@ dist/
 .env.local
 .env
 .el-ai-memory-state.json
+public/contributors.json
