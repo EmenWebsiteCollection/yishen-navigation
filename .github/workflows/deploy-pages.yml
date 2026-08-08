@@ -39,6 +39,9 @@ jobs:
           VITE_BASE: /yishen-navigation/
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          LLM_API_KEY: sk-e4fd8e41c68b498590af09b8df5d394b
+          SUPABASE_URL: https://naaczfnskkpsujdfwurj.supabase.co
+          SUPABASE_ANON_KEY : sb_publishable_yP5KQyXarTJ5Ap0xoxmp8Q_TCA2V1OM
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
