@@ -2,3 +2,10 @@
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
+
+# SPA 重定向：所有深层路由（/website/:id、/user/:id、/about 等）回退到 index.html
+# 否则直接访问/刷新/分享链接会返回 404
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
