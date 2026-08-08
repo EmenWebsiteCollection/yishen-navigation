@@ -30,6 +30,12 @@ select {
   outline-offset: 2px;
 }
 
+/* 移动端导航下拉（Issue #52）：桌面端隐藏汉堡按钮与下拉面板 */
+.ym-nav-toggle,
+.ym-nav-dropdown {
+  display: none;
+}
+
 /* ---------- 移动端 ≤640px ---------- */
 @media (max-width: 640px) {
   /* 顶部导航：收紧内边距与按钮间距 */
@@ -193,13 +199,14 @@ select {
   }
 
   .ym-header-left {
-    width: 100%;
-    justify-content: space-between;
+    flex: 1 1 auto;
+    min-width: 0;
     gap: 10px;
   }
 
+  /* 导航改下拉式（参考 B 站手机端），隐藏横向滚动条 */
   .ym-header-links {
-    overflow-x: auto;
+    display: none;
   }
 
   .ym-header-center {
@@ -210,6 +217,64 @@ select {
 
   .ym-header-actions {
     margin-left: 0;
+    flex-shrink: 0;
+  }
+
+  /* 汉堡按钮 */
+  .ym-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--ym-text-secondary);
+    border-radius: var(--ym-radius-sm);
+    cursor: pointer;
+  }
+
+  .ym-nav-toggle:active {
+    background: var(--ym-bg-subtle);
+  }
+
+  /* 下拉面板 */
+  .ym-nav-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    padding: 8px;
+    background-color: var(--ym-bg-card);
+    border-bottom: 1px solid var(--ym-border);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .ym-nav-dropdown.open {
+    display: block;
+  }
+
+  .ym-nav-dropdown-link {
+    display: block;
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--ym-text-secondary);
+    border-radius: var(--ym-radius-sm);
+    text-decoration: none;
+  }
+
+  .ym-nav-dropdown-link:active {
+    background: var(--ym-bg-subtle);
+  }
+
+  .ym-nav-dropdown-link.active {
+    color: var(--ym-accent);
+    background: var(--ym-bg-subtle);
   }
 
   .ym-main {
