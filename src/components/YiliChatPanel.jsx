@@ -60,7 +60,15 @@ async function fetchReply(messages, authCtx) {
   } catch (err) {
     console.warn('依力 AI 不可用，降级到规则版:', err);
     const rule = await getRuleReply(query);
-    return { reply: rule.text || '唔…依力现在有点状况，稍后再试试？', actions: [], offline: true };
+        // 降级时也把规则版查到的作品/入口做成卡片（避免「说点卡片却没卡片」）
+    const actions = [];
+    for (const w of (rule.works || []).slice(0, 4)) {
+      actions.push({ type: 'work_card', workId: w.id, title: w.title, url: w.url || '', workType: w.work_type || '', to: `/website/${w.id}` });
+    }
+    for (const l of (rule.links || []).slice(0, 3)) {
+      actions.push({ type: 'guide_card', label: l.label, to: l.to });
+    }
+    return { reply: rule.text || '唔…依力现在有点状况，稍后再试试？', actions, offline: true };
   } finally {
     clearTimeout(timer);
   }
@@ -181,3 +189,4 @@ export function YiliChatPanel({ open, onClose }) {
     </section>
   );
 }
+
