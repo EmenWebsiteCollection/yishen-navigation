@@ -904,6 +904,19 @@ body.ym-has-bg::before {
   color: var(--ym-text-muted);
 }
 
+.ym-chat-offline-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  vertical-align: 1px;
+  color: var(--ym-text-muted);
+  background-color: var(--ym-bg-card);
+  border: 1px solid var(--ym-border);
+}
+
 .ym-chat-msg-wrap {
   display: flex;
   flex-direction: column;

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { SiteHeader } from './SiteHeader.jsx';
 import { AppFooter } from './AppFooter.jsx';
 import { AuthModals } from './AuthModals.jsx';
-import { AgentBot } from './AgentBot.jsx';
 
 export function AppShell({ children }) {
   const [authMode, setAuthMode] = useState(null);
@@ -13,7 +12,6 @@ export function AppShell({ children }) {
       <main className="ym-main">{children}</main>
       <AppFooter />
       <AuthModals mode={authMode} onClose={() => setAuthMode(null)} onSwitch={setAuthMode} />
-      <AgentBot />
     </div>
   );
 }
