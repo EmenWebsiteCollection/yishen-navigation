@@ -232,19 +232,14 @@
 [data-theme="macos"] .ym-logo-mark {
 
 
-  display: grid;
+  display: block;
   width: 38px;
   height: 38px;
   flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.54);
   border-radius: 12px;
-  background: linear-gradient(145deg, #3f92ff, #0877f9 70%);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 18px rgba(0, 122, 255, 0.22);
-  font-family: var(--ym-font-display);
-  font-size: 18px;
-  font-weight: 650;
+  object-fit: cover;
+  box-shadow: 0 8px 18px rgba(0, 122, 255, 0.22);
+
 
 
 }
@@ -1879,6 +1874,7 @@
     width: 36px;
     height: 36px;
     border-radius: 11px;
+    object-fit: cover;
   
 
 }
