@@ -1,4 +1,4 @@
-// 首页：高分轮播 + 可配置分区 Tab + B 站式网站卡片信息流。
+﻿// 首页：高分轮播 + 可配置分区 Tab + B 站式网站卡片信息流。
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
@@ -258,7 +258,7 @@ export function HomePage() {
               本周新锐 · 编辑精选 · 小众宝藏 · 零评论作品 · 每日随机……不只按点赞数推荐
             </p>
           </div>
-          <span className="ym-btn ym-btn-sm">去看看</span>
+          <span className="ym-btn ym-btn-primary ym-btn-sm">去看看</span>
         </Link>
       </div>
 
@@ -349,3 +349,4 @@ export function HomePage() {
     </div>
   );
 }
+
