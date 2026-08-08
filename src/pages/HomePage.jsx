@@ -274,21 +274,38 @@ export function HomePage() {
                 )}
                 {user.email?.replace('@nav.local', '') || user.email}
                 {!isAnonymous && (
-                  <Link
-                    to='/profile'
-                    style={{
-                      padding: '6px 16px',
-                      backgroundColor: 'transparent',
-                      color: 'var(--ym-text-secondary)',
-                      border: '1px solid var(--ym-border)',
-                      borderRadius: 'var(--ym-radius-sm)',
-                      fontSize: '14px',
-                      textDecoration: 'none',
-                      transition: 'all var(--ym-transition)',
-                    }}
-                  >
-                    个人中心
-                  </Link>
+                  <>
+                    <Link
+                      to={`/user/${user.id}`}
+                      style={{
+                        padding: '6px 16px',
+                        backgroundColor: 'transparent',
+                        color: 'var(--ym-text-secondary)',
+                        border: '1px solid var(--ym-border)',
+                        borderRadius: 'var(--ym-radius-sm)',
+                        fontSize: '14px',
+                        textDecoration: 'none',
+                        transition: 'all var(--ym-transition)',
+                      }}
+                    >
+                      我的主页
+                    </Link>
+                    <Link
+                      to='/profile'
+                      style={{
+                        padding: '6px 16px',
+                        backgroundColor: 'transparent',
+                        color: 'var(--ym-text-secondary)',
+                        border: '1px solid var(--ym-border)',
+                        borderRadius: 'var(--ym-radius-sm)',
+                        fontSize: '14px',
+                        textDecoration: 'none',
+                        transition: 'all var(--ym-transition)',
+                      }}
+                    >
+                      个人中心
+                    </Link>
+                  </>
                 )}
               </span>
               <Link
