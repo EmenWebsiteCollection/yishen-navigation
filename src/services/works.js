@@ -120,7 +120,7 @@ const TABLE_SELECT_META = `
 const VIEW_SELECT = `
   id, url, title, description, image_url, cover_url, work_type,
   featured, status, visibility, group_id, changelog,
-  created_at, updated_at, user_id, like_count, username, avatar_url
+  created_at, updated_at, user_id, view_count, like_count, username, avatar_url
 `;
 
 // 运行时探测 works.video_url 列是否存在（结果缓存，避免每次请求都探测）
@@ -725,4 +725,15 @@ export const assignWorkGroup = async (workId, groupId) => {
     .update({ group_id: groupId || null })
     .eq('id', workId);
   if (error) throw error;
+};
+
+// ========== 浏览量统计 ==========
+// 调用 RPC（security definer，游客也可触发计数），失败静默不影响主流程
+export const incrementView = async (workId) => {
+  if (!workId) return;
+  try {
+    await supabase.rpc('rpc_increment_view', { p_work_id: workId });
+  } catch (e) {
+    console.warn('浏览量计数失败:', e.message);
+  }
 };

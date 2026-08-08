@@ -16,6 +16,7 @@ import {
   creativeTypeLabel,
   audienceLabel,
   CONTENT_WARNINGS,
+  incrementView,
 } from '../services/works.js';
 import { isFollowing, toggleFollow } from '../services/follows.js';
 import { getDiscoveryRail, setFeatured } from '../services/discovery.js';
@@ -339,6 +340,21 @@ export function WebsiteDetailPage() {
       setIsAdminUser(false);
     }
   }, [user?.id]);
+
+  // 浏览量计数：同会话只计一次（刷新/重复进入不重复计），失败静默
+  useEffect(() => {
+    if (!id) return;
+    try {
+      const viewed = JSON.parse(sessionStorage.getItem('viewed_works') || '[]');
+      if (!viewed.includes(id)) {
+        incrementView(id);
+        viewed.push(id);
+        sessionStorage.setItem('viewed_works', JSON.stringify(viewed));
+      }
+    } catch (e) {
+      // sessionStorage 异常忽略，不影响页面
+    }
+  }, [id]);
 
   // 网站详情
   const [website, setWebsite] = useState(null);
@@ -1371,6 +1387,9 @@ export function WebsiteDetailPage() {
       >
         <span style={{ fontSize: '16px', color: 'var(--ym-text-primary)' }}>
           ❤️ {likeCount} 人喜欢
+        </span>
+        <span style={{ fontSize: '16px', color: 'var(--ym-text-secondary)' }}>
+          👁 {website.view_count ?? 0} 次浏览
         </span>
         {user ? (
           <button
