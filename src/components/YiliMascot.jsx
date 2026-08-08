@@ -175,7 +175,7 @@ export function YiliMascot() {
               }
             }}
           >
-            <img src="/yili.jpg" alt="依力看板郎" draggable={false} />
+            <img src={`${import.meta.env.BASE_URL}yili.jpg`} alt="依力看板郎" draggable={false} />
           </div>
 
           {/* 关闭按钮 */}
