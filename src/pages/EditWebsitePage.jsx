@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS } from '../services/works.js';
+import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS, isAdmin } from '../services/works.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
@@ -48,6 +48,7 @@ const [videoUrl, setVideoUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -56,6 +57,7 @@ const [videoUrl, setVideoUrl] = useState('');
       setLoading(false);
       return;
     }
+    isAdmin(user.id).then(setIsAdminUser).catch(() => setIsAdminUser(false));
     const loadWork = async () => {
       try {
         setLoading(true);
@@ -65,7 +67,7 @@ const [videoUrl, setVideoUrl] = useState('');
           setError('作品不存在');
           return;
         }
-        if (user.id !== data.user_id) {
+        if (user.id !== data.user_id && !isAdminUser) {
           setError('您没有权限编辑此作品');
           return;
         }

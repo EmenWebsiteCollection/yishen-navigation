@@ -11,6 +11,7 @@ import {
   getWorkFavoriteCount,
   favoriteWork,
   unfavoriteWork,
+  isAdmin,
 } from '../services/works.js';
 import {
   getCommentsByWebsite,
@@ -40,6 +41,7 @@ const Chip = ({ label, value }) => (
 const CommentCard = ({
   comment,
   currentUserId,
+  isAdminUser,
   onDelete,
   onReplyClick,
   isReplying,
@@ -50,7 +52,7 @@ const CommentCard = ({
   replySubmitting,
   replyToUsername,
 }) => {
-  const isOwner = currentUserId && comment.user_id === currentUserId;
+  const isOwner = currentUserId && (comment.user_id === currentUserId || isAdminUser);
   const isReply = Boolean(replyToUsername);
 
   return (
@@ -233,6 +235,14 @@ export function WebsiteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  useEffect(() => {
+    if (user?.id) {
+      isAdmin(user.id).then(setIsAdminUser).catch(() => setIsAdminUser(false));
+    } else {
+      setIsAdminUser(false);
+    }
+  }, [user?.id]);
 
   // 网站详情
   const [website, setWebsite] = useState(null);
@@ -608,7 +618,7 @@ export function WebsiteDetailPage() {
     );
   }
 
-  const isOwner = user && user.id === website.user_id;
+  const isOwner = user && (user.id === website.user_id || isAdminUser);
 
   // ---------- 主界面 ----------
   return (

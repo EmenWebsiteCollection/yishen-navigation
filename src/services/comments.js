@@ -62,10 +62,6 @@ export const createComment = async (workId, userId, content, parentId = null) =>
  * @returns {Promise<void>}
  */
 export const deleteComment = async (commentId) => {
-  const { error } = await supabase
-    .from('comments')
-    .delete()
-    .eq('id', commentId);
-
+  const { error } = await supabase.rpc('rpc_delete_comment', { comment_id: commentId });
   if (error) throw error;
 };
