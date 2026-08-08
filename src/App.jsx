@@ -23,6 +23,7 @@ import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { BackToTop } from './components/BackToTop.jsx';
 import { useDevice } from './hooks/useDevice.js';
 import { AppShell } from './components/AppShell.jsx';
+import { YiliMascot } from './components/YiliMascot.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -37,6 +38,7 @@ function App() {
       <ScrollToTop />
       <ThemeSwitcher />
       <BackToTop />
+      <YiliMascot />
       <AppShell>
         <Routes>
           <Route path="/" element={<HomePage />} />

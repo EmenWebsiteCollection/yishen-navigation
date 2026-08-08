@@ -686,3 +686,110 @@ body.ym-has-bg::before {
   background-color: var(--ym-accent);
   color: var(--ym-accent-text-on);
 }
+
+/* ---------- 依神看板郎 ---------- */
+.ym-mascot-body {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--ym-border-strong);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  animation: ym-mascot-breathe 3.6s ease-in-out infinite;
+}
+
+.ym-mascot-body img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 呼吸：轻微上浮下沉 */
+@keyframes ym-mascot-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* 眨眼：用顶部色条模拟眨眼（图片固定，无法局部眨眼，改用整体闪动） */
+.ym-mascot-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.18);
+  animation: ym-mascot-blink 4.8s infinite;
+  pointer-events: none;
+}
+
+@keyframes ym-mascot-blink {
+  0%, 92%, 100% { opacity: 0; }
+  94%, 96% { opacity: 1; }
+}
+
+.ym-mascot-body:hover {
+  border-color: var(--ym-accent);
+}
+
+/* 对话气泡 */
+.ym-mascot-bubble {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 10px;
+  max-width: 220px;
+  background-color: var(--ym-bg-card);
+  border: 1px solid var(--ym-border);
+  border-radius: var(--ym-radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ym-text-primary);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  animation: ym-slide-down var(--ym-transition) forwards;
+}
+
+.ym-mascot-bubble-arrow {
+  position: absolute;
+  top: 100%;
+  left: 70%;
+  width: 10px;
+  height: 10px;
+  background-color: var(--ym-bg-card);
+  border-right: 1px solid var(--ym-border);
+  border-bottom: 1px solid var(--ym-border);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* 关闭按钮 */
+.ym-mascot-close {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--ym-border);
+  background-color: var(--ym-bg-card);
+  color: var(--ym-text-muted);
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.ym-mascot-close:hover {
+  color: var(--ym-danger);
+  border-color: var(--ym-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ym-mascot-body,
+  .ym-mascot-body::after {
+    animation: none !important;
+  }
+}
