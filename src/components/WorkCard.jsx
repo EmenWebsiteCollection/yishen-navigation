@@ -2,10 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { workTypeLabel, aiDegreeLabel } from '../services/works.js';
 
-export function WorkCard({ work }) {
+export function WorkCard({ work, className, style }) {
   const cover = work.cover_url || work.image_url;
   return (
-    <Link to={`/website/${work.id}`} className="ym-work-card">
+    <Link to={`/website/${work.id}`} className={`ym-work-card${className ? ' ' + className : ''}`} style={style}>
       <div className="ym-work-card-media">
         <div className="ym-work-card-fallback">{workTypeLabel(work.work_type) || '作品'}</div>
         {cover && (

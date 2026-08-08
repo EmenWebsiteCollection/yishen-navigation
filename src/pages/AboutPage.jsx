@@ -4,14 +4,15 @@ import { PageHero } from '../components/PageHero.jsx';
 import { getContributors } from '../services/contributors.js';
 import '../styles/global.css';
 
-const Section = ({ emoji, title, children }) => (
-  <div style={{
+const Section = ({ emoji, title, children, style, className }) => (
+  <div className={className} style={{
     padding: '24px 28px',
     backgroundColor: 'var(--ym-bg-card)',
     borderRadius: 'var(--ym-radius-lg)',
     border: '1px solid var(--ym-border)',
     marginBottom: '16px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+    ...style,
   }}>
     <h2 style={{
       fontFamily: 'var(--ym-font-display)',
@@ -121,9 +122,11 @@ export function AboutPage() {
           emoji="✨"
           title="关于依神网站汇总"
           subtitle="发现优质网站，共建网络资源库"
+          className="ym-stagger-item"
+          style={{ '--ym-stagger-index': 0 }}
         />
 
-        <Section emoji="📖" title="项目简介">
+        <Section emoji="📖" title="项目简介" className="ym-stagger-item" style={{ '--ym-stagger-index': 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <img
               src="https://github.com/EmenWebsiteCollection.png?size=120"
@@ -145,7 +148,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="💭" title="项目初衷">
+        <Section emoji="💭" title="项目初衷" className="ym-stagger-item" style={{ '--ym-stagger-index': 2 }}>
           <p>
             互联网上优秀的网站散落各处，很难被系统性地发现和沉淀 🌊。
             这个项目的初衷，就是把这些好网站汇集到一起，让每个人都能基于真实体验推荐、评分和评论，
@@ -153,7 +156,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="🚀" title="项目愿景">
+        <Section emoji="🚀" title="项目愿景" className="ym-stagger-item" style={{ '--ym-stagger-index': 3 }}>
           <p>
             我们希望依神网站汇总能够成长为一个活跃、可信、可持续的网站导航社区 🌱：
             内容由社区共建 ✍️、质量由社区把关 ⚖️，同时保持简洁、克制、注重体验的设计风格。
@@ -161,7 +164,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="🤝" title="开发团队与贡献者">
+        <Section emoji="🤝" title="开发团队与贡献者" className="ym-stagger-item" style={{ '--ym-stagger-index': 4 }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--ym-text-muted)', fontSize: '14px' }}>
               ⏳ 加载贡献者中...
