@@ -1,5 +1,4 @@
-// 全站统一顶栏：Logo + 导航 + 搜索 + 主题 + 登录/投稿/头像菜单。
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo.jsx';
 import { SearchBar } from './SearchBar.jsx';
@@ -16,25 +15,26 @@ const NAV_LINKS = [
   { to: '/contact', label: '联系我们' },
 ];
 
-const ThemeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c.55 0 1-.45 1-1 0-.27-.11-.51-.29-.69-.18-.18-.29-.42-.29-.69 0-.55.45-1 1-1h2.83c2.09 0 3.75-1.66 3.75-3.75C20 6.58 16.42 2 12 2zm-5 11c-.83 0-1.5-.67-1.5-1.5S6.17 10 7 10s1.5.67 1.5 1.5S7.83 13 7 13zm3-4C9.67 9 9 8.33 9 7.5S9.67 6 10 6s1.5.67 1.5 1.5S10.33 9 10 9zm4 0c-.83 0-1.5-.67-1.5-1.5S13.17 6 14 6s1.5.67 1.5 1.5S14.83 9 14 9zm3 4c-.83 0-1.5-.67-1.5-1.5S16.17 10 17 10s1.5.67 1.5 1.5S17.83 13 17 13z" />
-  </svg>
+const isActivePath = (pathname, to) => (
+  to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`)
 );
 
-export function SiteHeader({ onLogin, onRegister }) {
+export function SiteHeader({ onLogin }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, isAnonymous } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [navOpen, setNavOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
-  const menuRef = useRef(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [indicator, setIndicator] = useState({ x: 0, width: 0, visible: false });
+  const profileRef = useRef(null);
   const navRef = useRef(null);
-
+  const linkRefs = useRef(new Map());
   const isLoggedIn = Boolean(user && !isAnonymous);
 
-  const loadAvatar = React.useCallback(async () => {
+  const loadAvatar = useCallback(async () => {
     if (!isLoggedIn || !user) {
       setAvatarUrl('');
       return;
@@ -50,47 +50,52 @@ export function SiteHeader({ onLogin, onRegister }) {
 
   useEffect(() => {
     loadAvatar();
-    const onProfileUpdated = () => loadAvatar();
-    window.addEventListener('ym-profile-updated', onProfileUpdated);
-    return () => window.removeEventListener('ym-profile-updated', onProfileUpdated);
+    window.addEventListener('ym-profile-updated', loadAvatar);
+    return () => window.removeEventListener('ym-profile-updated', loadAvatar);
   }, [loadAvatar]);
 
   useEffect(() => {
-    const onPointerDown = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    const onPointerDown = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false);
     };
+    const onScroll = () => setScrolled(window.scrollY > 16);
     document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, []);
-
-  // 移动端导航下拉：路由变化时收起
-  useEffect(() => {
-    setNavOpen(false);
-  }, [pathname]);
-
-  // 移动端导航下拉：点击外部 / Esc 收起
-  useEffect(() => {
-    if (!navOpen) return;
-    const onPointerDown = (e) => {
-      if (navRef.current && !navRef.current.contains(e.target)) setNavOpen(false);
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') setNavOpen(false);
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onScroll);
     };
-  }, [navOpen]);
+  }, []);
 
-  const openTheme = () => {
-    window.dispatchEvent(new CustomEvent('ym-open-theme'));
-  };
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setMobileSearchOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
 
+  const measureIndicator = useCallback(() => {
+    const activeLink = NAV_LINKS.find((link) => isActivePath(pathname, link.to));
+    const nav = navRef.current;
+    const element = activeLink ? linkRefs.current.get(activeLink.to) : null;
+    if (!nav || !element) {
+      setIndicator((current) => ({ ...current, visible: false }));
+      return;
+    }
+    const navRect = nav.getBoundingClientRect();
+    const linkRect = element.getBoundingClientRect();
+    setIndicator({ x: linkRect.left - navRect.left, width: linkRect.width, visible: true });
+  }, [pathname]);
+
+  useLayoutEffect(() => {
+    measureIndicator();
+    window.addEventListener('resize', measureIndicator);
+    return () => window.removeEventListener('resize', measureIndicator);
+  }, [measureIndicator]);
+
+  const openTheme = () => window.dispatchEvent(new CustomEvent('ym-open-theme'));
   const handleLogout = async () => {
-    setMenuOpen(false);
+    setProfileOpen(false);
     try {
       await logout();
       navigate('/');
@@ -100,20 +105,31 @@ export function SiteHeader({ onLogin, onRegister }) {
   };
 
   const displayName = user?.email?.replace('@nav.local', '') || user?.email || '';
+  const openLogin = () => {
+    setMobileMenuOpen(false);
+    onLogin?.();
+  };
 
   return (
-    <header className="ym-site-header" ref={navRef}>
+    <header className={`ym-site-header${scrolled ? ' is-scrolled' : ''}`}>
       <div className="ym-header-inner">
         <div className="ym-header-left">
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex' }}>
-            <Logo />
-          </Link>
-          <nav className="ym-header-links" aria-label="主导航">
+          <Link to="/" className="ym-brand-link" aria-label="依神网站汇总首页"><Logo /></Link>
+          <nav ref={navRef} className="ym-header-links" aria-label="主导航">
+            <span
+              className={`ym-nav-indicator${indicator.visible ? ' is-visible' : ''}`}
+              style={{ width: `${indicator.width}px`, transform: `translateX(${indicator.x}px)` }}
+              aria-hidden="true"
+            />
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.to}
+                ref={(node) => {
+                  if (node) linkRefs.current.set(link.to, node);
+                  else linkRefs.current.delete(link.to);
+                }}
                 to={link.to}
-                className={'ym-header-link' + (pathname === link.to ? ' active' : '')}
+                className={`ym-header-link${isActivePath(pathname, link.to) ? ' active' : ''}`}
               >
                 {link.label}
               </Link>
@@ -121,137 +137,64 @@ export function SiteHeader({ onLogin, onRegister }) {
           </nav>
         </div>
 
-        <div className="ym-header-center">
-          <SearchBar />
-        </div>
+        <div className="ym-header-center"><SearchBar /></div>
 
-        <div className="ym-header-actions">
-          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={openTheme} title="切换主题" aria-label="切换主题">
-            <ThemeIcon />
-            主题
-          </button>
-
-          {isLoggedIn && (
-            <Link to="/create" className="ym-btn ym-btn-primary ym-btn-sm">
-              投稿
-            </Link>
-          )}
-
+        <div className="ym-header-actions ym-desktop-actions">
+          <button type="button" className="ym-btn ym-btn-sm" onClick={openTheme}>主题</button>
+          {isLoggedIn && <Link to="/create" className="ym-btn ym-btn-primary ym-btn-sm">投稿</Link>}
           {isLoggedIn ? (
-            <div ref={menuRef} style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((o) => !o)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '4px 8px',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  borderRadius: 'var(--ym-radius-sm)',
-                  color: 'var(--ym-text-secondary)',
-                }}
-              >
-                {avatarUrl ? (
-                  <img
-                    className="ym-avatar ym-avatar-md"
-                    src={avatarUrl}
-                    alt="头像"
-                  />
-                ) : (
-                  <span className="ym-avatar-fallback ym-avatar-md" style={{ fontSize: '16px' }}>👤</span>
-                )}
-                <span style={{ fontSize: '14px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {displayName}
-                </span>
+            <div ref={profileRef} style={{ position: 'relative' }}>
+              <button type="button" className="ym-profile-trigger" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen}>
+                {avatarUrl ? <img className="ym-avatar ym-avatar-md" src={avatarUrl} alt="头像" /> : <span className="ym-avatar-fallback ym-avatar-md">神</span>}
+                <span className="ym-profile-name">{displayName}</span>
               </button>
-
-              {menuOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: 'calc(100% + 6px)',
-                    width: '150px',
-                    backgroundColor: 'var(--ym-bg-card)',
-                    border: '1px solid var(--ym-border)',
-                    borderRadius: 'var(--ym-radius-md)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                    padding: '6px',
-                    zIndex: 120,
-                  }}
-                >
-                  <Link
-                    to="/profile"
-                    onClick={() => setMenuOpen(false)}
-                    style={{ display: 'block', padding: '8px 12px', fontSize: '14px', color: 'var(--ym-text-secondary)', borderRadius: 'var(--ym-radius-sm)', textDecoration: 'none' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-bg-subtle)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    个人中心
-                  </Link>
-                  <Link
-                    to="/profile?tab=settings"
-                    onClick={() => setMenuOpen(false)}
-                    style={{ display: 'block', padding: '8px 12px', fontSize: '14px', color: 'var(--ym-text-secondary)', borderRadius: 'var(--ym-radius-sm)', textDecoration: 'none' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-bg-subtle)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    更换头像
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: '14px', color: 'var(--ym-danger)', borderRadius: 'var(--ym-radius-sm)', border: 'none', background: 'none', cursor: 'pointer' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-danger-bg)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    退出
-                  </button>
+              {profileOpen && (
+                <div className="ym-profile-menu">
+                  <Link to="/profile">个人中心</Link>
+                  <Link to="/profile?tab=settings">更换头像</Link>
+                  <button type="button" className="ym-profile-danger" onClick={handleLogout}>退出</button>
                 </div>
               )}
             </div>
           ) : (
-            <button type="button" className="ym-btn ym-btn-primary ym-btn-sm" onClick={onLogin}>
-              登录
-            </button>
+            <button type="button" className="ym-btn ym-btn-primary ym-btn-sm" onClick={openLogin}>登录</button>
           )}
+        </div>
 
-          {/* 移动端导航菜单开关（≤640px 显示） */}
+        <div className="ym-mobile-actions">
+          {isLoggedIn ? <Link to="/create" className="ym-btn ym-btn-primary ym-btn-sm">投稿</Link> : <button type="button" className="ym-btn ym-btn-primary ym-btn-sm" onClick={openLogin}>登录</button>}
           <button
             type="button"
-            className="ym-nav-toggle"
-            onClick={() => setNavOpen((o) => !o)}
-            aria-expanded={navOpen}
-            aria-label="导航菜单"
-            title="导航菜单"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              {navOpen ? (
-                <path d="M18 6L6 18M6 6l12 12" />
-              ) : (
-                <path d="M3 6h18M3 12h18M3 18h18" />
-              )}
-            </svg>
-          </button>
+            className="ym-btn ym-mobile-icon-button"
+            onClick={() => { setMobileSearchOpen((open) => !open); setMobileMenuOpen(false); }}
+            aria-expanded={mobileSearchOpen}
+          >搜索</button>
+          <button
+            type="button"
+            className="ym-btn ym-mobile-icon-button"
+            onClick={() => { setMobileMenuOpen((open) => !open); setMobileSearchOpen(false); }}
+            aria-expanded={mobileMenuOpen}
+          >菜单</button>
         </div>
       </div>
 
-      {/* 移动端导航下拉（参考 B 站手机端） */}
-      <nav className={'ym-nav-dropdown' + (navOpen ? ' open' : '')} aria-label="移动端导航菜单">
-        {NAV_LINKS.map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className={'ym-nav-dropdown-link' + (pathname === link.to ? ' active' : '')}
-            onClick={() => setNavOpen(false)}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      <div className={`ym-mobile-search-panel${mobileSearchOpen ? ' is-open' : ''}`}><SearchBar /></div>
+      <div className={`ym-mobile-drawer${mobileMenuOpen ? ' is-open' : ''}`}>
+        <nav className="ym-mobile-nav" aria-label="移动端主导航">
+          {NAV_LINKS.map((link) => (
+            <Link key={link.to} to={link.to} className={`ym-mobile-nav-link${isActivePath(pathname, link.to) ? ' active' : ''}`}>{link.label}</Link>
+          ))}
+        </nav>
+        <div className="ym-mobile-drawer-footer">
+          <button type="button" className="ym-btn" onClick={openTheme}>切换主题</button>
+          {isLoggedIn ? (
+            <>
+              <Link to="/profile" className="ym-btn">个人中心</Link>
+              <button type="button" className="ym-btn" onClick={handleLogout}>退出登录</button>
+            </>
+          ) : <button type="button" className="ym-btn ym-btn-primary" onClick={openLogin}>登录账号</button>}
+        </div>
+      </div>
     </header>
   );
 }

@@ -1,0 +1,2043 @@
+/* macOS-inspired Liquid Glass design system */
+[data-theme="macos"] {
+
+
+  --ym-glass-rgb: 255, 255, 255;
+  --ym-glass-nav-alpha: 0.74;
+  --ym-glass-card-alpha: 0.68;
+  --ym-glass-control-alpha: 0.58;
+  --ym-glass-strong-alpha: 0.82;
+  --ym-glass-edge: rgba(255, 255, 255, 0.72);
+  --ym-glass-edge-soft: rgba(255, 255, 255, 0.48);
+  --ym-shadow-nav: 0 18px 48px rgba(54, 83, 126, 0.12), 0 2px 8px rgba(54, 83, 126, 0.05);
+  --ym-shadow-card: 0 16px 36px rgba(63, 88, 126, 0.09), 0 2px 8px rgba(63, 88, 126, 0.04);
+  --ym-shadow-card-hover: 0 22px 48px rgba(54, 83, 126, 0.14), 0 5px 14px rgba(54, 83, 126, 0.07);
+  --ym-shadow-control: 0 5px 16px rgba(63, 88, 126, 0.08);
+  --ym-radius-window: 28px;
+  --ym-radius-panel: 24px;
+  --ym-radius-card: 20px;
+  --ym-radius-control: 14px;
+  --ym-radius-pill: 999px;
+  --ym-space-1: 4px;
+  --ym-space-2: 8px;
+  --ym-space-3: 12px;
+  --ym-space-4: 16px;
+  --ym-space-5: 20px;
+  --ym-space-6: 24px;
+  --ym-space-8: 32px;
+  --ym-space-10: 40px;
+  --ym-motion-fast: 180ms;
+  --ym-motion-base: 300ms;
+  --ym-motion-spring: cubic-bezier(0.22, 1, 0.36, 1);
+
+
+}
+[data-theme="macos"] {
+
+
+  min-width: 320px;
+  background: #edf3fb;
+  scroll-behavior: smooth;
+
+
+}
+[data-theme="macos"] body {
+
+
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(70rem 48rem at -8% -8%, rgba(86, 157, 255, 0.18), transparent 65%),
+    radial-gradient(62rem 44rem at 108% 18%, rgba(130, 110, 255, 0.13), transparent 67%),
+    radial-gradient(44rem 32rem at 50% 105%, rgba(86, 180, 255, 0.09), transparent 70%),
+    linear-gradient(150deg, #eef4fb 0%, #f7f9fc 42%, #edf3fb 100%);
+  background-attachment: fixed;
+
+
+}
+[data-theme="macos"] body::before {
+
+
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.3), transparent 34%),
+    radial-gradient(34rem 18rem at 72% 0%, rgba(255, 255, 255, 0.46), transparent 72%);
+
+
+}
+[data-theme="macos"] #root,
+[data-theme="macos"] .ym-page-shell {
+
+
+  min-height: 100vh;
+
+
+}
+[data-theme="macos"] .ym-page-shell {
+
+
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+
+
+}
+[data-theme="macos"] .ym-page-shell::before,
+[data-theme="macos"] .ym-page-shell::after {
+
+
+  content: '';
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.32;
+
+
+}
+[data-theme="macos"] .ym-page-shell::before {
+
+
+  width: 320px;
+  height: 320px;
+  left: -140px;
+  top: 24vh;
+  background: rgba(73, 145, 255, 0.2);
+
+
+}
+[data-theme="macos"] .ym-page-shell::after {
+
+
+  width: 360px;
+  height: 360px;
+  right: -180px;
+  top: 54vh;
+  background: rgba(126, 105, 255, 0.16);
+
+
+}
+[data-theme="macos"] .ym-main {
+
+
+  position: relative;
+  width: min(100%, 1380px);
+  max-width: 1380px;
+  padding: 34px 34px 72px;
+
+
+}
+[data-theme="macos"] .ym-main > div[style*="min-height: 100vh"] {
+
+
+  min-height: auto !important;
+  background-color: transparent !important;
+
+
+}
+[data-theme="macos"] .ym-content-page,
+[data-theme="macos"] .ym-home-page {
+
+
+  width: 100%;
+
+
+}
+[data-theme="macos"] .ym-page-container {
+
+
+  width: min(100%, 900px);
+  margin: 0 auto;
+
+
+}
+[data-theme="macos"] .ym-page-container-wide {
+
+
+  width: min(100%, 1120px);
+
+
+}
+/* Floating navigation */
+[data-theme="macos"] .ym-site-header {
+
+
+  position: sticky;
+  top: 12px;
+  z-index: 300;
+  width: min(calc(100% - 24px), 1440px);
+  margin: 12px auto 0;
+  border: 1px solid var(--ym-glass-edge);
+  border-radius: var(--ym-radius-window);
+  background:
+    linear-gradient(135deg, rgba(var(--ym-glass-rgb), 0.9), rgba(var(--ym-glass-rgb), var(--ym-glass-nav-alpha)));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-nav);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+  transition: background var(--ym-motion-base) ease, box-shadow var(--ym-motion-base) ease,
+    transform var(--ym-motion-base) var(--ym-motion-spring);
+
+
+}
+[data-theme="macos"] .ym-site-header.is-scrolled {
+
+
+  background:
+    linear-gradient(135deg, rgba(var(--ym-glass-rgb), 0.94), rgba(var(--ym-glass-rgb), 0.82));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge), 0 20px 52px rgba(54, 83, 126, 0.16);
+
+
+}
+[data-theme="macos"] .ym-header-inner {
+
+
+  max-width: none;
+  height: 72px;
+  padding: 0 16px 0 18px;
+  gap: 14px;
+
+
+}
+[data-theme="macos"] .ym-header-left {
+
+
+  gap: 18px;
+
+
+}
+[data-theme="macos"] .ym-brand-link {
+
+
+  display: flex;
+  flex: 0 0 auto;
+  text-decoration: none;
+
+
+}
+[data-theme="macos"] .ym-logo {
+
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+
+}
+[data-theme="macos"] .ym-logo-mark {
+
+
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #3f92ff, #0877f9 70%);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 8px 18px rgba(0, 122, 255, 0.22);
+  font-family: var(--ym-font-display);
+  font-size: 18px;
+  font-weight: 650;
+
+
+}
+[data-theme="macos"] .ym-logo-name {
+
+
+  max-width: 150px;
+  overflow: hidden;
+  color: var(--ym-text-primary);
+  font-family: var(--ym-font-display);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+
+}
+[data-theme="macos"] .ym-header-links {
+
+
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ym-radius-pill);
+
+
+}
+[data-theme="macos"] .ym-nav-indicator {
+
+
+  position: absolute;
+  inset-block: 3px;
+  left: 0;
+  z-index: -1;
+  width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: var(--ym-radius-pill);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.76), rgba(219, 235, 255, 0.58));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 5px 14px rgba(47, 107, 188, 0.1);
+  opacity: 0;
+  transition: transform 340ms var(--ym-motion-spring), width 340ms var(--ym-motion-spring), opacity 180ms ease;
+
+
+}
+[data-theme="macos"] .ym-nav-indicator.is-visible {
+
+
+  opacity: 1;
+
+
+}
+[data-theme="macos"] .ym-header-link {
+
+
+  position: relative;
+  z-index: 1;
+  padding: 9px 11px;
+  border-radius: var(--ym-radius-pill);
+  color: var(--ym-text-secondary);
+  font-size: 13px;
+  font-weight: 520;
+  transition: color var(--ym-motion-fast) ease;
+
+
+}
+[data-theme="macos"] .ym-header-link:hover,
+[data-theme="macos"] .ym-header-link.active {
+
+
+  color: var(--ym-accent);
+  background: transparent;
+
+
+}
+[data-theme="macos"] .ym-header-center {
+
+
+  max-width: 340px;
+  min-width: 220px;
+
+
+}
+[data-theme="macos"] .ym-header-actions {
+
+
+  gap: 8px;
+
+
+}
+[data-theme="macos"] .ym-desktop-actions {
+
+
+  display: flex;
+
+
+}
+[data-theme="macos"] .ym-mobile-actions,
+[data-theme="macos"] .ym-mobile-search-panel,
+[data-theme="macos"] .ym-mobile-drawer {
+
+
+  display: none;
+
+
+}
+[data-theme="macos"] .ym-profile-trigger {
+
+
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 5px;
+  border: 1px solid transparent;
+  border-radius: var(--ym-radius-pill);
+  background: transparent;
+  color: var(--ym-text-secondary);
+  transition: background var(--ym-motion-fast) ease, border-color var(--ym-motion-fast) ease;
+
+
+}
+[data-theme="macos"] .ym-profile-trigger:hover {
+
+
+  border-color: var(--ym-glass-edge-soft);
+  background: rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha));
+
+
+}
+[data-theme="macos"] .ym-profile-name {
+
+
+  max-width: 92px;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+
+}
+[data-theme="macos"] .ym-profile-menu {
+
+
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  z-index: 360;
+  width: 168px;
+  padding: 7px;
+  border: 1px solid var(--ym-glass-edge);
+  border-radius: 18px;
+  background: rgba(var(--ym-glass-rgb), 0.86);
+  box-shadow: var(--ym-shadow-card);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  animation: ym-glass-pop 220ms var(--ym-motion-spring) both;
+
+
+}
+[data-theme="macos"] .ym-profile-menu a,
+[data-theme="macos"] .ym-profile-menu button {
+
+
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  align-items: center;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ym-text-secondary);
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+
+
+}
+[data-theme="macos"] .ym-profile-menu a:hover,
+[data-theme="macos"] .ym-profile-menu button:hover {
+
+
+  background: rgba(var(--ym-glass-rgb), 0.72);
+  color: var(--ym-text-primary);
+
+
+}
+[data-theme="macos"] .ym-profile-menu .ym-profile-danger {
+
+
+  color: var(--ym-danger);
+
+
+}
+/* Glass surfaces and controls */
+[data-theme="macos"] .ym-glass-panel,
+[data-theme="macos"] .ym-section-block,
+[data-theme="macos"] .ym-card,
+[data-theme="macos"] .ym-idea-card,
+[data-theme="macos"] .ym-work-card,
+[data-theme="macos"] .ym-modal-card,
+[data-theme="macos"] .ym-empty,
+[data-theme="macos"] .ym-stat {
+
+
+  border: 1px solid var(--ym-glass-edge);
+  background:
+    linear-gradient(145deg, rgba(var(--ym-glass-rgb), 0.82), rgba(var(--ym-glass-rgb), var(--ym-glass-card-alpha)));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-card);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+
+
+}
+[data-theme="macos"] .ym-section-block,
+[data-theme="macos"] .ym-glass-panel,
+[data-theme="macos"] .ym-modal-card {
+
+
+  border-radius: var(--ym-radius-panel);
+
+
+}
+[data-theme="macos"] .ym-btn,
+[data-theme="macos"] .ym-chip,
+[data-theme="macos"] .ym-tab,
+[data-theme="macos"] .ym-chip-button,
+[data-theme="macos"] .ym-page-button,
+[data-theme="macos"] .ym-page-confirm {
+
+
+  min-height: 38px;
+  border: 1px solid var(--ym-glass-edge-soft);
+  border-radius: var(--ym-radius-pill);
+  background:
+    linear-gradient(145deg, rgba(var(--ym-glass-rgb), 0.76), rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha)));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-control);
+  color: var(--ym-text-secondary);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+  transition: transform var(--ym-motion-fast) var(--ym-motion-spring),
+    background var(--ym-motion-fast) ease, border-color var(--ym-motion-fast) ease,
+    color var(--ym-motion-fast) ease, box-shadow var(--ym-motion-fast) ease;
+
+
+}
+[data-theme="macos"] .ym-btn:hover:not(:disabled),
+[data-theme="macos"] .ym-chip-button:hover:not(:disabled),
+[data-theme="macos"] .ym-page-button:hover:not(:disabled),
+[data-theme="macos"] .ym-page-confirm:hover:not(:disabled) {
+
+
+  opacity: 1;
+  border-color: rgba(125, 173, 233, 0.45);
+  background: rgba(var(--ym-glass-rgb), 0.8);
+  color: var(--ym-text-primary);
+  transform: translateY(-1px);
+
+
+}
+[data-theme="macos"] .ym-btn:active:not(:disabled),
+[data-theme="macos"] .ym-chip-button:active:not(:disabled),
+[data-theme="macos"] .ym-page-button:active:not(:disabled),
+[data-theme="macos"] .ym-page-confirm:active:not(:disabled) {
+
+
+  transform: scale(0.975);
+
+
+}
+[data-theme="macos"] .ym-btn-primary,
+[data-theme="macos"] .ym-chip-active,
+[data-theme="macos"] .ym-chip-button.is-active,
+[data-theme="macos"] .ym-page-button.is-active {
+
+
+  border-color: rgba(255, 255, 255, 0.38);
+  background: linear-gradient(145deg, #3c92ff, var(--ym-accent) 68%, #0068e7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 8px 20px rgba(0, 122, 255, 0.22);
+  color: #fff;
+
+
+}
+[data-theme="macos"] .ym-btn-primary:hover:not(:disabled) {
+
+
+  background: linear-gradient(145deg, #52a0ff, var(--ym-accent-hover));
+  color: #fff;
+
+
+}
+[data-theme="macos"] .ym-btn-sm {
+
+
+  min-height: 36px;
+  padding: 7px 13px;
+  font-size: 13px;
+
+
+}
+[data-theme="macos"] .ym-btn-lg {
+
+
+  min-height: 46px;
+  padding: 10px 24px;
+
+
+}
+[data-theme="macos"] .ym-chip-button {
+
+
+  padding: 7px 15px;
+  font-size: 13px;
+  font-weight: 520;
+  white-space: nowrap;
+
+
+}
+[data-theme="macos"] .ym-tabs,
+[data-theme="macos"] .ym-filter-rail {
+
+
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 24px;
+  padding: 4px 2px 10px;
+  overflow-x: auto;
+  border: 0;
+  scrollbar-width: none;
+
+
+}
+[data-theme="macos"] .ym-tabs::-webkit-scrollbar,
+[data-theme="macos"] .ym-filter-rail::-webkit-scrollbar {
+
+
+  display: none;
+
+
+}
+[data-theme="macos"] .ym-tab {
+
+
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--ym-glass-edge-soft);
+
+
+}
+[data-theme="macos"] .ym-tab.active {
+
+
+  border-color: rgba(255, 255, 255, 0.38);
+  background: var(--ym-accent);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 7px 18px rgba(0, 122, 255, 0.2);
+
+
+}
+[data-theme="macos"] .ym-input,
+[data-theme="macos"] .ym-textarea,
+[data-theme="macos"] .ym-select,
+[data-theme="macos"] input:not([type='checkbox']):not([type='radio']),
+[data-theme="macos"] textarea,
+[data-theme="macos"] select {
+
+
+  border-color: var(--ym-glass-edge);
+  border-radius: var(--ym-radius-control);
+  background: rgba(var(--ym-glass-rgb), var(--ym-glass-strong-alpha));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-control);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+  transition: border-color var(--ym-motion-fast) ease, box-shadow var(--ym-motion-fast) ease,
+    background var(--ym-motion-fast) ease;
+
+
+}
+[data-theme="macos"] .ym-input:focus,
+[data-theme="macos"] .ym-textarea:focus,
+[data-theme="macos"] .ym-select:focus,
+[data-theme="macos"] input:not([type='checkbox']):not([type='radio']):focus,
+[data-theme="macos"] textarea:focus,
+[data-theme="macos"] select:focus {
+
+
+  border-color: rgba(0, 122, 255, 0.58);
+  background: rgba(var(--ym-glass-rgb), 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 0 0 4px var(--ym-focus-ring),
+    0 8px 24px rgba(0, 122, 255, 0.09);
+
+
+}
+/* Page headings and layout rhythm */
+[data-theme="macos"] .ym-page-hero {
+
+
+  padding: 18px 0 10px;
+  margin-bottom: 22px;
+
+
+}
+[data-theme="macos"] .ym-page-hero-title-row {
+
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+
+}
+[data-theme="macos"] .ym-page-hero-icon {
+
+
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--ym-glass-edge);
+  border-radius: 13px;
+  background: rgba(var(--ym-glass-rgb), 0.72);
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-control);
+  font-size: 19px;
+
+
+}
+[data-theme="macos"] .ym-page-hero h1 {
+
+
+  margin: 0;
+  color: var(--ym-text-primary);
+  font-family: var(--ym-font-display);
+  font-size: clamp(26px, 2.3vw, 34px);
+  font-weight: 680;
+  letter-spacing: -0.035em;
+
+
+}
+[data-theme="macos"] .ym-page-hero p {
+
+
+  max-width: 720px;
+  margin: 10px 0 0 48px;
+  color: var(--ym-text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+
+
+}
+[data-theme="macos"] .ym-section-title {
+
+
+  margin: 34px 0 16px;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+
+
+}
+[data-theme="macos"] .ym-section-title::before {
+
+
+  width: 5px;
+  height: 20px;
+  border-radius: var(--ym-radius-pill);
+  background: linear-gradient(180deg, #64aaff, var(--ym-accent));
+  box-shadow: 0 3px 8px rgba(0, 122, 255, 0.24);
+
+
+}
+[data-theme="macos"] .ym-home-feature-grid {
+
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 8px;
+
+
+}
+[data-theme="macos"] .ym-home-feature {
+
+
+  display: flex;
+  min-height: 102px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--ym-motion-base) var(--ym-motion-spring), box-shadow var(--ym-motion-base) ease;
+
+
+}
+[data-theme="macos"] .ym-home-feature:hover {
+
+
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge), var(--ym-shadow-card-hover);
+  transform: translateY(-2px);
+
+
+}
+[data-theme="macos"] .ym-home-feature strong {
+
+
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ym-text-primary);
+  font-size: 16px;
+
+
+}
+[data-theme="macos"] .ym-home-feature p {
+
+
+  margin: 0;
+  color: var(--ym-text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+
+
+}
+[data-theme="macos"] .ym-list-anchor {
+
+
+  scroll-margin-top: 112px;
+
+
+}
+/* Cards */
+[data-theme="macos"] .ym-grid {
+
+
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 22px;
+
+
+}
+[data-theme="macos"] .ym-grid-wide {
+
+
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+
+
+}
+[data-theme="macos"] .ym-card,
+[data-theme="macos"] .ym-work-card {
+
+
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ym-radius-card);
+  transition: transform var(--ym-motion-base) var(--ym-motion-spring),
+    box-shadow var(--ym-motion-base) ease, border-color var(--ym-motion-base) ease;
+
+
+}
+[data-theme="macos"] .ym-card::before,
+[data-theme="macos"] .ym-work-card::before,
+[data-theme="macos"] .ym-idea-card::before {
+
+
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+
+
+}
+[data-theme="macos"] .ym-card:hover,
+[data-theme="macos"] .ym-work-card:hover,
+[data-theme="macos"] .ym-idea-card:hover {
+
+
+  border-color: rgba(141, 181, 230, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), var(--ym-shadow-card-hover);
+  transform: translateY(-3px) scale(1.004);
+
+
+}
+[data-theme="macos"] .ym-card-media,
+[data-theme="macos"] .ym-work-card-media {
+
+
+  position: relative;
+  margin: 6px 6px 0;
+  overflow: hidden;
+  border-radius: 15px;
+  background: rgba(var(--ym-glass-rgb), 0.5);
+
+
+}
+[data-theme="macos"] .ym-card-media > img,
+[data-theme="macos"] .ym-work-card-media > img {
+
+
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 520ms var(--ym-motion-spring), filter 320ms ease;
+
+
+}
+[data-theme="macos"] .ym-card:hover .ym-card-media > img,
+[data-theme="macos"] .ym-work-card:hover .ym-work-card-media > img {
+
+
+  transform: scale(1.025);
+  filter: saturate(1.03) contrast(1.01);
+
+
+}
+[data-theme="macos"] .ym-card-badge {
+
+
+  left: 10px;
+  top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 9px;
+  background: rgba(20, 29, 42, 0.56);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+
+
+}
+[data-theme="macos"] .ym-card-body,
+[data-theme="macos"] .ym-work-card-body {
+
+
+  padding: 15px 16px 16px;
+
+
+}
+[data-theme="macos"] .ym-card-title,
+[data-theme="macos"] .ym-work-card-title {
+
+
+  color: var(--ym-text-primary);
+  font-size: 15px;
+  font-weight: 620;
+  line-height: 1.45;
+
+
+}
+[data-theme="macos"] .ym-card-meta,
+[data-theme="macos"] .ym-work-card-meta {
+
+
+  margin-top: 11px;
+  color: var(--ym-text-muted);
+
+
+}
+[data-theme="macos"] .ym-like-button {
+
+
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--ym-radius-pill);
+  background: transparent;
+  color: var(--ym-text-muted);
+  font-size: 12px;
+
+
+}
+[data-theme="macos"] .ym-like-button:hover,
+[data-theme="macos"] .ym-like-button.is-liked {
+
+
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--ym-accent);
+
+
+}
+[data-theme="macos"] .ym-work-card {
+
+
+  display: block;
+  color: inherit;
+  text-decoration: none;
+
+
+}
+[data-theme="macos"] .ym-work-card-media {
+
+
+  aspect-ratio: 16 / 9;
+
+
+}
+[data-theme="macos"] .ym-work-card-fallback {
+
+
+  position: absolute;
+  inset: 0;
+  display: grid;
+  height: 100%;
+  place-items: center;
+  background:
+    radial-gradient(circle at 70% 20%, rgba(92, 169, 255, 0.2), transparent 42%),
+    linear-gradient(135deg, rgba(229, 238, 250, 0.9), rgba(244, 247, 252, 0.74));
+  color: var(--ym-text-muted);
+  font-size: 30px;
+
+
+}
+[data-theme="macos"] .ym-work-card-heading,
+[data-theme="macos"] .ym-work-card-author,
+[data-theme="macos"] .ym-work-card-stats {
+
+
+  display: flex;
+  align-items: center;
+
+
+}
+[data-theme="macos"] .ym-work-card-heading {
+
+
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 7px;
+
+
+}
+[data-theme="macos"] .ym-work-card-author {
+
+
+  gap: 6px;
+  min-width: 0;
+
+
+}
+[data-theme="macos"] .ym-work-card-submeta {
+
+
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 9px;
+  color: var(--ym-text-muted);
+  font-size: 12px;
+
+
+}
+[data-theme="macos"] .ym-work-card-tags {
+
+
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+
+
+}
+[data-theme="macos"] .ym-work-card-tags span,
+[data-theme="macos"] .ym-work-badge {
+
+
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: var(--ym-radius-pill);
+  background: rgba(var(--ym-glass-rgb), 0.56);
+  color: var(--ym-text-secondary);
+  font-size: 11px;
+
+
+}
+[data-theme="macos"] .ym-work-card-stats {
+
+
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ym-text-muted);
+  font-size: 12px;
+
+
+}
+[data-theme="macos"] .ym-idea-card {
+
+
+  position: relative;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  border-radius: var(--ym-radius-card);
+  transition: transform var(--ym-motion-base) var(--ym-motion-spring),
+    box-shadow var(--ym-motion-base) ease, border-color var(--ym-motion-base) ease;
+
+
+}
+[data-theme="macos"] .ym-idea-list {
+
+
+  display: grid;
+  gap: 14px;
+
+
+}
+[data-theme="macos"] .ym-idea-list .ym-idea-card {
+
+
+  margin-bottom: 0;
+
+
+}
+[data-theme="macos"] .ym-state-message {
+
+
+  padding: 64px 0;
+  color: var(--ym-text-muted);
+  text-align: center;
+
+
+}
+[data-theme="macos"] .ym-empty {
+
+
+  padding: 44px 24px;
+  border-radius: var(--ym-radius-panel);
+  text-align: center;
+
+
+}
+[data-theme="macos"] .ym-empty h3 {
+
+
+  margin: 0 0 8px;
+  font-size: 18px;
+
+
+}
+[data-theme="macos"] .ym-empty p {
+
+
+  margin: 0 0 18px;
+  color: var(--ym-text-secondary);
+
+
+}
+[data-theme="macos"] .ym-idea-card-main {
+
+
+  display: block;
+  color: inherit;
+  text-decoration: none;
+
+
+}
+[data-theme="macos"] .ym-idea-card-tags,
+[data-theme="macos"] .ym-idea-card-meta {
+
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+
+}
+[data-theme="macos"] .ym-idea-card-tags {
+
+
+  margin-bottom: 10px;
+
+
+}
+[data-theme="macos"] .ym-idea-card-tags > span:not(.ym-work-badge) {
+
+
+  color: var(--ym-text-muted);
+  font-size: 12px;
+
+
+}
+[data-theme="macos"] .ym-idea-card-title {
+
+
+  margin: 0 0 7px;
+  color: var(--ym-text-primary);
+  font-family: var(--ym-font-display);
+  font-size: 18px;
+  font-weight: 640;
+  letter-spacing: -0.018em;
+
+
+}
+[data-theme="macos"] .ym-idea-card-description {
+
+
+  display: -webkit-box;
+  margin: 0 0 14px;
+  overflow: hidden;
+  color: var(--ym-text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+
+
+}
+[data-theme="macos"] .ym-idea-card-meta {
+
+
+  color: var(--ym-text-muted);
+  font-size: 13px;
+
+
+}
+/* Discovery and idea controls */
+[data-theme="macos"] .ym-discovery-random {
+
+
+  padding: 22px;
+  margin-bottom: 24px;
+
+
+}
+[data-theme="macos"] .ym-discovery-random-head,
+[data-theme="macos"] .ym-idea-toolbar {
+
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+
+
+}
+[data-theme="macos"] .ym-discovery-random-title {
+
+
+  margin-bottom: 5px;
+  color: var(--ym-text-primary);
+  font-size: 17px;
+  font-weight: 640;
+
+
+}
+[data-theme="macos"] .ym-discovery-random-copy {
+
+
+  color: var(--ym-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+
+
+}
+[data-theme="macos"] .ym-random-result {
+
+
+  width: min(100%, 360px);
+  margin-top: 18px;
+
+
+}
+[data-theme="macos"] .ym-random-result p,
+[data-theme="macos"] .ym-random-hint {
+
+
+  margin: 10px 0 0;
+  color: var(--ym-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+
+
+}
+[data-theme="macos"] .ym-active-filter {
+
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -8px 0 20px;
+  color: var(--ym-text-secondary);
+  font-size: 13px;
+
+
+}
+[data-theme="macos"] .ym-load-more {
+
+
+  margin-top: 28px;
+  text-align: center;
+
+
+}
+[data-theme="macos"] .ym-idea-toolbar {
+
+
+  margin-bottom: 18px;
+
+
+}
+[data-theme="macos"] .ym-idea-search {
+
+
+  display: flex;
+  flex: 1 1 320px;
+  gap: 8px;
+  max-width: 440px;
+
+
+}
+[data-theme="macos"] .ym-idea-search input {
+
+
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+
+
+}
+[data-theme="macos"] .ym-idea-actions,
+[data-theme="macos"] .ym-chip-row {
+
+
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+
+}
+[data-theme="macos"] .ym-chip-row {
+
+
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding: 2px 2px 7px;
+  scrollbar-width: none;
+
+
+}
+[data-theme="macos"] .ym-chip-row::-webkit-scrollbar {
+
+
+  display: none;
+
+
+}
+/* Pagination */
+[data-theme="macos"] .ym-pagination-block {
+
+
+  margin-top: 34px;
+
+
+}
+[data-theme="macos"] .ym-pagination {
+
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+
+}
+[data-theme="macos"] .ym-page-numbers {
+
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+
+}
+[data-theme="macos"] .ym-page-button {
+
+
+  display: inline-grid;
+  min-width: 40px;
+  min-height: 40px;
+  place-items: center;
+  padding: 0 13px;
+  font-size: 13px;
+
+
+}
+[data-theme="macos"] .ym-page-number {
+
+
+  padding-inline: 10px;
+
+
+}
+[data-theme="macos"] .ym-page-ellipsis {
+
+
+  display: inline-grid;
+  width: 26px;
+  height: 40px;
+  place-items: center;
+  color: var(--ym-text-muted);
+
+
+}
+[data-theme="macos"] .ym-page-jump {
+
+
+  position: relative;
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+  padding: 4px 5px 4px 13px;
+  border: 1px solid var(--ym-glass-edge);
+  border-radius: var(--ym-radius-pill);
+  background: rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-control);
+  color: var(--ym-text-secondary);
+  font-size: 13px;
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+
+
+}
+[data-theme="macos"] .ym-page-jump input {
+
+
+  width: 54px;
+  height: 32px;
+  padding: 4px 7px;
+  border-radius: 10px;
+  text-align: center;
+
+
+}
+[data-theme="macos"] .ym-page-confirm {
+
+
+  min-height: 32px;
+  padding: 5px 11px;
+  border-color: rgba(0, 122, 255, 0.2);
+  color: var(--ym-accent);
+  font-size: 12px;
+
+
+}
+[data-theme="macos"] .ym-page-jump-error {
+
+
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 12px;
+  padding: 5px 9px;
+  border-radius: 9px;
+  background: rgba(255, 59, 48, 0.92);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(255, 59, 48, 0.16);
+
+
+}
+[data-theme="macos"] .ym-pagination-summary {
+
+
+  margin: 14px 0 0;
+  color: var(--ym-text-muted);
+  font-size: 13px;
+  text-align: center;
+
+
+}
+/* Footer and floating controls */
+[data-theme="macos"] .ym-site-footer {
+
+
+  width: min(calc(100% - 24px), 1380px);
+  margin: 0 auto 12px;
+  overflow: hidden;
+  border: 1px solid var(--ym-glass-edge);
+  border-radius: var(--ym-radius-panel);
+  background: rgba(var(--ym-glass-rgb), 0.58);
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-control);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+
+
+}
+[data-theme="macos"] .ym-footer-inner {
+
+
+  max-width: 1320px;
+  padding: 19px 24px;
+
+
+}
+[data-theme="macos"] .ym-fab {
+
+
+  border: 1px solid var(--ym-glass-edge) !important;
+  background: rgba(var(--ym-glass-rgb), 0.72) !important;
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-card) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+
+
+}
+/* Route transitions */
+[data-theme="macos"] .ym-route-stage {
+
+
+  min-height: 1px;
+  will-change: opacity, transform;
+
+
+}
+[data-theme="macos"] .ym-route-stage.is-entering {
+
+
+  animation: ym-route-enter 280ms var(--ym-motion-spring) both;
+
+
+}
+[data-theme="macos"] .ym-route-stage.is-exiting {
+
+
+  animation: ym-route-exit 120ms ease-in both;
+
+
+}
+@keyframes ym-route-enter {
+
+
+  from {
+    opacity: 0;
+    transform: translate3d(var(--ym-route-enter-offset, 10px), 3px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+
+}
+@keyframes ym-route-exit {
+
+
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(var(--ym-route-exit-offset, -5px), -1px, 0);
+  }
+
+
+}
+@keyframes ym-glass-pop {
+
+
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+
+}
+/* Responsive */
+[data-theme="macos"] .ym-search-input {
+  min-height: 42px;
+  padding: 10px 58px 10px 16px;
+  border: 1px solid var(--ym-glass-edge);
+  border-radius: var(--ym-radius-pill);
+  background: rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-control);
+  font-size: 13px;
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+}
+
+[data-theme="macos"] .ym-search-clear {
+  min-width: 42px;
+  height: 30px;
+  border-radius: var(--ym-radius-pill);
+  font-size: 11px;
+}
+
+[data-theme="macos"] .ym-search-dropdown {
+  background: rgba(var(--ym-glass-rgb), 0.9);
+  border: 1px solid var(--ym-glass-edge);
+  border-radius: 18px;
+  box-shadow: var(--ym-shadow-card);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+}
+@media (max-width: 1180px) {
+[data-theme="macos"] .ym-header-links {
+
+
+    gap: 0;
+  
+
+}
+[data-theme="macos"] .ym-header-link {
+
+
+    padding-inline: 8px;
+  
+
+}
+[data-theme="macos"] .ym-header-center {
+
+
+    max-width: 280px;
+  
+
+}
+}
+@media (max-width: 1080px) {
+[data-theme="macos"] .ym-header-inner {
+
+
+    height: 72px;
+    padding: 0 12px 0 16px;
+    flex-wrap: nowrap;
+    gap: 10px;
+  
+
+}
+[data-theme="macos"] .ym-header-left {
+
+
+    width: auto;
+    justify-content: flex-start;
+  
+
+}
+[data-theme="macos"] .ym-header-links,
+[data-theme="macos"] .ym-header-center,
+[data-theme="macos"] .ym-desktop-actions {
+
+
+    display: none;
+  
+
+}
+[data-theme="macos"] .ym-header-left {
+
+
+    min-width: 0;
+  
+
+}
+[data-theme="macos"] .ym-mobile-actions {
+
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  
+
+}
+[data-theme="macos"] .ym-header-actions {
+
+
+    margin-left: auto;
+  
+
+}
+[data-theme="macos"] .ym-mobile-icon-button {
+
+
+    display: inline-grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    padding: 0;
+  
+
+}
+[data-theme="macos"] .ym-mobile-search-panel,
+[data-theme="macos"] .ym-mobile-drawer {
+
+
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    left: 0;
+    border: 1px solid var(--ym-glass-edge);
+    background:
+      linear-gradient(145deg, rgba(var(--ym-glass-rgb), 0.97), rgba(var(--ym-glass-rgb), 0.92));
+    box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-shadow-nav);
+    -webkit-backdrop-filter: blur(28px) saturate(155%);
+    backdrop-filter: blur(28px) saturate(155%);
+    animation: ym-glass-pop 240ms var(--ym-motion-spring) both;
+  
+
+}
+[data-theme="macos"] .ym-mobile-search-panel.is-open {
+
+
+    display: block;
+    padding: 12px;
+    border-radius: 20px;
+  
+
+}
+[data-theme="macos"] .ym-mobile-drawer.is-open {
+
+
+    display: block;
+    max-height: min(72vh, 620px);
+    overflow-y: auto;
+    padding: 12px;
+    border-radius: 24px;
+  
+
+}
+[data-theme="macos"] .ym-mobile-nav {
+
+
+    display: grid;
+    gap: 5px;
+  
+
+}
+[data-theme="macos"] .ym-mobile-nav-link {
+
+
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    padding: 11px 14px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    color: var(--ym-text-secondary);
+    font-size: 15px;
+    font-weight: 540;
+  
+
+}
+[data-theme="macos"] .ym-mobile-nav-link:hover,
+[data-theme="macos"] .ym-mobile-nav-link.active {
+
+
+    border-color: rgba(255, 255, 255, 0.54);
+    background: linear-gradient(135deg, rgba(221, 235, 255, 0.74), rgba(255, 255, 255, 0.58));
+    color: var(--ym-accent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68), var(--ym-shadow-control);
+  
+
+}
+[data-theme="macos"] .ym-mobile-drawer-footer {
+
+
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 11px;
+    border-top: 1px solid rgba(136, 158, 190, 0.16);
+  
+
+}
+[data-theme="macos"] .ym-mobile-drawer-footer .ym-btn {
+
+
+    width: 100%;
+    min-height: 44px;
+  
+
+}
+}
+@media (min-width: 820px) and (max-width: 1180px) {
+[data-theme="macos"] .ym-grid,
+[data-theme="macos"] .ym-grid-wide {
+
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  
+
+}
+}
+@media (max-width: 768px) {
+[data-theme="macos"] .ym-main {
+
+
+    padding: 28px 18px 58px;
+  
+
+}
+[data-theme="macos"] .ym-page-container,
+[data-theme="macos"] .ym-page-container-wide {
+
+
+    width: 100%;
+  
+
+}
+[data-theme="macos"] .ym-page-hero {
+
+
+    padding-top: 10px;
+    margin-bottom: 18px;
+  
+
+}
+[data-theme="macos"] .ym-page-hero h1 {
+
+
+    font-size: 28px;
+  
+
+}
+[data-theme="macos"] .ym-page-hero p {
+
+
+    margin-left: 0;
+  
+
+}
+[data-theme="macos"] .ym-grid,
+[data-theme="macos"] .ym-grid-wide {
+
+
+    grid-template-columns: 1fr;
+    gap: 18px;
+  
+
+}
+[data-theme="macos"] .ym-chip-button,
+[data-theme="macos"] .ym-page-button,
+[data-theme="macos"] .ym-page-confirm {
+
+
+    min-height: 44px;
+  
+
+}
+[data-theme="macos"] .ym-home-feature-grid {
+
+
+    grid-template-columns: 1fr;
+  
+
+}
+[data-theme="macos"] .ym-idea-toolbar {
+
+
+    align-items: stretch;
+  
+
+}
+[data-theme="macos"] .ym-idea-search {
+
+
+    flex-basis: 100%;
+    max-width: none;
+  
+
+}
+[data-theme="macos"] .ym-idea-actions {
+
+
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 5px;
+  
+
+}
+[data-theme="macos"] .ym-pagination {
+
+
+    gap: 7px;
+  
+
+}
+[data-theme="macos"] .ym-page-jump {
+
+
+    width: min(100%, 280px);
+    justify-content: center;
+    margin: 4px 0 0;
+  
+
+}
+}
+@media (max-width: 520px) {
+[data-theme="macos"] .ym-site-header {
+
+
+    top: 8px;
+    width: calc(100% - 16px);
+    margin-top: 8px;
+    border-radius: 23px;
+  
+
+}
+[data-theme="macos"] .ym-header-inner {
+
+
+    height: 64px;
+    padding: 0 9px 0 12px;
+    flex-wrap: nowrap;
+    gap: 8px;
+  
+
+}
+[data-theme="macos"] .ym-logo {
+
+
+    gap: 8px;
+  
+
+}
+[data-theme="macos"] .ym-logo-mark {
+
+
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+  
+
+}
+[data-theme="macos"] .ym-logo-name {
+
+
+    max-width: 92px;
+    font-size: 15px;
+  
+
+}
+[data-theme="macos"] .ym-mobile-actions {
+
+
+    gap: 6px;
+  
+
+}
+[data-theme="macos"] .ym-mobile-actions .ym-btn-primary {
+
+
+    min-height: 42px;
+    padding-inline: 14px;
+  
+
+}
+[data-theme="macos"] .ym-mobile-icon-button {
+
+
+    width: 42px;
+    height: 42px;
+  
+
+}
+[data-theme="macos"] .ym-main {
+
+
+    padding: 24px 12px 48px;
+  
+
+}
+[data-theme="macos"] .ym-card,
+[data-theme="macos"] .ym-work-card,
+[data-theme="macos"] .ym-idea-card {
+
+
+    border-radius: 18px;
+  
+
+}
+[data-theme="macos"] .ym-card-media,
+[data-theme="macos"] .ym-work-card-media {
+
+
+    border-radius: 13px;
+  
+
+}
+[data-theme="macos"] .ym-card:hover,
+[data-theme="macos"] .ym-work-card:hover,
+[data-theme="macos"] .ym-idea-card:hover {
+
+
+    transform: none;
+  
+
+}
+[data-theme="macos"] .ym-card:active,
+[data-theme="macos"] .ym-work-card:active,
+[data-theme="macos"] .ym-idea-card:active {
+
+
+    transform: scale(0.988);
+  
+
+}
+[data-theme="macos"] .ym-discovery-random,
+[data-theme="macos"] .ym-idea-card {
+
+
+    padding: 18px;
+  
+
+}
+[data-theme="macos"] .ym-discovery-random-head {
+
+
+    align-items: stretch;
+  
+
+}
+[data-theme="macos"] .ym-discovery-random-head .ym-btn {
+
+
+    width: 100%;
+  
+
+}
+[data-theme="macos"] .ym-page-direction {
+
+
+    padding-inline: 12px;
+  
+
+}
+[data-theme="macos"] .ym-page-numbers {
+
+
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  
+
+}
+[data-theme="macos"] .ym-page-jump {
+
+
+    order: 4;
+  
+
+}
+[data-theme="macos"] .ym-footer-inner {
+
+
+    padding: 18px;
+  
+
+}
+}
+@media (prefers-reduced-motion: reduce) {
+[data-theme="macos"] {
+
+
+    scroll-behavior: auto;
+  
+
+}
+[data-theme="macos"] *,
+[data-theme="macos"] *::before,
+[data-theme="macos"] *::after {
+
+
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  
+
+}
+[data-theme="macos"] .ym-card:hover,
+[data-theme="macos"] .ym-work-card:hover,
+[data-theme="macos"] .ym-idea-card:hover,
+[data-theme="macos"] .ym-btn:hover,
+[data-theme="macos"] .ym-chip-button:hover,
+[data-theme="macos"] .ym-page-button:hover {
+
+
+    transform: none !important;
+  
+
+}
+}

@@ -1,8 +1,9 @@
 // src/components/YiliMascot.jsx
-// 依力看板郎（yili.jpg）：角落固定、可拖拽、点击冒泡对话、眨眼呼吸动画、可收起。
+// 依力看板郎（yili.jpg）：角落固定、可拖拽、点击开启 AI 对话、眨眼呼吸动画、可收起。
 // 纯前端实现，无 Live2D 模型文件依赖。
 import React, { useEffect, useRef, useState } from 'react';
-import { YiliChatPanel } from './YiliChatPanel.jsx';
+
+import { setMascotPos } from '../services/mascotPos.js';
 
 const LINES = [
   '你好，我是依力 🤙',
@@ -29,6 +30,25 @@ export function YiliMascot() {
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef(null); // 拖拽起始坐标
   const bubbleTimerRef = useRef(null);
+  const mascotRef = useRef(null); // 看板郎本体，用于上报位置
+
+  // 上报当前位置给 AgentBot，让对话框跟随看板郎
+  useEffect(() => {
+    const report = () => {
+      const el = mascotRef.current;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setMascotPos({ x: rect.left, y: rect.top, w: rect.width, h: rect.height });
+      }
+    };
+    report();
+    window.addEventListener('resize', report);
+    window.addEventListener('scroll', report, { passive: true });
+    return () => {
+      window.removeEventListener('resize', report);
+      window.removeEventListener('scroll', report);
+    };
+  }, [pos, open]);
 
   // 每次出现随机说一句话（首次进入、重新打开时）
   useEffect(() => {
@@ -74,8 +94,11 @@ export function YiliMascot() {
       setDragging(false);
       return; // 拖动过，不触发点击
     }
-    // 单击：打开 AI 对话面板（Issue #56）
-    setChatOpen(true);
+
+    // 单击：收起冒泡，交给 AI 助手开启对话
+    setBubble(null);
+    clearTimeout(bubbleTimerRef.current);
+    window.dispatchEvent(new CustomEvent('ym-agent-toggle'));
   };
 
   const mascotStyle = {
@@ -135,9 +158,10 @@ export function YiliMascot() {
 
           {/* 看板郎本体 */}
           <div
+            ref={mascotRef}
             role="button"
             tabIndex={0}
-            aria-label="依力看板郎，拖动可移动，点击对话"
+            aria-label="依力看板郎，拖动可移动，点击开启 AI 对话"
             className="ym-mascot-body"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
