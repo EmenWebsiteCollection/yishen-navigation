@@ -2,8 +2,53 @@
 // 创作者档案与统计
 import { supabase } from './supabase.js';
 
+// 可公开读取的字段（不含 email/phone/is_admin 等敏感列）
+const PUBLIC_PROFILE_COLS = [
+  'id',
+  'username',
+  'avatar_url',
+  'bio',
+  'cover_url',
+  'expertise',
+  'tools',
+  'style_tags',
+  'current_project',
+  'creation_progress',
+  'collab_status',
+  'commission_status',
+  'services',
+  'website_link',
+  'socials',
+  'website_link',
+  'accent_color',
+  'bg_color',
+  'created_at',
+  'updated_at',
+].join(',');
+
+// 本人可更新的字段白名单（禁止提权/改敏感信息）
+const EDITABLE_PROFILE_FIELDS = [
+  'username',
+  'avatar_url',
+  'bio',
+  'cover_url',
+  'expertise',
+  'tools',
+  'style_tags',
+  'current_project',
+  'creation_progress',
+  'collab_status',
+  'commission_status',
+  'services',
+  'website_link',
+  'socials',
+  'website_link',
+  'accent_color',
+  'bg_color',
+];
+
 /**
- * 获取用户档案
+ * 获取用户档案（仅公开字段）
  * @param {string} userId - profiles.id
  * @returns {Promise<object|null>}
  */
@@ -11,21 +56,24 @@ export const getProfile = async (userId) => {
   if (!userId) return null;
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PUBLIC_PROFILE_COLS)
     .eq('id', userId)
     .maybeSingle();
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error) throw error;
   return data || null;
 };
 
 /**
- * 更新本人档案（RLS 保证只能改自己）
+ * 更新本人档案（RLS 保证只能改自己；字段白名单防止自提权）
  * @param {string} userId
  * @param {object} data - 需要更新的字段
  * @returns {Promise<object>}
  */
 export const updateProfile = async (userId, data) => {
-  const patch = { ...data, updated_at: new Date().toISOString() };
+  const patch = { updated_at: new Date().toISOString() };
+  for (const key of EDITABLE_PROFILE_FIELDS) {
+    if (data[key] !== undefined) patch[key] = data[key];
+  }
   const { data: updated, error } = await supabase
     .from('profiles')
     .update(patch)

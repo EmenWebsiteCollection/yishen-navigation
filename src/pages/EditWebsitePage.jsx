@@ -76,17 +76,20 @@ const [videoUrl, setVideoUrl] = useState('');
       setLoading(false);
       return;
     }
-    isAdmin(user.id).then(setIsAdminUser).catch(() => setIsAdminUser(false));
     const loadWork = async () => {
       try {
         setLoading(true);
         setError('');
-        const data = await getWorkById(id, user.id);
+        const [data, adminFlag] = await Promise.all([
+          getWorkById(id, user.id),
+          isAdmin(user.id).catch(() => false),
+        ]);
+        setIsAdminUser(!!adminFlag);
         if (!data) {
           setError('作品不存在');
           return;
         }
-        if (user.id !== data.user_id && !isAdminUser) {
+        if (user.id !== data.user_id && !adminFlag) {
           setError('您没有权限编辑此作品');
           return;
         }

@@ -102,7 +102,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
       updated_at,
       user_id,
       like_count,
-      profiles ( username )
+      username
       `
     )
     .or(or)
