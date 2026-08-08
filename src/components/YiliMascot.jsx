@@ -18,7 +18,7 @@ const LINES = [
 const getRandomLine = () => LINES[Math.floor(Math.random() * LINES.length)];
 
 export function YiliMascot() {
-  const [open, setOpen] = useState(true); // 看板郎本体是否显示
+  const [open, setOpen] = useState(false); // 看板郎本体是否显示（默认收起，点击小气泡打开）
   const [bubble, setBubble] = useState(null); // 对话气泡内容
   const [chatOpen, setChatOpen] = useState(false); // AI 对话面板是否展开
   const [pos, setPos] = useState(() => {
