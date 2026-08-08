@@ -68,6 +68,15 @@ export function ThemeSwitcher() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    const onOpen = () => {
+      setOpen(true);
+      setView('list');
+    };
+    window.addEventListener('ym-open-theme', onOpen);
+    return () => window.removeEventListener('ym-open-theme', onOpen);
+  }, []);
+
+  useEffect(() => {
     const onPointerDown = (e) => {
       if (rootRef.current && !rootRef.current.contains(e.target)) {
         setOpen(false);

@@ -11,6 +11,7 @@ import {
   getWorkFavoriteCount,
   favoriteWork,
   unfavoriteWork,
+  getTopRatedWorks,
 } from '../services/works.js';
 import {
   getCommentsByWebsite,
@@ -261,6 +262,22 @@ export function WebsiteDetailPage() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyContent, setReplyContent] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
+
+  // 右侧推荐
+  const [topRated, setTopRated] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getTopRatedWorks(6);
+        if (!cancelled) setTopRated(data);
+      } catch (err) {
+        console.warn('加载高分榜单失败:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // ----- 加载详情 -----
   useEffect(() => {
@@ -612,17 +629,15 @@ export function WebsiteDetailPage() {
 
   // ---------- 主界面 ----------
   return (
-    <div
-      style={{
-        maxWidth: '720px',
-        margin: '40px auto',
-        padding: '32px 28px',
-        backgroundColor: 'var(--ym-bg-card)',
-        borderRadius: 'var(--ym-radius-lg)',
-        border: '1px solid var(--ym-border)',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-      }}
-    >
+    <div className="ym-detail-layout">
+      <div
+        style={{
+          padding: '28px',
+          backgroundColor: 'var(--ym-bg-card)',
+          borderRadius: 'var(--ym-radius-md)',
+          border: '1px solid var(--ym-border)',
+        }}
+      >
       {/* ---------- 顶部：面包屑 + 访问按钮 ---------- */}
       <div
         style={{
@@ -1060,6 +1075,62 @@ export function WebsiteDetailPage() {
           </>
         )}
       </div>
+      </div>
+
+      <aside className="ym-detail-side">
+        <div className="ym-section-block">
+          <Link to={`/user/${website.user_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {website.avatar_url ? (
+                <img className="ym-avatar ym-avatar-lg" src={website.avatar_url} alt={website.username} loading="lazy" decoding="async" />
+              ) : (
+                <span className="ym-avatar-fallback ym-avatar-lg" style={{ fontSize: '20px' }}>👤</span>
+              )}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--ym-text-primary)' }}>{website.username}</div>
+                <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {website.bio || '这位创作者还没有填写介绍'}
+                </div>
+              </div>
+            </div>
+          </Link>
+          <Link to={`/user/${website.user_id}`} className="ym-btn ym-btn-ghost ym-btn-sm" style={{ marginTop: '14px', width: '100%' }}>
+            查看主页
+          </Link>
+        </div>
+
+        {topRated.length > 0 && (
+          <div className="ym-section-block">
+            <h3 className="ym-section-title" style={{ margin: '0 0 12px' }}>高分榜单</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {topRated.map((site, i) => (
+                <Link
+                  key={site.id}
+                  to={`/website/${site.id}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'inherit', textDecoration: 'none' }}
+                >
+                  <span style={{ flex: '0 0 22px', fontSize: '15px', fontWeight: '600', color: i < 3 ? 'var(--ym-accent)' : 'var(--ym-text-muted)', textAlign: 'center' }}>
+                    {i + 1}
+                  </span>
+                  <div style={{ flex: '0 0 72px', aspectRatio: '16/10', borderRadius: '6px', overflow: 'hidden', backgroundColor: 'var(--ym-bg-subtle)' }}>
+                    {site.image_url ? (
+                      <img src={site.image_url} alt={site.title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--ym-text-muted)' }}>
+                        {(site.title || '网').trim()[0]}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '13px', color: 'var(--ym-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{site.title}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>❤️ {site.like_count || 0}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </aside>
     </div>
   );
 }

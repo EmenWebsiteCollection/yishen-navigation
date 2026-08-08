@@ -200,15 +200,8 @@ const [videoUrl, setVideoUrl] = useState('');
   const hasImage = imagePreview || imageUrl;
 
   return (
-    <div style={{
-      maxWidth: '560px',
-      margin: '60px auto',
-      padding: '32px 28px',
-      backgroundColor: 'var(--ym-bg-card)',
-      borderRadius: 'var(--ym-radius-lg)',
-      border: '1px solid var(--ym-border)',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-    }}>
+    <div className="ym-detail-layout">
+      <div className="ym-section-block" style={{ padding: '28px' }}>
       <h2 style={{
         fontFamily: 'var(--ym-font-display)',
         fontSize: '22px',
@@ -436,6 +429,19 @@ const [videoUrl, setVideoUrl] = useState('');
           <Link to={`/website/${id}`} style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', textDecoration: 'none' }}>取消</Link>
         </div>
       </form>
+      </div>
+
+      <aside className="ym-detail-side">
+        <div className="ym-section-block">
+          <h3 className="ym-section-title" style={{ margin: '0 0 12px' }}>编辑提示</h3>
+          <div style={{ fontSize: '13px', lineHeight: 1.8, color: 'var(--ym-text-secondary)' }}>
+            <p>只能编辑自己上传的作品。</p>
+            <p>网站类作品必须保留有效 URL。</p>
+            <p>删除图片并保存后，详情页将不再展示大图。</p>
+            <p>更新日志会展示在作品详情页。</p>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

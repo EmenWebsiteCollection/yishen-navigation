@@ -3,12 +3,12 @@
 /* ---------- 基础结构变量（不随主题变化） ---------- */
 :root {
   /* 圆角 */
-  --ym-radius-sm: 8px;
-  --ym-radius-md: 10px;
-  --ym-radius-lg: 16px;
+  --ym-radius-sm: 6px;
+  --ym-radius-md: 8px;
+  --ym-radius-lg: 12px;
 
   /* 字体 */
-  --ym-font-display: 'Noto Serif SC', 'Songti SC', serif;
+  --ym-font-display: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
   --ym-font-body: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
 
   /* 过渡 */
@@ -16,42 +16,42 @@
 }
 
 /* ========================================================= */
-/* 主题：默认（依神 / 金棕暖色）                             */
+/* 主题：默认（B 站风格浅色）                                */
 /* ========================================================= */
 :root,
 [data-theme="default"] {
   /* 背景 */
-  --ym-bg-page: #F3EAD8;
-  --ym-bg-card: #FFFCF5;
-  --ym-bg-subtle: #EDE3CC;
+  --ym-bg-page: #F6F7F8;
+  --ym-bg-card: #FFFFFF;
+  --ym-bg-subtle: #F1F2F3;
 
-  /* 主色（金棕） */
-  --ym-accent: #9C6B2E;
-  --ym-accent-hover: #855A24;
-  --ym-accent-text-on: #FFFCF5;
+  /* 主色（B 站粉） */
+  --ym-accent: #FB7299;
+  --ym-accent-hover: #F25D8F;
+  --ym-accent-text-on: #FFFFFF;
 
   /* 危险色 */
-  --ym-danger: #8B3A2E;
-  --ym-danger-hover: #742F25;
-  --ym-danger-bg: #F6E4DF;
+  --ym-danger: #FA5555;
+  --ym-danger-hover: #E04343;
+  --ym-danger-bg: #FDECEC;
   --ym-danger-text-on: #FFFFFF;
 
   /* 成功色 */
-  --ym-success: #5C7A3A;
-  --ym-success-bg: #EAF0DD;
+  --ym-success: #00A1D6;
+  --ym-success-bg: #E8F5FB;
   --ym-success-text-on: #FFFFFF;
 
   /* 文字 */
-  --ym-text-primary: #3A2E1F;
-  --ym-text-secondary: #8A7355;
-  --ym-text-muted: #C9AF87;
+  --ym-text-primary: #18191C;
+  --ym-text-secondary: #61666D;
+  --ym-text-muted: #9499A0;
 
   /* 边框 */
-  --ym-border: #E3D5BC;
-  --ym-border-strong: #9C6B2E;
+  --ym-border: #E3E5E7;
+  --ym-border-strong: #FB7299;
 
   /* 聚焦光圈 */
-  --ym-focus-ring: rgba(156, 107, 46, 0.12);
+  --ym-focus-ring: rgba(251, 114, 153, 0.12);
 }
 
 /* ========================================================= */

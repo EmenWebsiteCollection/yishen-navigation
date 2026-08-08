@@ -170,15 +170,8 @@ const [videoUrl, setVideoUrl] = useState('');
   };
 
   return (
-    <div style={{
-      maxWidth: '560px',
-      margin: '60px auto',
-      padding: '32px 28px',
-      backgroundColor: 'var(--ym-bg-card)',
-      borderRadius: 'var(--ym-radius-lg)',
-      border: '1px solid var(--ym-border)',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-    }}>
+    <div className="ym-detail-layout">
+      <div className="ym-section-block" style={{ padding: '28px' }}>
       <h2 style={{
         fontFamily: 'var(--ym-font-display)',
         fontSize: '22px',
@@ -434,6 +427,19 @@ const [videoUrl, setVideoUrl] = useState('');
       <div style={{ marginTop: '16px', textAlign: 'center' }}>
         <Link to="/" style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', textDecoration: 'none' }}>← 返回首页</Link>
       </div>
+      </div>
+
+      <aside className="ym-detail-side">
+        <div className="ym-section-block">
+          <h3 className="ym-section-title" style={{ margin: '0 0 12px' }}>提交提示</h3>
+          <div style={{ fontSize: '13px', lineHeight: 1.8, color: 'var(--ym-text-secondary)' }}>
+            <p>网站类作品必须填写完整 URL（含协议）。</p>
+            <p>不上传大图时，提交网站会自动截取首页作为封面。</p>
+            <p>私密作品只有自己可见，公开作品会展示在首页。</p>
+            <p>演示视频链接留空则不在详情页展示。</p>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

@@ -167,3 +167,87 @@ select {
     color: var(--ym-text-secondary) !important;
   }
 }
+
+/* ---------- B 站风格布局响应式 ---------- */
+@media (max-width: 1024px) {
+  .ym-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ym-detail-side {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .ym-detail-side > .ym-section-block {
+    flex: 1 1 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ym-header-inner {
+    height: auto;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ym-header-left {
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .ym-header-links {
+    overflow-x: auto;
+  }
+
+  .ym-header-center {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .ym-header-actions {
+    margin-left: 0;
+  }
+
+  .ym-main {
+    padding: 16px 14px 40px;
+  }
+
+  .ym-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ym-rank-item {
+    flex-basis: 150px;
+  }
+
+  .ym-space-cover {
+    height: 140px;
+  }
+
+  .ym-space-body {
+    padding: 0 14px 40px;
+  }
+
+  .ym-space-head {
+    margin-top: -36px;
+    gap: 12px;
+  }
+
+  .ym-space-avatar {
+    width: 72px;
+    height: 72px;
+  }
+
+  .ym-footer-inner {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .ym-footer-links {
+    justify-content: center;
+  }
+}
