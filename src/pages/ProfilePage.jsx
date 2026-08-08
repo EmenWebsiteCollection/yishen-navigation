@@ -1,4 +1,4 @@
-﻿// src/pages/ProfilePage.jsx
+// src/pages/ProfilePage.jsx
 // 个人中心：我的作品 / 我的收藏 / 设置（档案 + 分组）
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -20,11 +20,14 @@ import {
 } from '../services/works.js';
 import { getProfile, updateProfile, getCreatorStats, bindContact } from '../services/users.js';
 import { uploadAvatar, uploadCover, validateImageFile } from '../services/screenshot.js';
+import { getMyIdeas, getMyFavoritedIdeas } from '../services/ideas.js';
+import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import '../styles/global.css';
 
 const TABS = [
   { id: 'works', label: '我的作品' },
   { id: 'favorites', label: '我的收藏' },
+  { id: 'ideas', label: '我的想法' },
   { id: 'settings', label: '设置' },
 ];
 
@@ -64,6 +67,11 @@ export function ProfilePage() {
   // 我的收藏
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
+
+  // 我的想法（发布 + 关注）
+  const [myIdeas, setMyIdeas] = useState([]);
+  const [myIdeaFavorites, setMyIdeaFavorites] = useState([]);
+  const [ideasLoading, setIdeasLoading] = useState(false);
 
   // 统计
   const [stats, setStats] = useState({ work_count: 0, like_count: 0, favorite_count: 0, comment_count: 0 });
@@ -129,6 +137,23 @@ export function ProfilePage() {
     setStats(await getCreatorStats(userId));
   }, [userId]);
 
+  const loadIdeasTab = useCallback(async () => {
+    if (!userId) return;
+    setIdeasLoading(true);
+    try {
+      const [{ ideas: list }, favoritesList] = await Promise.all([
+        getMyIdeas(userId, { pageSize: 50 }),
+        getMyFavoritedIdeas(userId),
+      ]);
+      setMyIdeas(list);
+      setMyIdeaFavorites(favoritesList);
+    } catch (err) {
+      console.error('加载我的想法失败:', err);
+    } finally {
+      setIdeasLoading(false);
+    }
+  }, [userId]);
+
   const loadProfile = useCallback(async () => {
     if (!userId) return;
     setSettingsLoading(true);
@@ -169,6 +194,7 @@ export function ProfilePage() {
   useEffect(() => {
     if (!userId) return;
     if (tab === 'favorites') loadFavorites();
+    if (tab === 'ideas') loadIdeasTab();
     if (tab === 'settings') loadProfile();
   }, [tab, userId, loadFavorites, loadProfile]);
 
@@ -543,7 +569,55 @@ export function ProfilePage() {
           </div>
         )}
 
-        {/* Tab3 设置 */}
+﻿        {/* Tab3 我的想法 */}
+        {tab === 'ideas' && (
+          <div>
+            {ideasLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
+            ) : (
+              <>
+                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', color: 'var(--ym-text-primary)', marginBottom: '10px' }}>我发布的（{myIdeas.length}）</h3>
+                {myIdeas.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px dashed var(--ym-border)', marginBottom: '20px' }}>
+                    还没有发布想法，去
+                    <Link to="/ideas/new" style={{ color: 'var(--ym-accent)' }}> 发布第一条 </Link>
+                    吧
+                  </div>
+                ) : (
+                  myIdeas.map((idea) => (
+                    <div key={idea.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px' }}>
+                      <IdeaStatusBadge status={idea.status} size="sm" />
+                      <Link to={`/ideas/${idea.id}`} style={{ flex: 1, minWidth: '160px', fontSize: '15px', color: 'var(--ym-text-primary)', textDecoration: 'none' }}>
+                        {idea.title}
+                      </Link>
+                      <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>👍 {idea.vote_count} · 💬 {idea.comment_count} · {new Date(idea.created_at).toLocaleDateString('zh-CN')}</span>
+                    </div>
+                  ))
+                )}
+
+                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', color: 'var(--ym-text-primary)', margin: '20px 0 10px' }}>我关注的（{myIdeaFavorites.length}）</h3>
+                {myIdeaFavorites.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px dashed var(--ym-border)' }}>
+                    关注想法后，它的状态进展会出现在这里
+                  </div>
+                ) : (
+                  myIdeaFavorites.map((f) => (
+                    <div key={f.favorite_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px' }}>
+                      <IdeaStatusBadge status={f.idea.status} size="sm" />
+                      <Link to={`/ideas/${f.idea.id}`} style={{ flex: 1, minWidth: '160px', fontSize: '15px', color: 'var(--ym-text-primary)', textDecoration: 'none' }}>
+                        {f.idea.title}
+                      </Link>
+                      <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>{new Date(f.favorited_at).toLocaleDateString('zh-CN')} 关注</span>
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Tab4 设置 */}
+
         {tab === 'settings' && (
           <div>
             {settingsLoading ? (

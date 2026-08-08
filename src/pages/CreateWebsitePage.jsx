@@ -1,10 +1,11 @@
-﻿// src/pages/CreateWebsitePage.jsx
+// src/pages/CreateWebsitePage.jsx
 // 新建作品：类型选择（网站需 URL + 自动截图；其他类型可传图）、公开/私密、状态、分组、更新日志
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { createWork, listGroups, WORK_TYPES, WORK_STATUS } from '../services/works.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
+import { linkIdeaToWork, getIdeaById } from '../services/ideas.js';
 import '../styles/global.css';
 
 const inputStyle = {
@@ -45,6 +46,18 @@ const [videoUrl, setVideoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  // 从想法详情页「去实现」跳转过来时，携带 source_idea_id 自动关联
+  const [searchParams] = useSearchParams();
+  const sourceIdeaId = searchParams.get('source_idea_id');
+  const [sourceIdea, setSourceIdea] = useState(null);
+
+  useEffect(() => {
+    if (!sourceIdeaId) return;
+    getIdeaById(sourceIdeaId)
+      .then((idea) => setSourceIdea(idea))
+      .catch(() => setSourceIdea({ title: '想法 #' + sourceIdeaId.slice(0, 8) }));
+  }, [sourceIdeaId]);
 
   useEffect(() => {
     if (!user) return;
@@ -134,7 +147,7 @@ const [videoUrl, setVideoUrl] = useState('');
       }
 
       // 提交作品
-      await createWork(
+      const createdWork = await createWork(
         {
           url: url.trim(),
           title: title.trim(),
@@ -146,9 +159,17 @@ const [videoUrl, setVideoUrl] = useState('');
           visibility,
           group_id: groupId || null,
           changelog: changelog.trim() || null,
+          source_idea_id: sourceIdeaId || null,
         },
         user.id
       );
+      if (sourceIdeaId && createdWork?.id) {
+        try {
+          await linkIdeaToWork(sourceIdeaId, createdWork.id, user.id);
+        } catch (linkErr) {
+          console.warn('关联想法失败:', linkErr.message);
+        }
+      }
       setMessage({ type: 'success', text: '✅ 作品提交成功！' });
       setUrl('');
       setVideoUrl('');
@@ -189,6 +210,12 @@ const [videoUrl, setVideoUrl] = useState('');
       }}>
         新建作品
       </h2>
+
+      {sourceIdea && (
+        <div style={{ padding: '10px 14px', marginBottom: '14px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-success-bg)', color: 'var(--ym-success)', fontSize: '14px' }}>
+          💡 正在孵化想法「{sourceIdea.title}」：作品发布后，该想法将自动点亮「已实现」并回链作品。
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* 作品类型 */}

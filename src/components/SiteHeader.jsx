@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Logo } from './Logo.jsx';
 
 const NAV_LINKS = [
+  { to: '/ideas', label: '想法集中营' },
   { to: '/about', label: '关于' },
   { to: '/changelog', label: '更新记录' },
   { to: '/contact', label: '联系我们' },

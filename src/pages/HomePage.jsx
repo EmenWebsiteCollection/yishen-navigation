@@ -393,6 +393,35 @@ export function HomePage() {
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
         <HighRatedCarousel />
 
+        <Link
+          to="/ideas"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+            padding: '16px 20px',
+            marginBottom: '24px',
+            borderRadius: 'var(--ym-radius-md)',
+            backgroundColor: 'var(--ym-bg-card)',
+            border: '1px solid var(--ym-border)',
+            textDecoration: 'none',
+            transition: 'all var(--ym-transition)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--ym-border-strong)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--ym-border)'; e.currentTarget.style.boxShadow = 'none'; }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '28px' }}>💡</span>
+            <div>
+              <div style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)' }}>想法集中营</div>
+              <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>把脑洞说出来：点赞、收藏、讨论，被看中的想法会变成作品</div>
+            </div>
+          </div>
+          <span style={{ padding: '6px 16px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', fontSize: '13px', fontWeight: '500' }}>去逛逛 →</span>
+        </Link>
+
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}

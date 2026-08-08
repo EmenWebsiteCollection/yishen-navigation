@@ -1,4 +1,4 @@
-﻿// src/services/works.js
+// src/services/works.js
 // 作品（works）服务层：由原 websites.js 演进而来。
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
@@ -65,7 +65,7 @@ export const isAdmin = async (userId) => {
 //    因此拆成「基础字段」+「video_url」，查询前运行时探测列是否存在，缺列时自动降级。
 const TABLE_SELECT_CORE = `
   id, url, title, description, image_url, cover_url, work_type,
-  featured, status, visibility, group_id, changelog,
+  featured, status, visibility, group_id, changelog, source_idea_id,
   created_at, updated_at, user_id,
   profiles ( username, avatar_url )
 `;
@@ -114,6 +114,7 @@ const mapWork = (item) => {
     visibility: item.visibility || 'public',
     group_id: item.group_id || null,
     changelog: item.changelog || null,
+    source_idea_id: item.source_idea_id || null,
     created_at: item.created_at,
     updated_at: item.updated_at,
     user_id: item.user_id,
@@ -151,6 +152,7 @@ export const createWork = async (payload, userId) => {
     visibility = 'public',
     group_id = null,
     changelog = null,
+    source_idea_id = null,
   } = payload || {};
 
   if (!title || !title.trim()) throw new Error('标题不能为空');
@@ -176,6 +178,7 @@ export const createWork = async (payload, userId) => {
     visibility: visibility === 'private' ? 'private' : 'public',
     group_id: group_id || null,
     changelog: changelog?.trim() || null,
+    source_idea_id: source_idea_id || null,
     user_id: userId,
   };
   if (await isVideoUrlSupported()) insertRow.video_url = video_url?.trim() || null;

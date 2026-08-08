@@ -12,6 +12,9 @@ import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
 import { AboutPage } from './pages/AboutPage.jsx';
 import { ChangelogPage } from './pages/ChangelogPage.jsx';
 import { ContactPage } from './pages/ContactPage.jsx';
+import { IdeaListPage } from './pages/IdeaListPage.jsx';
+import { IdeaCreatePage } from './pages/IdeaCreatePage.jsx';
+import { IdeaDetailPage } from './pages/IdeaDetailPage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { BackToTop } from './components/BackToTop.jsx';
@@ -45,6 +48,9 @@ function App() {
         <Route path="/create" element={<PrivateRoute><CreateWebsitePage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
         <Route path="/user/:id" element={<CreatorProfilePage />} />
+        <Route path="/ideas" element={<IdeaListPage />} />
+        <Route path="/ideas/new" element={<PrivateRoute><IdeaCreatePage /></PrivateRoute>} />
+        <Route path="/ideas/:id" element={<IdeaDetailPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/contact" element={<ContactPage />} />

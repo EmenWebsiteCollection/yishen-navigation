@@ -67,8 +67,8 @@ export function highlightHtml(text, query) {
   );
 }
 
-// LIKE 通配符转义，避免用户输入的 % _ 变成模糊匹配
-function escapeLike(s) {
+// LIKE 通配符转义，避免用户输入的 % _ 变成模糊匹配（导出供 ideas.js 相似想法复用）
+export function escapeLike(s) {
   return s.replace(/[\\%_]/g, (c) => '\\' + c);
 }
 
