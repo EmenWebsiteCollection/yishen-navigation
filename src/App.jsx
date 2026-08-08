@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage.jsx';
 import { CreateWebsitePage } from './pages/CreateWebsitePage.jsx';
 import { WebsiteDetailPage } from './pages/WebsiteDetailPage.jsx';
 import { EditWebsitePage } from './pages/EditWebsitePage.jsx';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage.jsx';
 import { ProfilePage } from './pages/ProfilePage.jsx';
 import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
 import { AboutPage } from './pages/AboutPage.jsx';
@@ -31,6 +32,7 @@ function App() {
       <BackToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/website/:id" element={<WebsiteDetailPage />} />
         <Route
           path="/website/:id/edit"

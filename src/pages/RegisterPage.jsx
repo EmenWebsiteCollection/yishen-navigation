@@ -1,12 +1,15 @@
 // src/pages/RegisterPage.jsx
 import React, { useState } from 'react';
 import { register } from '../services/auth.js';
+import { bindContact } from '../services/users.js';
 import '../styles/global.css';
 
 export function RegisterPage({ onSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,8 +34,16 @@ export function RegisterPage({ onSuccess }) {
 
     setLoading(true);
     try {
-      await register(username, password);
+      const data = await register(username, password);
       setSuccess(true);
+      // 可选：绑定邮箱/手机，供找回密码使用（注册后已自动登录时生效）
+      if ((email.trim() || phone.trim()) && data?.user?.id) {
+        try {
+          await bindContact({ email: email.trim(), phone: phone.trim() });
+        } catch (e) {
+          console.warn('绑定联系方式失败（可稍后在个人资料中补充）:', e.message);
+        }
+      }
       if (onSuccess) onSuccess();
     } catch (err) {
       setError(err.message || '注册失败，请稍后重试');
@@ -157,6 +168,78 @@ export function RegisterPage({ onSuccess }) {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--ym-border)',
+                borderRadius: 'var(--ym-radius-sm)',
+                fontSize: '15px',
+                backgroundColor: 'var(--ym-bg-card)',
+                color: 'var(--ym-text-primary)',
+                transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <label htmlFor="register-email" style={{
+              display: 'block',
+              fontSize: '13px',
+              color: 'var(--ym-text-secondary)',
+              marginBottom: '4px',
+              fontWeight: '500',
+            }}>
+              邮箱（可选，用于找回密码）
+            </label>
+            <input
+              id="register-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="用于接收验证码找回密码"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--ym-border)',
+                borderRadius: 'var(--ym-radius-sm)',
+                fontSize: '15px',
+                backgroundColor: 'var(--ym-bg-card)',
+                color: 'var(--ym-text-primary)',
+                transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border-strong)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px var(--ym-focus-ring)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ym-border)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <label htmlFor="register-phone" style={{
+              display: 'block',
+              fontSize: '13px',
+              color: 'var(--ym-text-secondary)',
+              marginBottom: '4px',
+              fontWeight: '500',
+            }}>
+              手机号（可选，用于找回密码）
+            </label>
+            <input
+              id="register-phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="用于接收验证码找回密码"
               style={{
                 width: '100%',
                 padding: '10px 12px',

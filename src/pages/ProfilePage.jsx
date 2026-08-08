@@ -18,7 +18,7 @@ import {
   workTypeLabel,
   workStatusLabel,
 } from '../services/works.js';
-import { getProfile, updateProfile, getCreatorStats } from '../services/users.js';
+import { getProfile, updateProfile, getCreatorStats, bindContact } from '../services/users.js';
 import { uploadAvatar, uploadCover, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
@@ -77,6 +77,9 @@ export function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
   const [groupName, setGroupName] = useState('');
+  // 联系方式（找回密码用）
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactMsg, setContactMsg] = useState('');
 
   const me = user && !isAnonymous ? user : null;
   const userId = me?.id;
@@ -146,6 +149,8 @@ export function ProfilePage() {
         website_link: p?.website_link || '',
         bg_color: p?.bg_color || '',
         accent_color: p?.accent_color || '',
+        email: p?.email || '',
+        phone: p?.phone || '',
       });
     } catch (err) {
       console.error('加载档案失败:', err);
@@ -305,6 +310,46 @@ export function ProfilePage() {
       setSaveMsg(`❌ 保存失败：${err.message || '请稍后重试'}`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ---------- 联系方式保存（补绑邮箱/手机，供找回密码） ----------
+  const handleSaveContact = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setContactSaving(true);
+    setContactMsg('');
+    const email = (form.email || '').trim();
+    const phone = (form.phone || '').trim();
+
+    if (!email && !phone) {
+      setContactMsg('请至少填写邮箱或手机号之一');
+      setContactSaving(false);
+      return;
+    }
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setContactMsg('邮箱格式不正确');
+      setContactSaving(false);
+      return;
+    }
+    if (phone && !/^\+?[0-9]{6,15}$/.test(phone)) {
+      setContactMsg('手机号格式不正确（6-15 位数字，可带 + 区号）');
+      setContactSaving(false);
+      return;
+    }
+    if (email === (profile?.email || '') && phone === (profile?.phone || '')) {
+      setContactMsg('联系方式未发生变化');
+      setContactSaving(false);
+      return;
+    }
+
+    try {
+      await bindContact({ email: email || null, phone: phone || null });
+      setContactMsg('✅ 联系方式已保存');
+      loadProfile();
+    } catch (err) {
+      setContactMsg(`❌ 保存失败：${err.message || '请稍后重试'}`);
+    } finally {
+      setContactSaving(false);
     }
   };
 
@@ -634,6 +679,44 @@ export function ProfilePage() {
                     ))}
                   </div>
                 )}
+
+                {/* 账号安全：补绑邮箱/手机号（找回密码用） */}
+                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', margin: '28px 0 16px' }}>账号安全</h3>
+                <div style={{ backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-md)', padding: '16px', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', margin: '0 0 12px' }}>
+                    绑定邮箱或手机号后，可在登录页通过验证码找回密码。已绑定信息仅你本人可见。
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={labelStyle}>邮箱</label>
+                      <input
+                        type="email"
+                        value={form.email || ''}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        style={inputStyle}
+                        placeholder="you@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>手机号</label>
+                      <input
+                        type="tel"
+                        value={form.phone || ''}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        style={inputStyle}
+                        placeholder="13800138000"
+                      />
+                    </div>
+                  </div>
+                  {contactMsg && (
+                    <div style={{ padding: '8px 12px', marginBottom: '12px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: contactMsg.startsWith('✅') ? 'var(--ym-success-bg)' : 'var(--ym-danger-bg)', color: contactMsg.startsWith('✅') ? 'var(--ym-success)' : 'var(--ym-danger)', fontSize: '13px' }}>
+                      {contactMsg}
+                    </div>
+                  )}
+                  <button type="button" onClick={handleSaveContact} disabled={contactSaving} style={{ padding: '8px 24px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', border: 'none', borderRadius: 'var(--ym-radius-sm)', fontSize: '14px', fontWeight: '500', cursor: contactSaving ? 'not-allowed' : 'pointer', opacity: contactSaving ? 0.6 : 1 }}>
+                    {contactSaving ? '保存中...' : '保存联系方式'}
+                  </button>
+                </div>
               </form>
             )}
           </div>
