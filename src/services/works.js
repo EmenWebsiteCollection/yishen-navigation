@@ -2,6 +2,7 @@
 // 作品（works）服务层：由原 websites.js 演进而来。
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
+import { normalizeTagList } from './discovery-logic.js';
 
 // ========== 常量 ==========
 export const WORK_TYPES = [
@@ -39,6 +40,42 @@ export const workTypeLabel = (type) =>
 export const workStatusLabel = (status) =>
   WORK_STATUS.find((s) => s.id === status)?.label || status || '';
 
+// ========== Issue #39 P1：创作标签体系常量 ==========
+export const CREATIVE_TYPES = [
+  { id: 'original', label: '原创' },
+  { id: 'derivative', label: '二创' },
+  { id: 'collab', label: '合作' },
+  { id: 'commission', label: '委托' },
+  { id: 'practice', label: '练习' },
+];
+
+export const AI_DEGREES = [
+  { id: 'none', label: '纯人工' },
+  { id: 'assisted', label: 'AI 辅助' },
+  { id: 'mixed', label: '人机共创' },
+  { id: 'generated', label: 'AI 生成' },
+  { id: 'unknown', label: '未知' },
+];
+
+export const AUDIENCES = [
+  { id: 'all', label: '全年龄' },
+  { id: 'teen', label: '青少年' },
+  { id: 'adult', label: '成人向' },
+];
+
+export const CONTENT_WARNINGS = [
+  { id: 'violence', label: '暴力' },
+  { id: 'horror', label: '恐怖' },
+  { id: 'blood', label: '血腥' },
+  { id: 'adult', label: '成人内容' },
+  { id: 'spoil', label: '剧透' },
+  { id: 'other', label: '其他' },
+];
+
+export const creativeTypeLabel = (t) => CREATIVE_TYPES.find((x) => x.id === t)?.label || t || '';
+export const aiDegreeLabel = (t) => AI_DEGREES.find((x) => x.id === t)?.label || t || '未知';
+export const audienceLabel = (t) => AUDIENCES.find((x) => x.id === t)?.label || t || '';
+
 // ========== 基础 ==========
 export const normalizeUrl = (url) => {
   if (!url) return url;
@@ -70,6 +107,12 @@ const TABLE_SELECT_CORE = `
   profiles ( username, avatar_url )
 `;
 const TABLE_SELECT_FULL = `${TABLE_SELECT_CORE}, video_url`;
+// Issue #39 P1：创作标签体系/媒体直链（依赖迁移 20260808_add_discovery.sql）
+const TABLE_SELECT_META = `
+  tags, styles, tools, creative_type, completion,
+  seeking_collab, derivative_allowed, commercial_use,
+  ai_degree, audience, content_warning, media_url
+`;
 
 // works_with_likes 视图字段（视图已 join profiles）
 // ⚠️ 视图未包含 video_url（列表页不需要），若需列表展示需由团队重建视图并补列
@@ -92,10 +135,25 @@ export const isVideoUrlSupported = async () => {
   return _videoUrlSupported;
 };
 
-// 返回当前可用的 works 直查 select：列存在时含 video_url，否则降级为基础字段
+// 运行时探测 Issue #39 新增列是否存在（迁移未执行时自动降级）
+let _metaSupported = null;
+export const isMetaSupported = async () => {
+  if (_metaSupported !== null) return _metaSupported;
+  try {
+    const { error } = await supabase.from('works').select('tags, ai_degree').limit(1);
+    _metaSupported = !error;
+  } catch {
+    _metaSupported = false;
+  }
+  return _metaSupported;
+};
+
+// 返回当前可用的 works 直查 select：列存在时含 video_url/meta，否则降级为基础字段
 const getTableSelect = async () => {
-  const ok = await isVideoUrlSupported();
-  return ok ? TABLE_SELECT_FULL : TABLE_SELECT_CORE;
+  const parts = [TABLE_SELECT_CORE];
+  if (await isVideoUrlSupported()) parts.push('video_url');
+  if (await isMetaSupported()) parts.push(TABLE_SELECT_META);
+  return parts.join(',\n  ');
 };
 
 const mapWork = (item) => {
@@ -122,7 +180,61 @@ const mapWork = (item) => {
     like_count: item.like_count ?? 0,
     liked_by_user: false,
     favorited_by_user: false,
+    // Issue #39 P1 创作标签体系
+    tags: item.tags || [],
+    styles: item.styles || [],
+    tools: item.tools || [],
+    creative_type: item.creative_type || null,
+    completion: item.completion ?? null,
+    seeking_collab: !!item.seeking_collab,
+    derivative_allowed: item.derivative_allowed !== false,
+    commercial_use: !!item.commercial_use,
+    ai_degree: item.ai_degree || 'unknown',
+    audience: item.audience || null,
+    content_warning: item.content_warning || [],
+    media_url: item.media_url || null,
   };
+};
+
+// Issue #39 P1：创作标签体系字段清洗与校验（纯逻辑，可复用）
+export const normalizeWorkMeta = (payload = {}) => {
+  const out = {};
+  const tags = normalizeTagList(payload.tags);
+  const styles = normalizeTagList(payload.styles);
+  const tools = normalizeTagList(payload.tools);
+  const cw = normalizeTagList(payload.content_warning, { max: 6, maxLen: 20 });
+
+  if (payload.tags !== undefined) out.tags = tags;
+  if (payload.styles !== undefined) out.styles = styles;
+  if (payload.tools !== undefined) out.tools = tools;
+  if (payload.content_warning !== undefined) out.content_warning = cw;
+
+  if (payload.creative_type !== undefined) {
+    if (payload.creative_type && !CREATIVE_TYPES.some((c) => c.id === payload.creative_type)) {
+      throw new Error('未知的创作类型');
+    }
+    out.creative_type = payload.creative_type || null;
+  }
+  if (payload.completion !== undefined && payload.completion !== null && payload.completion !== '') {
+    const n = Number(payload.completion);
+    if (!Number.isInteger(n) || n < 0 || n > 100) throw new Error('完成度需为 0-100 的整数');
+    out.completion = n;
+  } else if (payload.completion !== undefined) {
+    out.completion = null;
+  }
+  if (payload.seeking_collab !== undefined) out.seeking_collab = !!payload.seeking_collab;
+  if (payload.derivative_allowed !== undefined) out.derivative_allowed = payload.derivative_allowed !== false;
+  if (payload.commercial_use !== undefined) out.commercial_use = !!payload.commercial_use;
+  if (payload.ai_degree !== undefined) {
+    if (!AI_DEGREES.some((d) => d.id === payload.ai_degree)) throw new Error('未知的 AI 参与程度');
+    out.ai_degree = payload.ai_degree;
+  }
+  if (payload.audience !== undefined) {
+    if (payload.audience && !AUDIENCES.some((a) => a.id === payload.audience)) throw new Error('未知的适合受众');
+    out.audience = payload.audience || null;
+  }
+  if (payload.media_url !== undefined) out.media_url = (payload.media_url || '').trim() || null;
+  return out;
 };
 
 export const checkUrlExists = async (url) => {
@@ -179,6 +291,7 @@ export const createWork = async (payload, userId) => {
     user_id: userId,
   };
   if (await isVideoUrlSupported()) insertRow.video_url = video_url?.trim() || null;
+  if (await isMetaSupported()) Object.assign(insertRow, normalizeWorkMeta(payload));
   const { data, error } = await supabase
     .from('works')
     .insert([insertRow])
@@ -393,6 +506,7 @@ export const updateWork = async (id, data) => {
   if (status !== undefined) patch.status = status || null;
   if (group_id !== undefined) patch.group_id = group_id || null;
   if (featured !== undefined) patch.featured = !!featured;
+  if (await isMetaSupported()) Object.assign(patch, normalizeWorkMeta(data));
 
   const { data: updated, error } = await supabase
     .from('works')
@@ -417,6 +531,20 @@ export const setWorkFeatured = async (id, featured) => {
     .update({ featured: !!featured })
     .eq('id', id);
   if (error) throw error;
+};
+
+export const setWorkMeta = async (id, meta) => {
+  const normalized = normalizeWorkMeta(meta);
+  if (Object.keys(normalized).length === 0) return null;
+  if (!(await isMetaSupported())) throw new Error('创作标签功能尚未就绪（迁移未执行）');
+  const { data, error } = await supabase
+    .from('works')
+    .update(normalized)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapWork(data);
 };
 
 export const setWorkVisibility = async (id, visibility) => {

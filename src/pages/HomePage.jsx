@@ -383,6 +383,43 @@ export function HomePage() {
       <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px 40px' }}>
         <HighRatedCarousel />
 
+        {/* Issue #39 P1：发现入口横幅（不改变原首页网站导航逻辑） */}
+        <Link
+          to="/discover"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+            textDecoration: 'none',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            backgroundColor: 'var(--ym-bg-card)',
+            border: '1px solid var(--ym-border)',
+            borderRadius: 'var(--ym-radius-md)',
+            transition: 'border-color var(--ym-transition), box-shadow var(--ym-transition)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--ym-accent)';
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--ym-border)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '4px' }}>
+              ✨ 作品发现
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}>
+              本周新锐 · 编辑精选 · 小众宝藏 · 零评论作品 · 每日随机……不只按点赞数推荐
+            </div>
+          </div>
+          <span style={{ color: 'var(--ym-accent)', fontSize: '14px', whiteSpace: 'nowrap' }}>去看看 →</span>
+        </Link>
+
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}

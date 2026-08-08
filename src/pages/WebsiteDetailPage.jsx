@@ -12,7 +12,13 @@ import {
   favoriteWork,
   unfavoriteWork,
   isAdmin,
+  aiDegreeLabel,
+  creativeTypeLabel,
+  audienceLabel,
+  CONTENT_WARNINGS,
 } from '../services/works.js';
+import { isFollowing, toggleFollow } from '../services/follows.js';
+import { getDiscoveryRail, setFeatured } from '../services/discovery.js';
 import {
   getCommentsByWebsite,
   createComment,
@@ -260,6 +266,13 @@ export function WebsiteDetailPage() {
   const [favoritedByUser, setFavoritedByUser] = useState(false);
   const [favoriteToggling, setFavoriteToggling] = useState(false);
 
+  // Issue #39 P1：关注 + 同类型推荐
+  const [following, setFollowing] = useState(false);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [similarWorks, setSimilarWorks] = useState([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [featuredBusy, setFeaturedBusy] = useState(false);
+
   // 评论
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -292,6 +305,9 @@ export function WebsiteDetailPage() {
         if (user) {
           const liked = await hasLikedWork(id, user.id);
           setLikedByUser(liked);
+          if (user.id !== data.user_id) {
+            isFollowing(user.id, data.user_id).then(setFollowing).catch(() => setFollowing(false));
+          }
         } else {
           setLikedByUser(false);
         }
@@ -328,6 +344,55 @@ export function WebsiteDetailPage() {
   useEffect(() => {
     loadComments();
   }, [loadComments]);
+
+  // Issue #39 P1：同类型推荐
+  useEffect(() => {
+    let cancelled = false;
+    if (id) {
+      setSimilarLoading(true);
+      getDiscoveryRail('similar', { workId: id, limit: 4, maxPerAuthor: 1 })
+        .then((list) => {
+          if (!cancelled) setSimilarWorks(list.filter((w) => w.id !== id));
+        })
+        .catch((e) => {
+          console.warn('同类型推荐加载失败:', e.message);
+          if (!cancelled) setSimilarWorks([]);
+        })
+        .finally(() => {
+          if (!cancelled) setSimilarLoading(false);
+        });
+    }
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // ----- 关注/取关 -----
+  const handleFollowToggle = async () => {
+    if (!user || followingLoading || !website) return;
+    setFollowingLoading(true);
+    try {
+      const res = await toggleFollow(user.id, website.user_id);
+      setFollowing(res.following);
+    } catch (err) {
+      console.error('关注操作失败:', err);
+    } finally {
+      setFollowingLoading(false);
+    }
+  };
+
+  // ----- 编辑精选（仅管理员） -----
+  const handleFeaturedToggle = async () => {
+    if (!isAdminUser || featuredBusy || !website) return;
+    setFeaturedBusy(true);
+    try {
+      await setFeatured(website.id, !website.featured);
+      setWebsite((prev) => (prev ? { ...prev, featured: !prev.featured } : prev));
+    } catch (err) {
+      console.error('设置精选失败:', err.message);
+      alert(err.message || '设置精选失败');
+    } finally {
+      setFeaturedBusy(false);
+    }
+  };
 
   // ----- 点赞 -----
   const handleLikeToggle = async () => {
@@ -745,8 +810,116 @@ export function WebsiteDetailPage() {
             上传者：{website.username}
           </span>
         </Link>
+        {user && user.id !== website.user_id && (
+          <button
+            onClick={handleFollowToggle}
+            disabled={followingLoading}
+            style={{
+              padding: '4px 16px',
+              borderRadius: '20px',
+              border: '1px solid var(--ym-border)',
+              backgroundColor: following ? 'var(--ym-success)' : 'transparent',
+              color: following ? '#fff' : 'var(--ym-text-secondary)',
+              cursor: followingLoading ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              transition: 'all var(--ym-transition)',
+            }}
+          >
+            {followingLoading ? '处理中...' : following ? '✓ 已关注' : '+ 关注'}
+          </button>
+        )}
         <Chip label="创建" value={new Date(website.created_at).toLocaleString('zh-CN')} />
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
+      </div>
+
+      {/* ---------- Issue #39 P1：创作标签与信息 ---------- */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: '500',
+              padding: '3px 12px',
+              borderRadius: '14px',
+              color: website.ai_degree === 'unknown' ? 'var(--ym-text-muted)' : '#fff',
+              backgroundColor:
+                website.ai_degree === 'none' ? 'var(--ym-success)'
+                : website.ai_degree === 'generated' ? 'var(--ym-danger)'
+                : website.ai_degree === 'unknown' ? 'var(--ym-bg-subtle)'
+                : 'var(--ym-accent)',
+              border: '1px solid var(--ym-border)',
+            }}
+            title="AI 参与程度（合规标识）"
+          >
+            🤖 AI 参与：{aiDegreeLabel(website.ai_degree)}
+          </span>
+          {website.creative_type && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              {creativeTypeLabel(website.creative_type)}
+            </span>
+          )}
+          {website.completion != null && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              完成度 {website.completion}%
+            </span>
+          )}
+          {website.seeking_collab && (
+            <span style={{ fontSize: '12px', color: '#fff', backgroundColor: 'var(--ym-success)', borderRadius: '14px', padding: '3px 12px' }}>
+              寻找合作
+            </span>
+          )}
+          {website.derivative_allowed && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              允许二创
+            </span>
+          )}
+          {website.commercial_use && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              可商用
+            </span>
+          )}
+          {website.audience && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              受众：{audienceLabel(website.audience)}
+            </span>
+          )}
+        </div>
+
+        {website.ai_degree === 'unknown' && (
+          <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginBottom: '10px' }}>
+            ⚠️ 该作品未标注 AI 参与程度。根据《人工智能生成合成内容标识办法》，平台对未标识/疑似内容加注风险提示。
+          </div>
+        )}
+
+        {(website.tags || []).length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+            {(website.tags || []).map((t) => (
+              <Link
+                key={t}
+                to={`/discover?tag=${encodeURIComponent(t)}`}
+                style={{ fontSize: '12px', color: 'var(--ym-accent)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '12px', padding: '2px 10px', textDecoration: 'none' }}
+              >
+                #{t}
+              </Link>
+            ))}
+          </div>
+        )}
+        {((website.styles || []).length > 0 || (website.tools || []).length > 0) && (
+          <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', lineHeight: 1.8 }}>
+            {(website.styles || []).length > 0 && (
+              <div>🎨 风格：{(website.styles || []).join(' / ')}</div>
+            )}
+            {(website.tools || []).length > 0 && (
+              <div>🛠️ 工具：{(website.tools || []).join(' / ')}</div>
+            )}
+          </div>
+        )}
+        {(website.content_warning || []).length > 0 && (
+          <div style={{ fontSize: '12px', color: 'var(--ym-danger)', marginTop: '6px' }}>
+            ⚠️ 内容警告：{(website.content_warning || []).map((c) => CONTENT_WARNINGS.find((x) => x.id === c)?.label || c).join(' / ')}
+          </div>
+        )}
       </div>
 
       {/* ---------- 演示视频 ---------- */}
@@ -893,6 +1066,63 @@ export function WebsiteDetailPage() {
         )}
       </div>
 
+      {/* ---------- Issue #39 P1：灵感地图 + 同类型推荐 ---------- */}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+        <Link
+          to={`/work/${id}/map`}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: 'transparent',
+            color: 'var(--ym-text-secondary)',
+            border: '1px solid var(--ym-border)',
+            borderRadius: 'var(--ym-radius-sm)',
+            fontSize: '14px',
+            fontWeight: '500',
+            textDecoration: 'none',
+            transition: 'all var(--ym-transition)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--ym-accent)';
+            e.currentTarget.style.color = 'var(--ym-accent)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--ym-border)';
+            e.currentTarget.style.color = 'var(--ym-text-secondary)';
+          }}
+        >
+          🗺️ 灵感地图
+        </Link>
+      </div>
+
+      {similarLoading ? (
+        <div style={{ color: 'var(--ym-text-secondary)', fontSize: '13px', marginBottom: '24px' }}>正在寻找同类作品...</div>
+      ) : similarWorks.length > 0 ? (
+        <div style={{ marginBottom: '28px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '12px' }}>
+            同类型推荐
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+            {similarWorks.map((w) => (
+              <Link
+                key={w.id}
+                to={`/website/${w.id}`}
+                style={{ textDecoration: 'none', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', overflow: 'hidden', display: 'block', backgroundColor: 'var(--ym-bg-card)' }}
+              >
+                {w.image_url ? (
+                  <img src={w.image_url} alt={w.title} loading="lazy" decoding="async" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ) : (
+                  <div style={{ aspectRatio: '16/9', backgroundColor: 'var(--ym-bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>✨</div>
+                )}
+                <div style={{ padding: '10px 12px' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--ym-text-primary)', fontWeight: '500', lineHeight: 1.35 }}>{w.title}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>❤️ {w.like_count ?? 0} · 💬 {w.comment_count ?? 0}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* ---------- 评论区域 ---------- */}
       <div style={{ marginTop: '20px' }}>
         <h3
@@ -1013,6 +1243,26 @@ export function WebsiteDetailPage() {
       >
         {isOwner && (
           <>
+            {isAdminUser && (
+              <button
+                onClick={handleFeaturedToggle}
+                disabled={featuredBusy}
+                style={{
+                  padding: '10px 24px',
+                  backgroundColor: 'transparent',
+                  color: website.featured ? 'var(--ym-accent)' : 'var(--ym-text-secondary)',
+                  border: '1px solid var(--ym-border)',
+                  borderRadius: 'var(--ym-radius-sm)',
+                  fontSize: '15px',
+                  fontWeight: '500',
+                  cursor: featuredBusy ? 'not-allowed' : 'pointer',
+                  opacity: featuredBusy ? 0.5 : 1,
+                  transition: 'all var(--ym-transition)',
+                }}
+              >
+                {featuredBusy ? '处理中...' : website.featured ? '★ 取消编辑精选' : '☆ 设为编辑精选'}
+              </button>
+            )}
             <Link
               to={`/website/${id}/edit`}
               style={{

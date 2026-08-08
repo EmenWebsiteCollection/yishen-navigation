@@ -11,6 +11,8 @@ import { CreatorProfilePage } from './pages/CreatorProfilePage.jsx';
 import { AboutPage } from './pages/AboutPage.jsx';
 import { ChangelogPage } from './pages/ChangelogPage.jsx';
 import { ContactPage } from './pages/ContactPage.jsx';
+import { DiscoverPage } from './pages/DiscoverPage.jsx';
+import { WorkMapPage } from './pages/WorkMapPage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { BackToTop } from './components/BackToTop.jsx';
@@ -32,6 +34,8 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/website/:id" element={<WebsiteDetailPage />} />
+        <Route path="/work/:id/map" element={<WorkMapPage />} />
+        <Route path="/discover" element={<DiscoverPage />} />
         <Route
           path="/website/:id/edit"
           element={

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { createWork, listGroups, WORK_TYPES, WORK_STATUS } from '../services/works.js';
+import { createWork, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS } from '../services/works.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import '../styles/global.css';
 
@@ -39,6 +39,18 @@ const [videoUrl, setVideoUrl] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [groupId, setGroupId] = useState('');
   const [changelog, setChangelog] = useState('');
+  // Issue #39 P1：创作标签体系
+  const [tagsText, setTagsText] = useState('');
+  const [stylesText, setStylesText] = useState('');
+  const [toolsText, setToolsText] = useState('');
+  const [creativeType, setCreativeType] = useState('');
+  const [completion, setCompletion] = useState('');
+  const [seekingCollab, setSeekingCollab] = useState(false);
+  const [derivativeAllowed, setDerivativeAllowed] = useState(true);
+  const [commercialUse, setCommercialUse] = useState(false);
+  const [aiDegree, setAiDegree] = useState('unknown');
+  const [audience, setAudience] = useState('');
+  const [contentWarning, setContentWarning] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [groups, setGroups] = useState([]);
@@ -146,6 +158,17 @@ const [videoUrl, setVideoUrl] = useState('');
           visibility,
           group_id: groupId || null,
           changelog: changelog.trim() || null,
+          tags: tagsText.split(/[,，]/).map((t) => t.trim()).filter(Boolean),
+          styles: stylesText.split(/[,，]/).map((t) => t.trim()).filter(Boolean),
+          tools: toolsText.split(/[,，]/).map((t) => t.trim()).filter(Boolean),
+          creative_type: creativeType || null,
+          completion: completion === '' ? null : Number(completion),
+          seeking_collab: seekingCollab,
+          derivative_allowed: derivativeAllowed,
+          commercial_use: commercialUse,
+          ai_degree: aiDegree,
+          audience: audience || null,
+          content_warning: contentWarning,
         },
         user.id
       );
@@ -158,6 +181,17 @@ const [videoUrl, setVideoUrl] = useState('');
       setVisibility('public');
       setGroupId('');
       setChangelog('');
+      setTagsText('');
+      setStylesText('');
+      setToolsText('');
+      setCreativeType('');
+      setCompletion('');
+      setSeekingCollab(false);
+      setDerivativeAllowed(true);
+      setCommercialUse(false);
+      setAiDegree('unknown');
+      setAudience('');
+      setContentWarning([]);
       setImageFile(null);
       setImagePreview('');
       setTimeout(() => navigate('/'), 1500);
@@ -347,6 +381,100 @@ const [videoUrl, setVideoUrl] = useState('');
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
+          </div>
+        </div>
+
+        {/* Issue #39 P1：创作标签与信息 */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '10px' }}>
+            创作标签与信息（除 AI 参与程度外均可选）
+          </div>
+
+          <div style={{ marginBottom: '12px' }}>
+            <label style={labelStyle}>AI 参与程度（必填，合规标识）</label>
+            <select value={aiDegree} onChange={(e) => setAiDegree(e.target.value)} style={inputStyle}>
+              {AI_DEGREES.map((d) => (
+                <option key={d.id} value={d.id}>{d.label}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>
+              依据《人工智能生成合成内容标识办法》，AI 生成内容需显式+隐式标识；选「未知」时平台会加注风险提示。
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={labelStyle}>创作类型</label>
+              <select value={creativeType} onChange={(e) => setCreativeType(e.target.value)} style={inputStyle}>
+                <option value="">未设置</option>
+                {CREATIVE_TYPES.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>完成度（0-100）</label>
+              <input type="number" min="0" max="100" value={completion} onChange={(e) => setCompletion(e.target.value)} placeholder="如 60" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>适合受众</label>
+              <select value={audience} onChange={(e) => setAudience(e.target.value)} style={inputStyle}>
+                <option value="">未设置</option>
+                {AUDIENCES.map((a) => (
+                  <option key={a.id} value={a.id}>{a.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '12px' }}>
+            <label style={labelStyle}>标签（逗号分隔，最多 10 个，每个 ≤20 字）</label>
+            <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder="如：AI 工具, 开源, 效率" style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={labelStyle}>风格（逗号分隔）</label>
+              <input value={stylesText} onChange={(e) => setStylesText(e.target.value)} placeholder="如：极简, 像素" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>使用工具（逗号分隔）</label>
+              <input value={toolsText} onChange={(e) => setToolsText(e.target.value)} placeholder="如：Figma, PS" style={inputStyle} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '12px', fontSize: '14px', color: 'var(--ym-text-secondary)' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={seekingCollab} onChange={(e) => setSeekingCollab(e.target.checked)} />
+              寻找合作
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={derivativeAllowed} onChange={(e) => setDerivativeAllowed(e.target.checked)} />
+              允许二次创作
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={commercialUse} onChange={(e) => setCommercialUse(e.target.checked)} />
+              可商用
+            </label>
+          </div>
+
+          <div style={{ marginBottom: '4px' }}>
+            <label style={labelStyle}>内容警告（可多选）</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {CONTENT_WARNINGS.map((cw) => (
+                <label key={cw.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '13px', color: 'var(--ym-text-secondary)', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={contentWarning.includes(cw.id)}
+                    onChange={(e) => {
+                      setContentWarning((prev) =>
+                        e.target.checked ? [...prev, cw.id] : prev.filter((x) => x !== cw.id)
+                      );
+                    }}
+                  />
+                  {cw.label}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
