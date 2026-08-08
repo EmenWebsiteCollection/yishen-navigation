@@ -19,6 +19,10 @@ import {
 } from '../services/works.js';
 import { isFollowing, toggleFollow } from '../services/follows.js';
 import { getDiscoveryRail, setFeatured } from '../services/discovery.js';
+import { FEEDBACK_TYPES, feedbackLabel, validateAnchor, formatTime, checkTextQuoteMismatch } from '../services/comment-logic.js';
+import { MediaPlayer } from '../components/MediaPlayer.jsx';
+import { ImageAnnotator } from '../components/ImageAnnotator.jsx';
+import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
 import {
   getCommentsByWebsite,
   createComment,
@@ -57,6 +61,7 @@ const CommentCard = ({
   onReplyCancel,
   replySubmitting,
   replyToUsername,
+  workDescription = '',
 }) => {
   const isOwner = currentUserId && (comment.user_id === currentUserId || isAdminUser);
   const isReply = Boolean(replyToUsername);
@@ -100,6 +105,27 @@ const CommentCard = ({
           </span>
         )}
       </div>
+
+      {/* 反馈类型徽章 */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+        <span style={{ fontSize: '11px', color: 'var(--ym-accent)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '10px', padding: '2px 10px' }}>
+          {feedbackLabel(comment.feedback_type)}
+        </span>
+        {comment.anchor && (
+          <span style={{ fontSize: '11px', color: 'var(--ym-text-muted)', borderRadius: '10px', padding: '2px 10px', border: '1px dashed var(--ym-border)' }}>
+            {comment.anchor.kind === 'image' && '📷 图片区域批注'}
+            {comment.anchor.kind === 'text' && `📝 「${(comment.anchor.quote || '').slice(0, 24)}${(comment.anchor.quote || '').length > 24 ? '…' : ''}」`}
+            {comment.anchor.kind === 'video' && `🎬 ${formatTime(comment.anchor.start_sec)}${comment.anchor.end_sec != null ? ' - ' + formatTime(comment.anchor.end_sec) : ' 起'}`}
+            {comment.anchor.kind === 'audio' && `🎵 ${formatTime(comment.anchor.start_sec)}${comment.anchor.end_sec != null ? ' - ' + formatTime(comment.anchor.end_sec) : ' 起'}`}
+            {comment.anchor.kind === 'component' && `🧩 ${comment.anchor.path}`}
+          </span>
+        )}
+      </div>
+      {comment.anchor && comment.anchor.kind === 'text' && checkTextQuoteMismatch(comment.anchor, workDescription) && (
+        <div style={{ fontSize: '11px', color: 'var(--ym-text-muted)', marginBottom: '6px' }}>
+          ⚠️ 原文已修改，该段批注可能已失效
+        </div>
+      )}
 
       {/* 评论内容 */}
       <div
@@ -273,6 +299,14 @@ export function WebsiteDetailPage() {
   const [similarLoading, setSimilarLoading] = useState(false);
   const [featuredBusy, setFeaturedBusy] = useState(false);
 
+  // Issue #39 P2：结构化评论 + 局部批注
+  const [commentFeedbackType, setCommentFeedbackType] = useState('appreciate');
+  const [anchorMode, setAnchorMode] = useState(null); // null|image|text|video|audio|component
+  const [pendingAnchor, setPendingAnchor] = useState(null);
+  const [mediaRange, setMediaRange] = useState({ start_sec: null, end_sec: null });
+  const [manualSec, setManualSec] = useState('');
+  const [mediaUploading, setMediaUploading] = useState(false);
+
   // 评论
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -394,6 +428,85 @@ export function WebsiteDetailPage() {
     }
   };
 
+  // ----- Issue #39 P2：批注 -----
+  const descRef = React.useRef(null);
+
+  const startAnchorMode = (mode) => {
+    setAnchorMode((prev) => (prev === mode ? null : mode));
+    setPendingAnchor(null);
+    setMediaRange({ start_sec: null, end_sec: null });
+    setManualSec('');
+  };
+
+  const handleTextSelection = () => {
+    if (anchorMode !== 'text') return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const node = sel.anchorNode;
+    if (node && descRef.current && descRef.current.contains(node)) {
+      const start = Math.min(sel.anchorOffset, sel.focusOffset);
+      const end = Math.max(sel.anchorOffset, sel.focusOffset);
+      if (end > start) {
+        setPendingAnchor({ kind: 'text', start, end, quote: sel.toString().slice(0, 500) });
+      }
+    }
+  };
+
+  const getComponentPath = (el) => {
+    const parts = [];
+    let node = el;
+    while (node && node !== document.body && parts.length < 4) {
+      let sel = node.tagName ? node.tagName.toLowerCase() : '';
+      if (node.id) sel = '#' + node.id;
+      else if (node.className && typeof node.className === 'string') {
+        const cls = node.className.split(/\s+/).filter(Boolean).slice(0, 2).join('.');
+        if (cls) sel += '.' + cls;
+      }
+      parts.unshift(sel);
+      node = node.parentElement;
+    }
+    return parts.join(' > ');
+  };
+
+  const handleComponentCapture = (e) => {
+    if (anchorMode !== 'component') return;
+    e.preventDefault();
+    e.stopPropagation();
+    const path = getComponentPath(e.target);
+    if (path) setPendingAnchor({ kind: 'component', path });
+  };
+
+  const handleMediaRange = (startSec, endSec) => {
+    setMediaRange({ start_sec: startSec, end_sec: endSec });
+    setPendingAnchor({
+      kind: website?.work_type === 'music' || website?.work_type === 'audio' ? 'audio' : 'video',
+      start_sec: startSec,
+      end_sec: endSec,
+    });
+  };
+
+  const handleManualTimeAnchor = () => {
+    const sec = Math.floor(Number(manualSec));
+    if (!Number.isFinite(sec) || sec < 0) {
+      alert('请输入有效的时间秒数');
+      return;
+    }
+    const kind = website?.work_type === 'music' || website?.work_type === 'audio' ? 'audio' : 'video';
+    setPendingAnchor({ kind, start_sec: sec });
+    setMediaRange({ start_sec: sec, end_sec: null });
+  };
+
+  const anchorSummary = (a) => {
+    if (!a) return '';
+    if (a.kind === 'image') return `📷 图片区域 (${Math.round(a.x * 100)}%, ${Math.round(a.y * 100)}%)`;
+    if (a.kind === 'text') return `📝 「${(a.quote || '').slice(0, 20)}${(a.quote || '').length > 20 ? '…' : ''}」`;
+    if (a.kind === 'video' || a.kind === 'audio') {
+      return `${a.kind === 'video' ? '🎬' : '🎵'} ${formatTime(a.start_sec)}${a.end_sec != null ? ' - ' + formatTime(a.end_sec) : ' 起'}`;
+    }
+    if (a.kind === 'component') return `🧩 ${a.path}`;
+    return '';
+  };
+
   // ----- 点赞 -----
   const handleLikeToggle = async () => {
     if (!user || likeToggling) return;
@@ -460,8 +573,24 @@ export function WebsiteDetailPage() {
 
     setSubmitting(true);
     try {
-      await createComment(id, user.id, trimmed);
+      let anchor = null;
+      try {
+        anchor = validateAnchor(pendingAnchor);
+      } catch (e) {
+        alert(e.message);
+        setSubmitting(false);
+        return;
+      }
+      await createComment(id, user.id, trimmed, {
+        parentId: null,
+        feedbackType: commentFeedbackType,
+        anchor,
+      });
       setCommentContent('');
+      setPendingAnchor(null);
+      setAnchorMode(null);
+      setMediaRange({ start_sec: null, end_sec: null });
+      setManualSec('');
       await loadComments();
     } catch (err) {
       console.error('发表评论失败:', err);
@@ -592,6 +721,7 @@ export function WebsiteDetailPage() {
                 onReplyCancel={() => setReplyingTo(null)}
                 replySubmitting={submittingReply}
                 replyToUsername={replyToUsername}
+                workDescription={website?.description || ''}
               />
             </div>
           )}
@@ -610,6 +740,7 @@ export function WebsiteDetailPage() {
               onReplySubmit={handleReplySubmit}
               onReplyCancel={() => setReplyingTo(null)}
               replySubmitting={submittingReply}
+              workDescription={website?.description || ''}
             />
           )}
           {node.children && node.children.length > 0 && renderCommentTree(node.children, depth + 1)}
@@ -688,6 +819,7 @@ export function WebsiteDetailPage() {
   // ---------- 主界面 ----------
   return (
     <div
+      onClickCapture={handleComponentCapture}
       style={{
         maxWidth: '720px',
         margin: '40px auto',
@@ -765,7 +897,7 @@ export function WebsiteDetailPage() {
         {website.title}
       </h1>
 
-      {/* ---------- 大图 ---------- */}
+      {/* ---------- 大图（Issue #39 P2：支持图片局部批注） ---------- */}
       {website.image_url && (
         <div
           style={{
@@ -776,13 +908,17 @@ export function WebsiteDetailPage() {
             backgroundColor: 'var(--ym-bg-subtle)',
           }}
         >
-          <img
+          <ImageAnnotator
             src={website.image_url}
             alt={website.title}
-            fetchpriority="high"
-            decoding="async"
-            style={{ width: '100%', display: 'block' }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            addMode={anchorMode === 'image'}
+            onAdd={(x, y, w, h) => {
+              setPendingAnchor({ kind: 'image', x, y, w, h });
+              setAnchorMode(null);
+            }}
+            anchors={comments
+              .filter((c) => c.anchor && c.anchor.kind === 'image')
+              .map((c) => ({ id: c.id, ...c.anchor }))}
           />
         </div>
       )}
@@ -922,7 +1058,21 @@ export function WebsiteDetailPage() {
         )}
       </div>
 
-      {/* ---------- 演示视频 ---------- */}
+      {/* ---------- 媒体（Issue #39 P2：内嵌播放器 + 时间区间批注） ---------- */}
+      {website.media_url && (
+        <div style={{ marginBottom: '24px' }}>
+          <MediaPlayer
+            src={website.media_url}
+            type={website.work_type === 'music' ? 'audio' : 'video'}
+            selectMode={anchorMode === 'video' || anchorMode === 'audio'}
+            onRangeSelect={handleMediaRange}
+            markers={comments
+              .filter((c) => c.anchor && (c.anchor.kind === 'video' || c.anchor.kind === 'audio'))
+              .map((c) => ({ id: c.id, start_sec: c.anchor.start_sec, end_sec: c.anchor.end_sec }))}
+          />
+        </div>
+      )}
+
       {website.video_url && (
         <a
           href={website.video_url}
@@ -945,12 +1095,37 @@ export function WebsiteDetailPage() {
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-accent)'; }}
         >
-          ▶ 观看演示视频
+          ▶ 观看演示视频（外链）
         </a>
       )}
 
-      {/* ---------- 描述 ---------- */}
+      {/* 外链视频/音频的时间锚降级批注 */}
+      {(anchorMode === 'video' || anchorMode === 'audio') && !website.media_url && (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '24px', padding: '12px 16px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-sm)' }}>
+          <span style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}>
+            该媒体为外链，暂无法内嵌播放；可手动填写时间点（秒）做时间锚批注：
+          </span>
+          <input
+            type="number"
+            min="0"
+            value={manualSec}
+            onChange={(e) => setManualSec(e.target.value)}
+            placeholder="如 90"
+            style={{ width: '90px', padding: '6px 10px', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px' }}
+          />
+          <button
+            onClick={handleManualTimeAnchor}
+            style={{ padding: '6px 14px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', border: 'none', borderRadius: 'var(--ym-radius-sm)', cursor: 'pointer', fontSize: '13px' }}
+          >
+            使用此时间点
+          </button>
+        </div>
+      )}
+
+      {/* ---------- 描述（Issue #39 P2：支持文字选中批注） ---------- */}
       <div
+        ref={descRef}
+        onMouseUp={handleTextSelection}
         style={{
           padding: '16px 20px',
           backgroundColor: 'var(--ym-bg-subtle)',
@@ -961,9 +1136,15 @@ export function WebsiteDetailPage() {
           lineHeight: 1.6,
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
+          cursor: anchorMode === 'text' ? 'text' : 'default',
         }}
       >
         {website.description || '暂无详情'}
+        {anchorMode === 'text' && (
+          <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--ym-text-muted)' }}>
+            已进入文字批注模式：直接用鼠标选中想点评的段落，松开即生成批注。
+          </div>
+        )}
       </div>
 
       {/* ---------- 更新日志 ---------- */}
@@ -1159,6 +1340,74 @@ export function WebsiteDetailPage() {
         {/* 发表顶级评论 */}
         {user ? (
           <form onSubmit={handleCommentSubmit} style={{ marginTop: '12px' }}>
+            {/* 反馈类型（Issue #39 P2） */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+              {FEEDBACK_TYPES.map((f) => {
+                const active = commentFeedbackType === f.id;
+                return (
+                  <button
+                    type="button"
+                    key={f.id}
+                    onClick={() => setCommentFeedbackType(f.id)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--ym-border)',
+                      backgroundColor: active ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                      color: active ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      transition: 'all var(--ym-transition)',
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 局部批注模式（Issue #39 P2） */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>局部批注：</span>
+              {[
+                { id: 'image', label: '📷 图片区域' },
+                { id: 'text', label: '📝 文字选中' },
+                { id: 'video', label: '🎬 视频时间' },
+                { id: 'audio', label: '🎵 音频时间' },
+                { id: 'component', label: '🧩 组件位置' },
+              ].map((m) => {
+                const active = anchorMode === m.id;
+                return (
+                  <button
+                    type="button"
+                    key={m.id}
+                    onClick={() => startAnchorMode(m.id)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--ym-border)',
+                      backgroundColor: active ? 'var(--ym-success)' : 'var(--ym-bg-card)',
+                      color: active ? '#fff' : 'var(--ym-text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      transition: 'all var(--ym-transition)',
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {pendingAnchor && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', padding: '8px 12px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px', color: 'var(--ym-text-secondary)' }}>
+                <span>批注：{anchorSummary(pendingAnchor)}</span>
+                <button type="button" onClick={() => setPendingAnchor(null)} style={{ background: 'none', border: 'none', color: 'var(--ym-danger)', cursor: 'pointer', fontSize: '13px' }}>
+                  移除
+                </button>
+              </div>
+            )}
+
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}

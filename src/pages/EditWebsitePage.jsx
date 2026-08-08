@@ -5,6 +5,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS, isAdmin, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS } from '../services/works.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
+import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
 import '../styles/global.css';
 
 const inputStyle = {
@@ -61,6 +62,9 @@ const [videoUrl, setVideoUrl] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaUploading, setMediaUploading] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -105,6 +109,7 @@ const [videoUrl, setVideoUrl] = useState('');
         setContentWarning(data.content_warning || []);
         setImageUrl(data.image_url || '');
         setImagePreview(data.image_url || '');
+        setMediaUrl(data.media_url || '');
         setGroups(await listGroups(user.id));
       } catch (err) {
         setError('加载作品信息失败，请稍后重试');
@@ -127,6 +132,40 @@ const [videoUrl, setVideoUrl] = useState('');
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
     setError('');
+  };
+
+  // 媒体文件（视频/音频直链，Issue #39 P2）
+  const handleMediaFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setMessage('');
+    setError('');
+    if (!file) {
+      setMediaFile(null);
+      return;
+    }
+    try {
+      validateMediaFile(file);
+      setMediaFile(file);
+    } catch (err) {
+      setError(err.message);
+      e.target.value = '';
+    }
+  };
+  const handleUploadMedia = async () => {
+    if (!mediaFile) return;
+    setMediaUploading(true);
+    setError('');
+    setMessage('');
+    try {
+      const { url } = await uploadWorkMedia(mediaFile, id, user.id);
+      setMediaUrl(url);
+      setMediaFile(null);
+      setMessage('✅ 媒体上传成功，保存后生效');
+    } catch (err) {
+      setError(err.message || '媒体上传失败');
+    } finally {
+      setMediaUploading(false);
+    }
   };
 
   // 删除图片
@@ -408,6 +447,41 @@ const [videoUrl, setVideoUrl] = useState('');
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
+          </div>
+        </div>
+
+        {/* 媒体文件（视频/音频直链，Issue #39 P2） */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={labelStyle}>媒体文件（可选，视频 mp4/webm ≤100MB，音频 mp3/ogg ≤30MB）</label>
+          <input
+            type="file"
+            accept="video/mp4,video/webm,audio/mpeg,audio/ogg"
+            onChange={handleMediaFileChange}
+            style={{ display: 'block', marginBottom: '8px', fontSize: '13px' }}
+          />
+          {mediaUrl && (
+            <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '6px', wordBreak: 'break-all' }}>
+              当前媒体：{mediaUrl}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleUploadMedia}
+            disabled={!mediaFile || mediaUploading}
+            style={{
+              padding: '8px 18px',
+              backgroundColor: mediaFile ? 'var(--ym-accent)' : 'var(--ym-bg-subtle)',
+              color: mediaFile ? 'var(--ym-accent-text-on)' : 'var(--ym-text-muted)',
+              border: 'none',
+              borderRadius: 'var(--ym-radius-sm)',
+              fontSize: '14px',
+              cursor: mediaFile && !mediaUploading ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {mediaUploading ? '上传中...' : mediaFile ? '上传媒体并设为作品内嵌播放' : '选择文件后上传'}
+          </button>
+          <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '6px' }}>
+            上传后作品详情页将内嵌播放器，支持视频/音频时间区间批注。
           </div>
         </div>
 
