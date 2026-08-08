@@ -1,9 +1,9 @@
-# 依力 AI 完整部署与使用说明（v2 · 含站内搜索工具）
+﻿# 依力 AI 完整部署与使用说明（v3 · 语料风格注入 + 全站工具 + 个性化记忆）
 
-- **版本**: v2（一期前端对话面板 + 二期工具调用 agent）
-- **关联**: Issue #56（原 yishen 项目）→ 现为 Rai 个人部署项目
+- **版本**: v3（一期前端对话面板 + 二期工具调用 agent + 三期风格 RAG / 工具扩展 / 记忆）
+- **关联**: Issue #56（原 yishen 项目）→ 现为 Rai 个人部署项目；v3 方案见 docs/yili-corpus-pipeline.md
 - **更新时间**: 2026-08-08
-- **代码位置**: `netlify/functions/yili-chat.mjs` + `src/components/YiliChatPanel.jsx`
+- **代码位置**: `netlify/functions/yili-chat.mjs` + `src/components/YiliChatPanel.jsx` + `src/components/ChatActionCard.jsx`
 
 ---
 
@@ -195,9 +195,13 @@ A: 换 `LLM_URL` + `LLM_MODEL` + key 即可，协议兼容。
 
 ---
 
-## 九、v3 规划（未实现）
+## 九、v3 已实现（依力 AI 3.0）
 
-- **创建作品**：需要用户鉴权（把前端 Supabase session 传给函数）+ 写库权限 + 表单校验 → 单独设计
-- **流式输出**：SSE/NDJSON 逐字显示（前端 YiliChatPanel 有升级点）
-- **会话持久化**：历史存 Supabase，刷新不丢
-- **混合路由**：本地模型兜底 + 云 API 处理复杂请求
+- **风格注入（不微调）**：66 万字课程语料 → 句群切块 → DashScope 嵌入 + 关键词混合检索（RRF）→ 每轮注入 3-5 段依力原话样本 + 常驻表达 DNA（见 docs/yili-style-dna.md）
+- **工具扩展**：search_works / get_discovery_rail / get_work / get_ideas / get_creator / get_platform_guide → 结构化 actions（work_card / idea_card / guide_card），前端渲染站点风格卡片
+- **个性化记忆**：user_memories 表（RLS 仅本人），对话中检测偏好自动写入，个人中心可查看/清除，聊天面板 🧠/💤 开关
+- **降级链**：LLM 失败 → 规则版 agentFallback；检索/记忆失败 → 跳过注入，绝不因单点故障杀死聊天
+- **数据层**：`yili_corpus`（语料向量库）+ `user_memories` + RPC `get_yili_samples` / `save_user_memory` / `upsert_yili_chunks`（迁移：supabase/migrations/20260808_add_yili_ai_v3.sql）
+
+
+

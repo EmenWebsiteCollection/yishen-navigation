@@ -1,38 +1,56 @@
-// src/components/YiliChatPanel.jsx
-// 依力 AI 对话面板（Issue #56 一期）
+﻿// src/components/YiliChatPanel.jsx
+// 依力 AI 对话面板（v3：风格注入 + 卡片 actions + 个性化记忆）
 //
-// ⚠️ 一期约定：
-//   1. AI 代理函数 /.netlify/functions/yili-chat 暂未实现，请求失败时
-//      自动降级为本地占位回复；代理函数就绪后无需改动前端即可切换。
-//   2. 依力口语人设（YILI_PERSONA_PROMPT）暂留空，由团队在代理函数
-//      system prompt 中填写。
-//   3. API key 一律放服务端（Netlify 环境变量），前端不接触。
+// v3 变更：
+//   1. 登录用户把 idToken/userId 随消息传给代理函数 → 读写 user_memories（RLS 仅本人）
+//   2. 记忆开关：关闭后不再传 idToken（即不读写记忆），状态存 localStorage
+//   3. actions 渲染结构化卡片（work_card / idea_card / guide_card），复用站点视觉
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRuleReply } from '../services/agentFallback.js';
+import { supabase } from '../services/supabase.js';
+import { ChatActionCard } from './ChatActionCard.jsx';
 
-// 依力口语人设（占位，团队在代理函数里使用）
 export const YILI_PERSONA_PROMPT = '';
 
-// AI 代理函数地址（一期留空占位，函数上线后即生效）
 const CHAT_ENDPOINT = '/.netlify/functions/yili-chat';
-
-// AI 请求超时：10s 内没回就降级到规则版，避免干等
 const AI_TIMEOUT_MS = 10000;
+const MEMORY_KEY = 'yili-memory-enabled';
 
 const GREETING = '你好，我是依力～想看点什么？可以直接问我，比如「有什么好玩的网站」。';
 
-// 先试 AI 代理函数，失败/超时则降级为规则版回答（离线模式）
-async function fetchReply(messages) {
+function isMemoryEnabled() {
+  return localStorage.getItem(MEMORY_KEY) !== 'off';
+}
+
+// 登录用户会话（用于个性化记忆；匿名/未登录返回 null）
+async function getAuthContext() {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const session = data?.session;
+    const user = session?.user;
+    if (!user || user.is_anonymous) return null;
+    return { userId: user.id, idToken: session.access_token };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchReply(messages, authCtx) {
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
   const query = String(lastUser?.content || '');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
   try {
+    const body = { messages, persona: YILI_PERSONA_PROMPT };
+    if (authCtx && isMemoryEnabled()) {
+      body.userId = authCtx.userId;
+      body.idToken = authCtx.idToken;
+    }
     const res = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, persona: YILI_PERSONA_PROMPT }),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`chat endpoint ${res.status}`);
@@ -53,14 +71,21 @@ export function YiliChatPanel({ open, onClose }) {
   const [messages, setMessages] = useState(() => [{ role: 'yili', content: GREETING, actions: [] }]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
+  const [memoryEnabled, setMemoryEnabled] = useState(isMemoryEnabled);
   const bodyRef = useRef(null);
 
-  // 新消息/状态变化时滚到底部
   useEffect(() => {
     if (open && bodyRef.current) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
   }, [messages, open, thinking]);
+
+  const toggleMemory = () => {
+    const next = !memoryEnabled;
+    setMemoryEnabled(next);
+    if (next) localStorage.removeItem(MEMORY_KEY);
+    else localStorage.setItem(MEMORY_KEY, 'off');
+  };
 
   const send = async () => {
     const text = input.trim();
@@ -70,7 +95,8 @@ export function YiliChatPanel({ open, onClose }) {
     setMessages(history);
     setThinking(true);
     try {
-      const data = await fetchReply(history);
+      const authCtx = await getAuthContext();
+      const data = await fetchReply(history, authCtx);
       setMessages((m) => [
         ...m,
         {
@@ -96,6 +122,14 @@ export function YiliChatPanel({ open, onClose }) {
         <span className={'ym-chat-status' + (thinking ? ' thinking' : '')} aria-hidden="true" />
         <span className="ym-chat-title">依力</span>
         <span className="ym-chat-hint">AI 接入中</span>
+        <button
+          type="button"
+          className="ym-chat-memory-toggle"
+          onClick={toggleMemory}
+          title={memoryEnabled ? '依力会记住你的偏好（点击关闭）' : '记忆已关闭（点击开启）'}
+        >
+          {memoryEnabled ? '🧠' : '💤'}
+        </button>
         <button type="button" className="ym-chat-close" onClick={onClose} aria-label="收起对话面板">
           ✕
         </button>
@@ -115,14 +149,7 @@ export function YiliChatPanel({ open, onClose }) {
             {m.actions && m.actions.length > 0 && (
               <div className="ym-chat-actions">
                 {m.actions.map((a, j) => (
-                  <button
-                    key={j}
-                    type="button"
-                    className="ym-chat-action"
-                    onClick={() => navigate(a.to)}
-                  >
-                    {a.label}
-                  </button>
+                  <ChatActionCard key={j} action={a} />
                 ))}
               </div>
             )}
