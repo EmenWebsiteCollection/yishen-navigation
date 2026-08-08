@@ -12,13 +12,26 @@ import {
   favoriteWork,
   unfavoriteWork,
   isAdmin,
+  aiDegreeLabel,
+  creativeTypeLabel,
+  audienceLabel,
+  CONTENT_WARNINGS,
 } from '../services/works.js';
+import { isFollowing, toggleFollow } from '../services/follows.js';
+import { getDiscoveryRail, setFeatured } from '../services/discovery.js';
+import { FEEDBACK_TYPES, feedbackLabel, validateAnchor, formatTime, checkTextQuoteMismatch } from '../services/comment-logic.js';
+import { MediaPlayer } from '../components/MediaPlayer.jsx';
+import { ImageAnnotator } from '../components/ImageAnnotator.jsx';
+import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
+import { getWorkRevisions, markCommentAdopted } from '../services/revisions.js';
+import { COMMENT_FEEDBACK_TYPES, toggleCommentFeedback } from '../services/commentFeedback.js';
 import {
   getCommentsByWebsite,
   createComment,
   deleteComment,
 } from '../services/comments.js';
 import { getIdeaById } from '../services/ideas.js';
+import { supabase } from '../services/supabase.js';
 import '../styles/global.css';
 
 // ---------- 辅助组件 ----------
@@ -52,6 +65,15 @@ const CommentCard = ({
   onReplyCancel,
   replySubmitting,
   replyToUsername,
+  workDescription = '',
+  feedbackCounts = {},
+  feedbackActive = {},
+  onToggleFeedback,
+  feedbackBusy = false,
+  canAdopt = false,
+  adopted = false,
+  onAdopt,
+  adoptBusy = false,
 }) => {
   const isOwner = currentUserId && (comment.user_id === currentUserId || isAdminUser);
   const isReply = Boolean(replyToUsername);
@@ -95,6 +117,27 @@ const CommentCard = ({
           </span>
         )}
       </div>
+
+      {/* 反馈类型徽章 */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+        <span style={{ fontSize: '11px', color: 'var(--ym-accent)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '10px', padding: '2px 10px' }}>
+          {feedbackLabel(comment.feedback_type)}
+        </span>
+        {comment.anchor && (
+          <span style={{ fontSize: '11px', color: 'var(--ym-text-muted)', borderRadius: '10px', padding: '2px 10px', border: '1px dashed var(--ym-border)' }}>
+            {comment.anchor.kind === 'image' && '📷 图片区域批注'}
+            {comment.anchor.kind === 'text' && `📝 「${(comment.anchor.quote || '').slice(0, 24)}${(comment.anchor.quote || '').length > 24 ? '…' : ''}」`}
+            {comment.anchor.kind === 'video' && `🎬 ${formatTime(comment.anchor.start_sec)}${comment.anchor.end_sec != null ? ' - ' + formatTime(comment.anchor.end_sec) : ' 起'}`}
+            {comment.anchor.kind === 'audio' && `🎵 ${formatTime(comment.anchor.start_sec)}${comment.anchor.end_sec != null ? ' - ' + formatTime(comment.anchor.end_sec) : ' 起'}`}
+            {comment.anchor.kind === 'component' && `🧩 ${comment.anchor.path}`}
+          </span>
+        )}
+      </div>
+      {comment.anchor && comment.anchor.kind === 'text' && checkTextQuoteMismatch(comment.anchor, workDescription) && (
+        <div style={{ fontSize: '11px', color: 'var(--ym-text-muted)', marginBottom: '6px' }}>
+          ⚠️ 原文已修改，该段批注可能已失效
+        </div>
+      )}
 
       {/* 评论内容 */}
       <div
@@ -156,6 +199,58 @@ const CommentCard = ({
             </button>
           )}
         </div>
+      </div>
+
+      {/* Issue #39 P3：评论质量评价 + 采纳 */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '6px' }}>
+        {COMMENT_FEEDBACK_TYPES.map((t) => {
+          const active = !!feedbackActive[t.id];
+          const count = feedbackCounts[t.id] || 0;
+          return (
+            <button
+              key={t.id}
+              onClick={() => onToggleFeedback && onToggleFeedback(comment.id, t.id)}
+              disabled={feedbackBusy || !currentUserId}
+              title={currentUserId ? '' : '登录后可评价'}
+              style={{
+                padding: '2px 10px',
+                borderRadius: '12px',
+                border: '1px solid var(--ym-border)',
+                backgroundColor: active ? 'var(--ym-success)' : 'var(--ym-bg-card)',
+                color: active ? '#fff' : 'var(--ym-text-secondary)',
+                cursor: currentUserId && !feedbackBusy ? 'pointer' : 'not-allowed',
+                fontSize: '11px',
+                opacity: currentUserId ? 1 : 0.6,
+                transition: 'all var(--ym-transition)',
+              }}
+            >
+              {t.label} {count > 0 ? count : ''}
+            </button>
+          );
+        })}
+        {canAdopt && !adopted && (
+          <button
+            onClick={() => onAdopt && onAdopt(comment)}
+            disabled={adoptBusy}
+            style={{
+              padding: '2px 10px',
+              borderRadius: '12px',
+              border: '1px solid var(--ym-accent)',
+              backgroundColor: 'transparent',
+              color: 'var(--ym-accent)',
+              cursor: adoptBusy ? 'not-allowed' : 'pointer',
+              fontSize: '11px',
+              opacity: adoptBusy ? 0.6 : 1,
+            }}
+          >
+            采纳这条建议
+          </button>
+        )}
+        {adopted && (
+          <span style={{ fontSize: '11px', color: 'var(--ym-success)', fontWeight: '500' }}>
+            ✓ 已被作者采纳
+          </span>
+        )}
       </div>
 
       {/* 回复输入框（展开状态）- 统一使用较小尺寸，所有层级一致 */}
@@ -261,6 +356,28 @@ export function WebsiteDetailPage() {
   const [favoritedByUser, setFavoritedByUser] = useState(false);
   const [favoriteToggling, setFavoriteToggling] = useState(false);
 
+  // Issue #39 P1：关注 + 同类型推荐
+  const [following, setFollowing] = useState(false);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [similarWorks, setSimilarWorks] = useState([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [featuredBusy, setFeaturedBusy] = useState(false);
+
+  // Issue #39 P2：结构化评论 + 局部批注
+  const [commentFeedbackType, setCommentFeedbackType] = useState('appreciate');
+  const [anchorMode, setAnchorMode] = useState(null); // null|image|text|video|audio|component
+  const [pendingAnchor, setPendingAnchor] = useState(null);
+  const [mediaRange, setMediaRange] = useState({ start_sec: null, end_sec: null });
+  const [manualSec, setManualSec] = useState('');
+  const [mediaUploading, setMediaUploading] = useState(false);
+
+  // Issue #39 P3：评论质量评价 + 作品成长档案
+  const [feedbackMap, setFeedbackMap] = useState({}); // { [commentId]: { counts, active } }
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [adoptBusy, setAdoptBusy] = useState(false);
+  const [revisions, setRevisions] = useState([]);
+  const [revisionsLoading, setRevisionsLoading] = useState(true);
+
   // 评论
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -296,6 +413,9 @@ export function WebsiteDetailPage() {
         if (user) {
           const liked = await hasLikedWork(id, user.id);
           setLikedByUser(liked);
+          if (user.id !== data.user_id) {
+            isFollowing(user.id, data.user_id).then(setFollowing).catch(() => setFollowing(false));
+          }
         } else {
           setLikedByUser(false);
         }
@@ -332,6 +452,217 @@ export function WebsiteDetailPage() {
   useEffect(() => {
     loadComments();
   }, [loadComments]);
+
+  // Issue #39 P3：评论质量评价聚合（一次查询）
+  useEffect(() => {
+    let cancelled = false;
+    const ids = comments.map((c) => c.id);
+    if (ids.length === 0) {
+      setFeedbackMap({});
+      return;
+    }
+    supabase
+      .from('comment_feedback')
+      .select('comment_id, feedback_type, user_id')
+      .in('comment_id', ids)
+      .then(({ data, error }) => {
+        if (cancelled || error) return;
+        const map = {};
+        ids.forEach((cid) => { map[cid] = { counts: {}, active: {} }; });
+        (data || []).forEach((f) => {
+          if (!map[f.comment_id]) return;
+          map[f.comment_id].counts[f.feedback_type] = (map[f.comment_id].counts[f.feedback_type] || 0) + 1;
+          if (user && f.user_id === user.id) map[f.comment_id].active[f.feedback_type] = true;
+        });
+        setFeedbackMap(map);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [comments, user]);
+
+  // Issue #39 P3：作品成长档案（版本快照）
+  useEffect(() => {
+    let cancelled = false;
+    if (id) {
+      setRevisionsLoading(true);
+      getWorkRevisions(id)
+        .then((list) => { if (!cancelled) setRevisions(list); })
+        .catch((e) => { console.warn('加载成长档案失败:', e.message); if (!cancelled) setRevisions([]); })
+        .finally(() => { if (!cancelled) setRevisionsLoading(false); });
+    }
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // ----- 评论质量评价 / 采纳 -----
+  const handleToggleFeedback = async (commentId, type) => {
+    if (!user || feedbackBusy) return;
+    setFeedbackBusy(true);
+    try {
+      const res = await toggleCommentFeedback(commentId, user.id, type);
+      setFeedbackMap((prev) => {
+        const cur = prev[commentId] || { counts: {}, active: {} };
+        const next = {
+          counts: { ...cur.counts },
+          active: { ...cur.active },
+        };
+        if (res.active) {
+          next.counts[type] = (next.counts[type] || 0) + 1;
+          next.active[type] = true;
+        } else {
+          next.counts[type] = Math.max(0, (next.counts[type] || 0) - 1);
+          delete next.active[type];
+        }
+        return { ...prev, [commentId]: next };
+      });
+    } catch (e) {
+      console.error('评价操作失败:', e);
+    } finally {
+      setFeedbackBusy(false);
+    }
+  };
+
+  const handleAdopt = async (comment) => {
+    if (!user || adoptBusy) return;
+    const summary = window.prompt('可选：写一句采纳说明（会记录进成长档案）', '') || '';
+    setAdoptBusy(true);
+    try {
+      await markCommentAdopted(comment.id, id, user.id, summary);
+      await loadComments();
+    } catch (e) {
+      alert(e.message || '采纳失败');
+      console.error(e);
+    } finally {
+      setAdoptBusy(false);
+    }
+  };
+
+  // Issue #39 P1：同类型推荐
+  useEffect(() => {
+    let cancelled = false;
+    if (id) {
+      setSimilarLoading(true);
+      getDiscoveryRail('similar', { workId: id, limit: 4, maxPerAuthor: 1 })
+        .then((list) => {
+          if (!cancelled) setSimilarWorks(list.filter((w) => w.id !== id));
+        })
+        .catch((e) => {
+          console.warn('同类型推荐加载失败:', e.message);
+          if (!cancelled) setSimilarWorks([]);
+        })
+        .finally(() => {
+          if (!cancelled) setSimilarLoading(false);
+        });
+    }
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // ----- 关注/取关 -----
+  const handleFollowToggle = async () => {
+    if (!user || followingLoading || !website) return;
+    setFollowingLoading(true);
+    try {
+      const res = await toggleFollow(user.id, website.user_id);
+      setFollowing(res.following);
+    } catch (err) {
+      console.error('关注操作失败:', err);
+    } finally {
+      setFollowingLoading(false);
+    }
+  };
+
+  // ----- 编辑精选（仅管理员） -----
+  const handleFeaturedToggle = async () => {
+    if (!isAdminUser || featuredBusy || !website) return;
+    setFeaturedBusy(true);
+    try {
+      await setFeatured(website.id, !website.featured);
+      setWebsite((prev) => (prev ? { ...prev, featured: !prev.featured } : prev));
+    } catch (err) {
+      console.error('设置精选失败:', err.message);
+      alert(err.message || '设置精选失败');
+    } finally {
+      setFeaturedBusy(false);
+    }
+  };
+
+  // ----- Issue #39 P2：批注 -----
+  const descRef = React.useRef(null);
+
+  const startAnchorMode = (mode) => {
+    setAnchorMode((prev) => (prev === mode ? null : mode));
+    setPendingAnchor(null);
+    setMediaRange({ start_sec: null, end_sec: null });
+    setManualSec('');
+  };
+
+  const handleTextSelection = () => {
+    if (anchorMode !== 'text') return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const node = sel.anchorNode;
+    if (node && descRef.current && descRef.current.contains(node)) {
+      const start = Math.min(sel.anchorOffset, sel.focusOffset);
+      const end = Math.max(sel.anchorOffset, sel.focusOffset);
+      if (end > start) {
+        setPendingAnchor({ kind: 'text', start, end, quote: sel.toString().slice(0, 500) });
+      }
+    }
+  };
+
+  const getComponentPath = (el) => {
+    const parts = [];
+    let node = el;
+    while (node && node !== document.body && parts.length < 4) {
+      let sel = node.tagName ? node.tagName.toLowerCase() : '';
+      if (node.id) sel = '#' + node.id;
+      else if (node.className && typeof node.className === 'string') {
+        const cls = node.className.split(/\s+/).filter(Boolean).slice(0, 2).join('.');
+        if (cls) sel += '.' + cls;
+      }
+      parts.unshift(sel);
+      node = node.parentElement;
+    }
+    return parts.join(' > ');
+  };
+
+  const handleComponentCapture = (e) => {
+    if (anchorMode !== 'component') return;
+    e.preventDefault();
+    e.stopPropagation();
+    const path = getComponentPath(e.target);
+    if (path) setPendingAnchor({ kind: 'component', path });
+  };
+
+  const handleMediaRange = (startSec, endSec) => {
+    setMediaRange({ start_sec: startSec, end_sec: endSec });
+    setPendingAnchor({
+      kind: website?.work_type === 'music' || website?.work_type === 'audio' ? 'audio' : 'video',
+      start_sec: startSec,
+      end_sec: endSec,
+    });
+  };
+
+  const handleManualTimeAnchor = () => {
+    const sec = Math.floor(Number(manualSec));
+    if (!Number.isFinite(sec) || sec < 0) {
+      alert('请输入有效的时间秒数');
+      return;
+    }
+    const kind = website?.work_type === 'music' || website?.work_type === 'audio' ? 'audio' : 'video';
+    setPendingAnchor({ kind, start_sec: sec });
+    setMediaRange({ start_sec: sec, end_sec: null });
+  };
+
+  const anchorSummary = (a) => {
+    if (!a) return '';
+    if (a.kind === 'image') return `📷 图片区域 (${Math.round(a.x * 100)}%, ${Math.round(a.y * 100)}%)`;
+    if (a.kind === 'text') return `📝 「${(a.quote || '').slice(0, 20)}${(a.quote || '').length > 20 ? '…' : ''}」`;
+    if (a.kind === 'video' || a.kind === 'audio') {
+      return `${a.kind === 'video' ? '🎬' : '🎵'} ${formatTime(a.start_sec)}${a.end_sec != null ? ' - ' + formatTime(a.end_sec) : ' 起'}`;
+    }
+    if (a.kind === 'component') return `🧩 ${a.path}`;
+    return '';
+  };
 
   // ----- 点赞 -----
   const handleLikeToggle = async () => {
@@ -399,8 +730,24 @@ export function WebsiteDetailPage() {
 
     setSubmitting(true);
     try {
-      await createComment(id, user.id, trimmed);
+      let anchor = null;
+      try {
+        anchor = validateAnchor(pendingAnchor);
+      } catch (e) {
+        alert(e.message);
+        setSubmitting(false);
+        return;
+      }
+      await createComment(id, user.id, trimmed, {
+        parentId: null,
+        feedbackType: commentFeedbackType,
+        anchor,
+      });
       setCommentContent('');
+      setPendingAnchor(null);
+      setAnchorMode(null);
+      setMediaRange({ start_sec: null, end_sec: null });
+      setManualSec('');
       await loadComments();
     } catch (err) {
       console.error('发表评论失败:', err);
@@ -541,6 +888,15 @@ export function WebsiteDetailPage() {
                 onReplyCancel={() => setReplyingTo(null)}
                 replySubmitting={submittingReply}
                 replyToUsername={replyToUsername}
+                workDescription={website?.description || ''}
+                feedbackCounts={feedbackMap[node.id]?.counts || {}}
+                feedbackActive={feedbackMap[node.id]?.active || {}}
+                onToggleFeedback={handleToggleFeedback}
+                feedbackBusy={feedbackBusy}
+                canAdopt={!!user && user.id === website?.user_id && node.user_id !== user.id}
+                adopted={!!node.adopted}
+                onAdopt={handleAdopt}
+                adoptBusy={adoptBusy}
               />
             </div>
           )}
@@ -559,6 +915,15 @@ export function WebsiteDetailPage() {
               onReplySubmit={handleReplySubmit}
               onReplyCancel={() => setReplyingTo(null)}
               replySubmitting={submittingReply}
+              workDescription={website?.description || ''}
+              feedbackCounts={feedbackMap[node.id]?.counts || {}}
+              feedbackActive={feedbackMap[node.id]?.active || {}}
+              onToggleFeedback={handleToggleFeedback}
+              feedbackBusy={feedbackBusy}
+              canAdopt={!!user && user.id === website?.user_id && node.user_id !== user.id}
+              adopted={!!node.adopted}
+              onAdopt={handleAdopt}
+              adoptBusy={adoptBusy}
             />
           )}
           {node.children && node.children.length > 0 && renderCommentTree(node.children, depth + 1)}
@@ -637,6 +1002,7 @@ export function WebsiteDetailPage() {
   // ---------- 主界面 ----------
   return (
     <div
+      onClickCapture={handleComponentCapture}
       style={{
         maxWidth: '720px',
         margin: '40px auto',
@@ -723,7 +1089,7 @@ export function WebsiteDetailPage() {
         {website.title}
       </h1>
 
-      {/* ---------- 大图 ---------- */}
+      {/* ---------- 大图（Issue #39 P2：支持图片局部批注） ---------- */}
       {website.image_url && (
         <div
           style={{
@@ -734,13 +1100,17 @@ export function WebsiteDetailPage() {
             backgroundColor: 'var(--ym-bg-subtle)',
           }}
         >
-          <img
+          <ImageAnnotator
             src={website.image_url}
             alt={website.title}
-            fetchpriority="high"
-            decoding="async"
-            style={{ width: '100%', display: 'block' }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            addMode={anchorMode === 'image'}
+            onAdd={(x, y, w, h) => {
+              setPendingAnchor({ kind: 'image', x, y, w, h });
+              setAnchorMode(null);
+            }}
+            anchors={comments
+              .filter((c) => c.anchor && c.anchor.kind === 'image')
+              .map((c) => ({ id: c.id, ...c.anchor }))}
           />
         </div>
       )}
@@ -768,11 +1138,133 @@ export function WebsiteDetailPage() {
             上传者：{website.username}
           </span>
         </Link>
+        {user && user.id !== website.user_id && (
+          <button
+            onClick={handleFollowToggle}
+            disabled={followingLoading}
+            style={{
+              padding: '4px 16px',
+              borderRadius: '20px',
+              border: '1px solid var(--ym-border)',
+              backgroundColor: following ? 'var(--ym-success)' : 'transparent',
+              color: following ? '#fff' : 'var(--ym-text-secondary)',
+              cursor: followingLoading ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              transition: 'all var(--ym-transition)',
+            }}
+          >
+            {followingLoading ? '处理中...' : following ? '✓ 已关注' : '+ 关注'}
+          </button>
+        )}
         <Chip label="创建" value={new Date(website.created_at).toLocaleString('zh-CN')} />
         <Chip label="更新" value={new Date(website.updated_at).toLocaleString('zh-CN')} />
       </div>
 
-      {/* ---------- 演示视频 ---------- */}
+      {/* ---------- Issue #39 P1：创作标签与信息 ---------- */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: '500',
+              padding: '3px 12px',
+              borderRadius: '14px',
+              color: website.ai_degree === 'unknown' ? 'var(--ym-text-muted)' : '#fff',
+              backgroundColor:
+                website.ai_degree === 'none' ? 'var(--ym-success)'
+                : website.ai_degree === 'generated' ? 'var(--ym-danger)'
+                : website.ai_degree === 'unknown' ? 'var(--ym-bg-subtle)'
+                : 'var(--ym-accent)',
+              border: '1px solid var(--ym-border)',
+            }}
+            title="AI 参与程度（合规标识）"
+          >
+            🤖 AI 参与：{aiDegreeLabel(website.ai_degree)}
+          </span>
+          {website.creative_type && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              {creativeTypeLabel(website.creative_type)}
+            </span>
+          )}
+          {website.completion != null && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              完成度 {website.completion}%
+            </span>
+          )}
+          {website.seeking_collab && (
+            <span style={{ fontSize: '12px', color: '#fff', backgroundColor: 'var(--ym-success)', borderRadius: '14px', padding: '3px 12px' }}>
+              寻找合作
+            </span>
+          )}
+          {website.derivative_allowed && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              允许二创
+            </span>
+          )}
+          {website.commercial_use && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              可商用
+            </span>
+          )}
+          {website.audience && (
+            <span style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '14px', padding: '3px 12px' }}>
+              受众：{audienceLabel(website.audience)}
+            </span>
+          )}
+        </div>
+
+        {website.ai_degree === 'unknown' && (
+          <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginBottom: '10px' }}>
+            ⚠️ 该作品未标注 AI 参与程度。根据《人工智能生成合成内容标识办法》，平台对未标识/疑似内容加注风险提示。
+          </div>
+        )}
+
+        {(website.tags || []).length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+            {(website.tags || []).map((t) => (
+              <Link
+                key={t}
+                to={`/discover?tag=${encodeURIComponent(t)}`}
+                style={{ fontSize: '12px', color: 'var(--ym-accent)', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '12px', padding: '2px 10px', textDecoration: 'none' }}
+              >
+                #{t}
+              </Link>
+            ))}
+          </div>
+        )}
+        {((website.styles || []).length > 0 || (website.tools || []).length > 0) && (
+          <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', lineHeight: 1.8 }}>
+            {(website.styles || []).length > 0 && (
+              <div>🎨 风格：{(website.styles || []).join(' / ')}</div>
+            )}
+            {(website.tools || []).length > 0 && (
+              <div>🛠️ 工具：{(website.tools || []).join(' / ')}</div>
+            )}
+          </div>
+        )}
+        {(website.content_warning || []).length > 0 && (
+          <div style={{ fontSize: '12px', color: 'var(--ym-danger)', marginTop: '6px' }}>
+            ⚠️ 内容警告：{(website.content_warning || []).map((c) => CONTENT_WARNINGS.find((x) => x.id === c)?.label || c).join(' / ')}
+          </div>
+        )}
+      </div>
+
+      {/* ---------- 媒体（Issue #39 P2：内嵌播放器 + 时间区间批注） ---------- */}
+      {website.media_url && (
+        <div style={{ marginBottom: '24px' }}>
+          <MediaPlayer
+            src={website.media_url}
+            type={website.work_type === 'music' ? 'audio' : 'video'}
+            selectMode={anchorMode === 'video' || anchorMode === 'audio'}
+            onRangeSelect={handleMediaRange}
+            markers={comments
+              .filter((c) => c.anchor && (c.anchor.kind === 'video' || c.anchor.kind === 'audio'))
+              .map((c) => ({ id: c.id, start_sec: c.anchor.start_sec, end_sec: c.anchor.end_sec }))}
+          />
+        </div>
+      )}
+
       {website.video_url && (
         <a
           href={website.video_url}
@@ -795,12 +1287,37 @@ export function WebsiteDetailPage() {
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--ym-accent)'; }}
         >
-          ▶ 观看演示视频
+          ▶ 观看演示视频（外链）
         </a>
       )}
 
-      {/* ---------- 描述 ---------- */}
+      {/* 外链视频/音频的时间锚降级批注 */}
+      {(anchorMode === 'video' || anchorMode === 'audio') && !website.media_url && (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '24px', padding: '12px 16px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-sm)' }}>
+          <span style={{ fontSize: '13px', color: 'var(--ym-text-secondary)' }}>
+            该媒体为外链，暂无法内嵌播放；可手动填写时间点（秒）做时间锚批注：
+          </span>
+          <input
+            type="number"
+            min="0"
+            value={manualSec}
+            onChange={(e) => setManualSec(e.target.value)}
+            placeholder="如 90"
+            style={{ width: '90px', padding: '6px 10px', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px' }}
+          />
+          <button
+            onClick={handleManualTimeAnchor}
+            style={{ padding: '6px 14px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', border: 'none', borderRadius: 'var(--ym-radius-sm)', cursor: 'pointer', fontSize: '13px' }}
+          >
+            使用此时间点
+          </button>
+        </div>
+      )}
+
+      {/* ---------- 描述（Issue #39 P2：支持文字选中批注） ---------- */}
       <div
+        ref={descRef}
+        onMouseUp={handleTextSelection}
         style={{
           padding: '16px 20px',
           backgroundColor: 'var(--ym-bg-subtle)',
@@ -811,9 +1328,15 @@ export function WebsiteDetailPage() {
           lineHeight: 1.6,
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
+          cursor: anchorMode === 'text' ? 'text' : 'default',
         }}
       >
         {website.description || '暂无详情'}
+        {anchorMode === 'text' && (
+          <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--ym-text-muted)' }}>
+            已进入文字批注模式：直接用鼠标选中想点评的段落，松开即生成批注。
+          </div>
+        )}
       </div>
 
       {/* ---------- 更新日志 ---------- */}
@@ -916,6 +1439,63 @@ export function WebsiteDetailPage() {
         )}
       </div>
 
+      {/* ---------- Issue #39 P1：灵感地图 + 同类型推荐 ---------- */}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+        <Link
+          to={`/work/${id}/map`}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: 'transparent',
+            color: 'var(--ym-text-secondary)',
+            border: '1px solid var(--ym-border)',
+            borderRadius: 'var(--ym-radius-sm)',
+            fontSize: '14px',
+            fontWeight: '500',
+            textDecoration: 'none',
+            transition: 'all var(--ym-transition)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--ym-accent)';
+            e.currentTarget.style.color = 'var(--ym-accent)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--ym-border)';
+            e.currentTarget.style.color = 'var(--ym-text-secondary)';
+          }}
+        >
+          🗺️ 灵感地图
+        </Link>
+      </div>
+
+      {similarLoading ? (
+        <div style={{ color: 'var(--ym-text-secondary)', fontSize: '13px', marginBottom: '24px' }}>正在寻找同类作品...</div>
+      ) : similarWorks.length > 0 ? (
+        <div style={{ marginBottom: '28px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '12px' }}>
+            同类型推荐
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+            {similarWorks.map((w) => (
+              <Link
+                key={w.id}
+                to={`/website/${w.id}`}
+                style={{ textDecoration: 'none', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', overflow: 'hidden', display: 'block', backgroundColor: 'var(--ym-bg-card)' }}
+              >
+                {w.image_url ? (
+                  <img src={w.image_url} alt={w.title} loading="lazy" decoding="async" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ) : (
+                  <div style={{ aspectRatio: '16/9', backgroundColor: 'var(--ym-bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>✨</div>
+                )}
+                <div style={{ padding: '10px 12px' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--ym-text-primary)', fontWeight: '500', lineHeight: 1.35 }}>{w.title}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px' }}>❤️ {w.like_count ?? 0} · 💬 {w.comment_count ?? 0}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* ---------- 评论区域 ---------- */}
       <div style={{ marginTop: '20px' }}>
         <h3
@@ -952,6 +1532,74 @@ export function WebsiteDetailPage() {
         {/* 发表顶级评论 */}
         {user ? (
           <form onSubmit={handleCommentSubmit} style={{ marginTop: '12px' }}>
+            {/* 反馈类型（Issue #39 P2） */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+              {FEEDBACK_TYPES.map((f) => {
+                const active = commentFeedbackType === f.id;
+                return (
+                  <button
+                    type="button"
+                    key={f.id}
+                    onClick={() => setCommentFeedbackType(f.id)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--ym-border)',
+                      backgroundColor: active ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                      color: active ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      transition: 'all var(--ym-transition)',
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 局部批注模式（Issue #39 P2） */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>局部批注：</span>
+              {[
+                { id: 'image', label: '📷 图片区域' },
+                { id: 'text', label: '📝 文字选中' },
+                { id: 'video', label: '🎬 视频时间' },
+                { id: 'audio', label: '🎵 音频时间' },
+                { id: 'component', label: '🧩 组件位置' },
+              ].map((m) => {
+                const active = anchorMode === m.id;
+                return (
+                  <button
+                    type="button"
+                    key={m.id}
+                    onClick={() => startAnchorMode(m.id)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--ym-border)',
+                      backgroundColor: active ? 'var(--ym-success)' : 'var(--ym-bg-card)',
+                      color: active ? '#fff' : 'var(--ym-text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      transition: 'all var(--ym-transition)',
+                    }}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {pendingAnchor && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', padding: '8px 12px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px', color: 'var(--ym-text-secondary)' }}>
+                <span>批注：{anchorSummary(pendingAnchor)}</span>
+                <button type="button" onClick={() => setPendingAnchor(null)} style={{ background: 'none', border: 'none', color: 'var(--ym-danger)', cursor: 'pointer', fontSize: '13px' }}>
+                  移除
+                </button>
+              </div>
+            )}
+
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
@@ -1022,6 +1670,93 @@ export function WebsiteDetailPage() {
         )}
       </div>
 
+      {/* ---------- Issue #39 P3：作品成长档案 ---------- */}
+      <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--ym-border)' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '4px' }}>
+          📜 作品成长档案
+        </h3>
+        <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)', marginBottom: '16px' }}>
+          每次更新自动生成只读快照；被作者采纳的评论会回链到这里。
+        </div>
+
+        {revisionsLoading ? (
+          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>加载成长档案...</div>
+        ) : revisions.length === 0 ? (
+          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>
+            暂无版本记录。作者每次编辑作品都会自动生成快照。
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {revisions.map((rev, idx) => {
+              const prev = idx > 0 ? revisions[idx - 1] : null;
+              const changes = [];
+              if (prev) {
+                if (prev.title !== rev.title) changes.push('标题');
+                if (prev.description !== rev.description) changes.push('描述');
+                if ((prev.image_url || null) !== (rev.image_url || null)) changes.push('封面/图片');
+                if ((prev.cover_url || null) !== (rev.cover_url || null)) changes.push('封面');
+                if (prev.changelog !== rev.changelog) changes.push('更新日志');
+              } else {
+                changes.push('首次发布');
+              }
+              const adoptedComments = (rev.adopted_comment_ids || [])
+                .map((cid) => comments.find((c) => c.id === cid))
+                .filter(Boolean);
+              const labelMap = { first: '第一版', revised: '修改版', final: '最终版' };
+              const isLast = idx === revisions.length - 1;
+              return (
+                <div
+                  key={rev.id}
+                  style={{
+                    padding: '14px 16px',
+                    backgroundColor: isLast ? 'var(--ym-bg-subtle)' : 'var(--ym-bg-card)',
+                    border: `1px solid ${isLast ? 'var(--ym-accent)' : 'var(--ym-border)'}`,
+                    borderRadius: 'var(--ym-radius-sm)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: isLast ? 'var(--ym-accent)' : 'var(--ym-text-primary)' }}>
+                      {labelMap[rev.version_label] || rev.version_label}
+                    </span>
+                    <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>
+                      v{rev.revision_no} · {new Date(rev.created_at).toLocaleString('zh-CN')}
+                    </span>
+                    {isLast && (
+                      <span style={{ fontSize: '11px', color: '#fff', backgroundColor: 'var(--ym-accent)', borderRadius: '10px', padding: '1px 8px' }}>
+                        当前版本
+                      </span>
+                    )}
+                  </div>
+                  {changes.length > 0 && (
+                    <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>
+                      变更：{changes.join(' / ')}
+                    </div>
+                  )}
+                  {rev.note && (
+                    <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', marginBottom: '4px', whiteSpace: 'pre-wrap' }}>{rev.note}</div>
+                  )}
+                  {rev.adopted_summary && (
+                    <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>
+                      采纳说明：{rev.adopted_summary}
+                    </div>
+                  )}
+                  {adoptedComments.length > 0 && (
+                    <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginTop: '6px' }}>
+                      ✓ 采纳了 {adoptedComments.length} 条建议：
+                      {adoptedComments.map((c) => (
+                        <span key={c.id} style={{ display: 'inline-block', backgroundColor: 'var(--ym-success-bg)', borderRadius: '6px', padding: '2px 8px', margin: '2px 4px 0 0' }}>
+                          @{c.username}：「{(c.content || '').slice(0, 24)}{(c.content || '').length > 24 ? '…' : ''}」
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ---------- 底部操作按钮（仅编辑/删除） ---------- */}
       <div
         style={{
@@ -1036,6 +1771,26 @@ export function WebsiteDetailPage() {
       >
         {isOwner && (
           <>
+            {isAdminUser && (
+              <button
+                onClick={handleFeaturedToggle}
+                disabled={featuredBusy}
+                style={{
+                  padding: '10px 24px',
+                  backgroundColor: 'transparent',
+                  color: website.featured ? 'var(--ym-accent)' : 'var(--ym-text-secondary)',
+                  border: '1px solid var(--ym-border)',
+                  borderRadius: 'var(--ym-radius-sm)',
+                  fontSize: '15px',
+                  fontWeight: '500',
+                  cursor: featuredBusy ? 'not-allowed' : 'pointer',
+                  opacity: featuredBusy ? 0.5 : 1,
+                  transition: 'all var(--ym-transition)',
+                }}
+              >
+                {featuredBusy ? '处理中...' : website.featured ? '★ 取消编辑精选' : '☆ 设为编辑精选'}
+              </button>
+            )}
             <Link
               to={`/website/${id}/edit`}
               style={{

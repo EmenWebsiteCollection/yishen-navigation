@@ -35,6 +35,7 @@
 - [ ] 非网站类作品可创建/展示（无 URL 也可）
 - [ ] 首页仍是网站导航且不受影响；所有入口跳转正确
 - [ ] 用他人账号复核 RLS
+- [ ] 用他人账号复核 RLS
 
 
 ---
@@ -82,3 +83,52 @@
 - [ ] 状态变更/补进展写时间线；关闭必填理由；管理员合并生效
 - [ ] 关注=收藏，个人中心可见；评论与回复；移动端断点
 - [ ] 用他人账号复核 RLS（匿名不能写）
+
+---
+
+# Issue #39：作品发现 + 反馈系统（3 个 PR，分支 feat/discovery-feedback）
+
+> 状态图例：⬜ 未开始 · 🔄 进行中 · ✅ 已完成
+
+## PR-A（P1）：发现多入口 + 创作标签体系 + 关注 + 灵感地图 + 每日随机
+
+- [x] ✅ 数据层：works url 可空 + 标签体系字段 + 约束/索引；follows、work_relations 表；works_discovery 视图（计数走 SECURITY DEFINER）；get_discovery_rail / get_random_work / set_featured RPC（supabase/migrations/20260808_add_discovery.sql + sql/002）
+- [x] ✅ 服务层：discovery.js（rail/随机/精选/关系）、follows.js、discovery-logic.js 纯逻辑 + 18 组 Node 单测
+- [x] ✅ works.js：meta 字段运行时探测、create/update 支持、setWorkMeta
+- [x] ✅ 页面：/discover 发现页、/work/:id/map 灵感地图、详情页关注/标签/AI 徽章/同类型推荐/灵感地图入口/管理员精选、创建·编辑表单标签体系、导航+首页入口
+- [x] ✅ 迁移执行并验证（幂等重跑 OK；anon 视角 RPC/视图 200）
+
+## PR-B（P2）：结构化评论 + 作品局部批注（含内嵌音视频）
+
+- [x] ✅ 数据层：comments feedback_type + anchor(jsonb)、内容约束幂等、work_media 桶（supabase/migrations/20260808_add_feedback_annotations.sql + sql/003）
+- [x] ✅ 服务层：comment-logic.js 纯逻辑 + 13 组单测、media.js 直链上传、comments.js 扩展
+- [x] ✅ 组件：MediaPlayer（时间轴标记/区间选择）、ImageAnnotator（圈选/点选）
+- [x] ✅ 详情页：反馈类型 chips + 批注工具栏（图/文/视频/音频/组件）+ 锚点摘要 + 改版提示 + 外链时间锚降级；编辑页媒体上传
+- [x] ✅ 迁移执行并验证（约束/桶 OK）
+
+## PR-C（P3）：评论质量评价 + 评论者声誉 + 作品成长档案
+
+- [x] ✅ 数据层：comment_feedback、comments.adopted、work_revisions、get_commenter_reputation RPC（supabase/migrations/20260808_add_comment_quality_revisions.sql + sql/004）
+- [x] ✅ 服务层：commentFeedback.js（toggle/声誉/徽章）、revisions.js（自动快照/采纳/版本列表）、works.js 更新自动快照
+- [x] ✅ 详情页：质量评价按钮、作者采纳闭环、成长档案区块（版本 + 变更点 + 采纳回链）
+- [x] ✅ 个人中心：我的信誉卡（不做公开排行榜）
+- [x] ✅ 迁移执行并验证（唯一约束/CHECK/聚合 RPC 正确）
+
+## 文档与运营
+
+- [x] ✅ project.md（v0.4 更新日志 + 数据字段）、task.md、ui.md
+- [x] ✅ docs/discovery-ops.md 运营手册（种子/周例行/零评论救场/采纳仪式）
+- [ ] ⬜ 多模态任务卡：发现页/灵感地图空态视觉素材（交 CGPT 组员）
+
+## 手工验收（交付后执行）
+
+- [ ] 11 个发现入口有数据且不重复霸屏（同作者去重生效）
+- [ ] 编辑精选仅管理员可设；每日随机质量门槛 + 会话去重
+- [ ] 标签/风格/工具可点击筛选；AI 徽章与风险提示正确
+- [ ] 灵感地图：显式关系 + 自动相似都出现；无关系显示引导空态
+- [ ] 结构化评论 8 类型、默认欣赏；批注 图/文/视频/音频/组件 各自落库渲染；外链降级
+- [ ] 评论质量评价一人一票一类型、可取消；采纳仅作者、点亮闭环
+- [ ] 成长档案：更新自动快照、只读、变更点、采纳回链
+- [ ] 评论者信誉徽章显示但不公开排行榜
+- [ ] 未登录可看不可投/评；他人账号私密不可见；管理员可删违规评论
+- [ ] 移动端断点可用；首页仍是网站导航且不受影响

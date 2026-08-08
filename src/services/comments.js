@@ -1,5 +1,6 @@
 ﻿// src/services/comments.js
 import { supabase } from './supabase.js';
+import { validateCommentContent, validateFeedbackType, validateAnchor } from './comment-logic.js';
 
 /**
  * 获取某个作品的所有评论（含回复，按时间升序，前端自行分组）
@@ -12,6 +13,9 @@ export const getCommentsByWebsite = async (workId) => {
     .select(`
       id,
       content,
+      feedback_type,
+      anchor,
+      adopted,
       created_at,
       user_id,
       parent_id,
@@ -25,6 +29,9 @@ export const getCommentsByWebsite = async (workId) => {
   return data.map((comment) => ({
     id: comment.id,
     content: comment.content,
+    feedback_type: comment.feedback_type || 'appreciate',
+    anchor: comment.anchor || null,
+    adopted: !!comment.adopted,
     created_at: comment.created_at,
     user_id: comment.user_id,
     parent_id: comment.parent_id,
@@ -38,17 +45,25 @@ export const getCommentsByWebsite = async (workId) => {
  * @param {string} workId - 作品 UUID
  * @param {string} userId - 当前用户 ID (profiles.id)
  * @param {string} content - 评论内容
- * @param {string|null} parentId - 回复某条评论时传它的 id；顶级评论传 null
+ * @param {object} opts - { parentId, feedbackType, anchor }
  * @returns {Promise<object>} 新评论对象
  */
-export const createComment = async (workId, userId, content, parentId = null) => {
-  const trimmed = (content || '').trim();
-  if (!trimmed) throw new Error('评论不能为空');
-  if (trimmed.length > 1000) throw new Error('评论不能超过 1000 字');
-  if ((trimmed.match(/\n/g) || []).length > 10) throw new Error('评论中的换行不能超过 10 个');
+export const createComment = async (workId, userId, content, opts = {}) => {
+  const { parentId = null, feedbackType = 'appreciate', anchor = null } = opts || {};
+  const trimmed = validateCommentContent(content);
+  const type = validateFeedbackType(feedbackType);
+  const anchorValue = validateAnchor(anchor);
+  const insertRow = {
+    website_id: workId,
+    user_id: userId,
+    content: trimmed,
+    parent_id: parentId,
+    feedback_type: type,
+  };
+  if (anchorValue) insertRow.anchor = anchorValue;
   const { data, error } = await supabase
     .from('comments')
-    .insert({ website_id: workId, user_id: userId, content: trimmed, parent_id: parentId })
+    .insert(insertRow)
     .select()
     .single();
 

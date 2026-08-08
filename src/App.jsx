@@ -15,6 +15,8 @@ import { ContactPage } from './pages/ContactPage.jsx';
 import { IdeaListPage } from './pages/IdeaListPage.jsx';
 import { IdeaCreatePage } from './pages/IdeaCreatePage.jsx';
 import { IdeaDetailPage } from './pages/IdeaDetailPage.jsx';
+import { DiscoverPage } from './pages/DiscoverPage.jsx';
+import { WorkMapPage } from './pages/WorkMapPage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { BackToTop } from './components/BackToTop.jsx';
@@ -37,6 +39,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/website/:id" element={<WebsiteDetailPage />} />
+        <Route path="/work/:id/map" element={<WorkMapPage />} />
+        <Route path="/discover" element={<DiscoverPage />} />
         <Route
           path="/website/:id/edit"
           element={
