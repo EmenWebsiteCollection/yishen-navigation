@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { searchWebsites } from '../services/search.js';
 import { getTopRatedWorks, getWorks, workTypeLabel } from '../services/works.js';
+import { subscribeMascotPos } from '../services/mascotPos.js';
 import yiliAvatar from '../assets/yili-avatar.png';
 import {
   classifyAgentIntent,
@@ -63,19 +64,47 @@ export function AgentBot() {
   const inputRef = useRef(null);
   const seqRef = useRef(0);
   const busyRef = useRef(false);
+  const [mascotPos, setMascotPosState] = useState(null);
+
+  useEffect(() => subscribeMascotPos(setMascotPosState), []);
+
+  // 对话框位置跟随看板郎：默认贴其右上方，空间不足时翻转到左下方
+  const panelStyle = (() => {
+    if (!open || !mascotPos) return null;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const { x, y, w, h } = mascotPos;
+    const panelW = Math.min(360, vw - 28);
+    const panelH = Math.min(560, vh - 120);
+    const gap = 12;
+    let left = x + w - panelW;
+    let top = y - panelH - gap;
+    let transformOrigin = 'right bottom';
+    if (top < 12) {
+      top = y + h + gap;
+      transformOrigin = 'right top';
+    }
+    left = Math.max(12, Math.min(left, vw - panelW - 12));
+    return { left, top, width: panelW, height: panelH, transformOrigin };
+  })();
 
   useEffect(() => {
     const onPointerDown = (e) => {
+      // 点击悬浮看板郎（ym-mascot）时不视为面板外点击，由看板郎负责开合
+      if (e.target && e.target.closest && e.target.closest('.ym-mascot')) return;
       if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
     };
     const onKeyDown = (e) => {
       if (e.key === 'Escape') setOpen(false);
     };
+    const onToggle = () => setOpen((o) => !o);
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('ym-agent-toggle', onToggle);
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('ym-agent-toggle', onToggle);
     };
   }, []);
 
@@ -142,7 +171,7 @@ export function AgentBot() {
   return (
     <div ref={rootRef} className="ym-agent">
       {open && (
-        <div className="ym-agent-panel" role="dialog" aria-label="依力">
+        <div className="ym-agent-panel" role="dialog" aria-label="依力" style={panelStyle}>
           <div className="ym-agent-header">
             <span className="ym-agent-title">依力</span>
             <button
@@ -242,20 +271,6 @@ export function AgentBot() {
           </form>
         </div>
       )}
-
-      <button
-        type="button"
-        className="ym-agent-launcher"
-        onClick={() => setOpen((o) => !o)}
-        aria-label={open ? '关闭依力' : '打开依力'}
-        title="依力"
-      >
-        {open ? (
-          <CloseIcon />
-        ) : (
-          <img className="ym-agent-launcher-avatar" src={yiliAvatar} alt="" aria-hidden="true" />
-        )}
-      </button>
     </div>
   );
 }

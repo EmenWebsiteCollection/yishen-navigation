@@ -27,12 +27,7 @@
 }
 
 .ym-agent-panel {
-  position: absolute;
-  right: 0;
-  bottom: 56px;
-  width: 360px;
-  max-width: calc(100vw - 28px);
-  height: min(70vh, 560px);
+  position: fixed;
   display: flex;
   flex-direction: column;
   background-color: var(--ym-bg-card);
@@ -41,6 +36,7 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   overflow: hidden;
   animation: ym-fade-in var(--ym-transition) forwards;
+  z-index: 1002;
 }
 
 .ym-agent-header {
@@ -284,12 +280,6 @@
   .ym-agent {
     right: calc(16px + env(safe-area-inset-right));
     bottom: calc(132px + env(safe-area-inset-bottom));
-  }
-
-  .ym-agent-panel {
-    bottom: calc(56px + env(safe-area-inset-bottom));
-    max-width: calc(100vw - 28px);
-    height: min(72vh, 520px);
   }
 
   .ym-agent-form input {
