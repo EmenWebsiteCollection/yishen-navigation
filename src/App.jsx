@@ -25,9 +25,9 @@ import { useDevice } from './hooks/useDevice.js';
 import { AppShell } from './components/AppShell.jsx';
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAnonymous } = useAuth();
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
-  return user ? children : <Navigate to="/" replace />;
+  return user && !isAnonymous ? children : <Navigate to="/" replace />;
 };
 
 function App() {

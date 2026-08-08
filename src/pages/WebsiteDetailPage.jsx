@@ -334,7 +334,7 @@ const CommentCard = ({
 export function WebsiteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAnonymous } = useAuth();
   const [isAdminUser, setIsAdminUser] = useState(false);
   useEffect(() => {
     if (user?.id) {
@@ -530,7 +530,7 @@ export function WebsiteDetailPage() {
 
   // ----- 评论质量评价 / 采纳 -----
   const handleToggleFeedback = async (commentId, type) => {
-    if (!user || feedbackBusy) return;
+    if (!user || isAnonymous || feedbackBusy) return;
     setFeedbackBusy(true);
     try {
       const res = await toggleCommentFeedback(commentId, user.id, type);
@@ -557,7 +557,7 @@ export function WebsiteDetailPage() {
   };
 
   const handleAdopt = async (comment) => {
-    if (!user || adoptBusy) return;
+    if (!user || isAnonymous || adoptBusy) return;
     const summary = window.prompt('可选：写一句采纳说明（会记录进成长档案）', '') || '';
     setAdoptBusy(true);
     try {
@@ -593,7 +593,7 @@ export function WebsiteDetailPage() {
 
   // ----- 关注/取关 -----
   const handleFollowToggle = async () => {
-    if (!user || followingLoading || !website) return;
+    if (!user || isAnonymous || followingLoading || !website) return;
     setFollowingLoading(true);
     try {
       const res = await toggleFollow(user.id, website.user_id);
@@ -701,7 +701,7 @@ export function WebsiteDetailPage() {
 
   // ----- 点赞 -----
   const handleLikeToggle = async () => {
-    if (!user || likeToggling) return;
+    if (!user || isAnonymous || likeToggling) return;
     setLikeToggling(true);
     try {
       if (likedByUser) {
@@ -722,7 +722,7 @@ export function WebsiteDetailPage() {
 
   // ----- 收藏 -----
   const handleFavoriteToggle = async () => {
-    if (!user || favoriteToggling) return;
+    if (!user || isAnonymous || favoriteToggling) return;
     setFavoriteToggling(true);
     try {
       if (favoritedByUser) {
@@ -758,7 +758,7 @@ export function WebsiteDetailPage() {
       alert('评论中的换行不能超过 10 个');
       return;
     }
-    if (!user) {
+    if (!user || isAnonymous) {
       alert('请先登录');
       return;
     }
@@ -794,7 +794,7 @@ export function WebsiteDetailPage() {
 
   // ----- 发表回复 -----
   const handleReplySubmit = async () => {
-    if (!user || !replyingTo) return;
+    if (!user || isAnonymous || !replyingTo) return;
     const trimmed = replyContent.trim();
     if (!trimmed) {
       alert('回复不能为空');
