@@ -52,9 +52,37 @@ const Version = ({ version, date, changes, latest }) => (
 
 const CHANGELOG = [
   {
-    version: 'v1.4.0',
+    version: 'v1.5.0',
     date: '2026-08-08',
     latest: true,
+    changes: {
+      '新增': [
+        'B站风格全站UI大改版：新视觉、头像功能、高分轮播、首页分区',
+        '看板郎「依力」：轻量吉祥物展示，导航栏 Logo 与网站图标同步更新',
+        '移动端顶栏导航改为下拉式 + 全面尺寸适配',
+        'TechLoader 加载动画',
+        '作品成长档案（版本快照）：编辑后自动生成修改历史',
+        '首页卡片直接展示浏览数与点赞交互',
+      ],
+      '优化': [
+        'Catppuccin 主题改为暗色 Mocha 风格',
+        '我的主页布局优化',
+        '详情页修复浏览量统计显示',
+        '导航栏 Logo 统一使用 yili.jpg',
+        '分区配置 SQL 补全（bind_contact updated_at、work_media 存储桶）',
+      ],
+      '修复': [
+        '安全审计修复（Issue #31）',
+        '手机端 responsive.css 恢复加载（Issue #9 遗留）',
+        '/ideas、/discover 等页面双顶栏问题（Issue #45）',
+        '多处 UI 细节修复（Issue #46）',
+      ],
+    },
+  },
+  {
+    version: 'v1.4.0',
+    date: '2026-08-08',
+    latest: false,
     changes: {
       '新增': [
         '关于页面：项目简介、初衷、愿景与开发团队展示',
