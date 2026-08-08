@@ -30,6 +30,11 @@
   100% { opacity: 1; }
 }
 
+@keyframes ym-hrc-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 .ym-fade-in {
   animation: ym-fade-in var(--ym-transition) forwards;
 }

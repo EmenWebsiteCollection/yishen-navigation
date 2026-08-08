@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { getProfile, getCreatorStats } from '../services/users.js';
 import { getWorksByUser, workTypeLabel } from '../services/works.js';
 import { TechLoader } from '../components/TechLoader.jsx';
+import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
 const DEFAULT_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"%3E%3Crect width="128" height="128" fill="%23EDE3CC"/%3E%3Ctext x="64" y="78" font-family="Arial" font-size="44" fill="%239C6B2E" text-anchor="middle"%3E?%3C/text%3E%3C/svg%3E';
@@ -95,6 +96,7 @@ export function CreatorProfilePage() {
         getCreatorStats(id),
         getWorksByUser(id, { currentUserId: user?.id, pageSize: 100 }),
       ]);
+      getPartitions().catch(() => {});
       setStats(s);
       setWorks(list);
     } catch (err) {
@@ -145,11 +147,11 @@ export function CreatorProfilePage() {
   const socials = profile.socials || [];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
+    <div>
       {/* 封面横幅 */}
-      <div style={{ height: '180px', backgroundColor: profile.cover_url ? 'transparent' : 'var(--ym-bg-subtle)', position: 'relative' }}>
+      <div className="ym-space-cover">
         {profile.cover_url ? (
-          <img src={profile.cover_url} alt="封面" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={profile.cover_url} alt="封面" decoding="async" />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ym-text-muted)', fontSize: '14px' }}>
             创作者主页
@@ -157,15 +159,14 @@ export function CreatorProfilePage() {
         )}
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px 60px' }}>
+      <div className="ym-space-body">
         {/* 头部：头像 + 用户名 + 介绍 */}
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ width: '96px', height: '96px', borderRadius: '50%', overflow: 'hidden', border: '4px solid var(--ym-bg-card)', backgroundColor: 'var(--ym-bg-subtle)', flexShrink: 0, marginTop: '-48px', position: 'relative', zIndex: 1 }}>
+        <div className="ym-space-head">
+          <div className="ym-space-avatar">
             <img
               src={profile.avatar_url || DEFAULT_AVATAR}
               alt={username}
               decoding="async"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
             />
           </div>
@@ -180,7 +181,7 @@ export function CreatorProfilePage() {
             )}
           </div>
           {isSelf && (
-            <Link to="/profile" style={{ padding: '8px 20px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', borderRadius: 'var(--ym-radius-sm)', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
+            <Link to="/profile" className="ym-btn ym-btn-primary ym-btn-sm">
               编辑资料
             </Link>
           )}
@@ -196,16 +197,16 @@ export function CreatorProfilePage() {
         ) : null}
 
         {/* 统计卡 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginTop: '20px' }}>
+        <div className="ym-stats">
           {[
             { label: '作品', value: stats.work_count },
             { label: '获赞', value: stats.like_count },
             { label: '被收藏', value: stats.favorite_count },
             { label: '评论', value: stats.comment_count },
           ].map((s) => (
-            <div key={s.label} style={{ padding: '14px 12px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
-              <div style={{ fontSize: '22px', fontWeight: '600', color: 'var(--ym-accent)' }}>{s.value}</div>
-              <div style={{ fontSize: '12px', color: 'var(--ym-text-secondary)', marginTop: '4px' }}>{s.label}</div>
+            <div key={s.label} className="ym-stat">
+              <b>{s.value}</b>
+              <span>{s.label}</span>
             </div>
           ))}
         </div>

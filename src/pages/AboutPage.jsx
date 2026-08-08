@@ -1,6 +1,5 @@
 // src/pages/AboutPage.jsx
 import React, { useEffect, useState } from 'react';
-import { SiteHeader } from '../components/SiteHeader.jsx';
 import { PageHero } from '../components/PageHero.jsx';
 import { getContributors } from '../services/contributors.js';
 import '../styles/global.css';
@@ -117,10 +116,7 @@ export function AboutPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <SiteHeader />
-
-      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 20px 60px' }}>
+    <div className="ym-main-narrow" style={{ margin: '0 auto' }}>
         <PageHero
           emoji="✨"
           title="关于依神网站汇总"
@@ -183,7 +179,6 @@ export function AboutPage() {
             </>
           )}
         </Section>
-      </div>
     </div>
   );
 }

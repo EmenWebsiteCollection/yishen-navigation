@@ -1,6 +1,5 @@
 // src/pages/ChangelogPage.jsx
 import React from 'react';
-import { SiteHeader } from '../components/SiteHeader.jsx';
 import { PageHero } from '../components/PageHero.jsx';
 import '../styles/global.css';
 
@@ -139,10 +138,7 @@ const CHANGELOG = [
 
 export function ChangelogPage() {
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-      <SiteHeader />
-
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 20px 60px' }}>
+    <div className="ym-main-narrow" style={{ margin: '0 auto' }}>
         <PageHero
           emoji="📝"
           title="版本更新记录"
@@ -152,7 +148,6 @@ export function ChangelogPage() {
         {CHANGELOG.map((v) => (
           <Version key={v.version} version={v.version} date={v.date} changes={v.changes} latest={v.latest} />
         ))}
-      </div>
     </div>
   );
 }

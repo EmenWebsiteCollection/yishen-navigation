@@ -1,66 +1,67 @@
-// src/components/HighRatedCarousel.jsx
+// 首页高分网站轮播：每 5 秒自动切换，支持点选/暂停/减少动画偏好。
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getTopRatedWorks } from '../services/works.js';
-import '../styles/high-rated.css';
 
 const ROTATE_INTERVAL = 5000;
 const MIN_SITES = 3;
 
-const CarouselSkeleton = () => (
-  <div className="ym-hrc-skeleton">
-    <div className="ym-hrc-skeleton-media" />
-    <div className="ym-hrc-skeleton-body">
-      <div className="ym-hrc-skeleton-line" style={{ width: '30%' }} />
-      <div className="ym-hrc-skeleton-line" style={{ width: '60%' }} />
-      <div className="ym-hrc-skeleton-line" style={{ width: '45%' }} />
+function CarouselSkeleton() {
+  return (
+    <div className="ym-section-block" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>
+      <div style={{ height: '16px', width: '160px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px', marginBottom: '14px' }} />
+      <div style={{ aspectRatio: '16/6', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '8px' }} />
     </div>
-  </div>
-);
+  );
+}
 
-const Slide = ({ site, index }) => (
-  <div className="ym-hrc-slide" aria-roledescription="slide" aria-label={`第 ${index + 1} 名：${site.title}`}>
-    <div className="ym-hrc-media">
-      <div className="ym-hrc-media-fallback">
-        <span className="ym-hrc-letter">{(site.title || '网').trim()[0]}</span>
+function Slide({ site, index }) {
+  return (
+    <div className="ym-carousel-slide" style={{ flex: '0 0 100%', minWidth: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 4fr)' }}>
+      <div style={{ position: 'relative', minHeight: '280px', backgroundColor: 'var(--ym-bg-subtle)', overflow: 'hidden' }}>
+        {site.image_url ? (
+          <img
+            src={site.image_url}
+            alt={site.title}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--ym-font-display)', fontSize: '72px', color: 'var(--ym-text-muted)', background: 'linear-gradient(135deg, var(--ym-bg-subtle), var(--ym-border))' }}>
+            {(site.title || '网').trim()[0]}
+          </div>
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0) 55%)' }} />
+        <div style={{ position: 'absolute', left: '16px', bottom: '14px', color: 'var(--ym-bg-card)', fontSize: '12px', letterSpacing: '1px', textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>
+          高分榜单 · 第 {String(index + 1).padStart(2, '0')} 名
+        </div>
       </div>
-      {site.image_url && (
-        <img
-          src={site.image_url}
-          alt={site.title}
-          loading={index === 0 ? 'eager' : 'lazy'}
-          fetchpriority={index === 0 ? 'high' : 'auto'}
-          decoding="async"
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        />
-      )}
-      <div className="ym-hrc-shade" />
-      <div className="ym-hrc-rank">
-        <span className="ym-hrc-rank-num">{String(index + 1).padStart(2, '0')}</span>
-        <span className="ym-hrc-rank-label">高分榜单</span>
-      </div>
-    </div>
 
-    <div className="ym-hrc-info">
-      <span className="ym-hrc-score">
-        <span className="ym-hrc-score-star">⭐</span>
-        <span className="ym-hrc-score-value">{site.like_count}</span>
-        <span className="ym-hrc-score-unit">分</span>
-      </span>
-      <h3 className="ym-hrc-title-text">{site.title}</h3>
-      <p className="ym-hrc-desc">{site.description || '暂无详情，点击查看完整介绍。'}</p>
-      <div className="ym-hrc-footer">
-        <Link to={`/user/${site.user_id}`} className='ym-hrc-author' style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-          {site.avatar_url ? <img src={site.avatar_url} alt='' loading="lazy" decoding="async" style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} /> : null}
-          👤 {site.username}
-        </Link>
-        <Link to={`/website/${site.id}`} className="ym-hrc-btn">
-          查看详情 →
-        </Link>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '28px', backgroundColor: 'var(--ym-bg-card)' }}>
+        <span className="ym-chip ym-chip-active" style={{ alignSelf: 'flex-start' }}>
+          ⭐ {site.like_count || 0} 赞
+        </span>
+        <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '22px', fontWeight: '600', color: 'var(--ym-text-primary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>
+          {site.title}
+        </h3>
+        <p style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--ym-text-secondary)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>
+          {site.description || '暂无详情，点击查看完整介绍。'}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginTop: 'auto' }}>
+          <Link to={`/user/${site.user_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--ym-text-muted)', textDecoration: 'none' }}>
+            {site.avatar_url ? <img className="ym-avatar ym-avatar-sm" src={site.avatar_url} alt="" loading="lazy" decoding="async" /> : <span className="ym-avatar-fallback ym-avatar-sm" style={{ fontSize: '11px' }}>👤</span>}
+            {site.username}
+          </Link>
+          <Link to={`/website/${site.id}`} className="ym-btn ym-btn-primary ym-btn-sm">
+            查看详情
+          </Link>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+}
 
 export function HighRatedCarousel() {
   const [sites, setSites] = useState([]);
@@ -68,12 +69,9 @@ export function HighRatedCarousel() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
-
   const reducedMotion = useRef(
-    typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
-
   const total = sites.length;
 
   useEffect(() => {
@@ -102,7 +100,6 @@ export function HighRatedCarousel() {
     if (index >= total) setIndex(0);
   }, [total, index]);
 
-  // 自动轮换：每 5 秒按评分名次 +1
   useEffect(() => {
     if (total <= 1 || paused || reducedMotion.current) return;
     const timer = setInterval(() => {
@@ -112,7 +109,6 @@ export function HighRatedCarousel() {
     return () => clearInterval(timer);
   }, [total, paused]);
 
-  // 切换标签页时暂停，避免后台空转
   useEffect(() => {
     const onVisibility = () => {
       if (document.hidden) setPaused(true);
@@ -122,81 +118,70 @@ export function HighRatedCarousel() {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
-  if (loading) {
-    return <CarouselSkeleton />;
-  }
-
-  if (total < MIN_SITES) {
-    return null;
-  }
+  if (loading) return <CarouselSkeleton />;
+  if (total < MIN_SITES) return null;
 
   const current = sites[index];
-  const lastIndex = total - 1;
 
   return (
     <section
-      className="ym-hrc"
       aria-label="高分网站轮播"
+      style={{ marginBottom: '28px' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="ym-hrc-header">
-        <div className="ym-hrc-heading">
-          <h2 className="ym-hrc-title">
-            ⭐ 高分网站
-            <span className="ym-hrc-title-badge">TOP</span>
-          </h2>
-          <span className="ym-hrc-subtitle">按评分自动轮播 · 每 5 秒</span>
+      <h2 className="ym-section-title">
+        高分榜单
+        <span className="ym-section-extra">按点赞自动轮播 · 每 5 秒</span>
+      </h2>
+
+      <div className="ym-section-block" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', transition: 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)', transform: `translateX(-${index * 100}%)` }}>
+          {sites.map((site, i) => <Slide key={site.id} site={site} index={i} />)}
+        </div>
+        <div style={{ height: '3px', backgroundColor: 'var(--ym-border)' }}>
+          <div
+            key={progressKey}
+            style={{
+              height: '100%',
+              backgroundColor: 'var(--ym-accent)',
+              transformOrigin: 'left',
+              animation: paused ? 'none' : 'ym-hrc-progress 5s linear forwards',
+            }}
+          />
         </div>
       </div>
 
-      <div className="ym-hrc-viewport">
-        <div
-          className="ym-hrc-track"
-          style={{ transform: `translateX(-${index * 100}%)` }}
-        >
-          {sites.map((site, i) => (
-            <Slide key={site.id} site={site} index={i} />
-          ))}
-        </div>
-        <div className={`ym-hrc-progress${paused ? ' is-paused' : ''}`}>
-          <div key={progressKey} className="ym-hrc-progress-bar" />
-        </div>
-      </div>
-
-      <div className="ym-hrc-nav">
-        <span className="ym-hrc-counter">
-          第 <b>{String(index + 1).padStart(2, '0')}</b> / {String(total).padStart(2, '0')} 名
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginTop: '12px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>
+          第 <b style={{ color: 'var(--ym-text-secondary)' }}>{String(index + 1).padStart(2, '0')}</b> / {String(total).padStart(2, '0')} 名
         </span>
-
-        <div className="ym-hrc-dots" role="tablist" aria-label="选择展位">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'center' }}>
           {sites.map((site, i) => (
             <button
               key={site.id}
-              className={`ym-hrc-dot${i === index ? ' active' : ''}`}
+              type="button"
               onClick={() => goTo(i)}
               aria-label={`第 ${i + 1} 名：${site.title}`}
-              aria-selected={i === index}
-              role="tab"
+              style={{
+                width: i === index ? '22px' : '8px',
+                height: '8px',
+                border: 'none',
+                borderRadius: i === index ? '4px' : '50%',
+                backgroundColor: 'var(--ym-accent)',
+                opacity: i === index ? 1 : 0.25,
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'width var(--ym-transition), opacity var(--ym-transition), border-radius var(--ym-transition)',
+              }}
             />
           ))}
         </div>
-
-        <div className="ym-hrc-arrows">
-          <button
-            className="ym-hrc-arrow"
-            onClick={() => goTo(index - 1)}
-            disabled={index === 0}
-            aria-label="上一名"
-          >
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" disabled={index === 0} onClick={() => goTo(index - 1)}>
             ←
           </button>
-          <button
-            className="ym-hrc-arrow"
-            onClick={() => goTo(index + 1)}
-            disabled={index === lastIndex}
-            aria-label="下一名"
-          >
+          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" disabled={index === total - 1} onClick={() => goTo(index + 1)}>
             →
           </button>
         </div>

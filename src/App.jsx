@@ -22,6 +22,7 @@ import { TechLoader } from './components/TechLoader.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { BackToTop } from './components/BackToTop.jsx';
 import { useDevice } from './hooks/useDevice.js';
+import { AppShell } from './components/AppShell.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -36,31 +37,33 @@ function App() {
       <ScrollToTop />
       <ThemeSwitcher />
       <BackToTop />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/website/:id" element={<WebsiteDetailPage />} />
-        <Route path="/work/:id/map" element={<WorkMapPage />} />
-        <Route path="/discover" element={<DiscoverPage />} />
-        <Route
-          path="/website/:id/edit"
-          element={
-            <PrivateRoute>
-              <EditWebsitePage />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/create" element={<PrivateRoute><CreateWebsitePage /></PrivateRoute>} />
-        <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-        <Route path="/user/:id" element={<CreatorProfilePage />} />
-        <Route path="/ideas" element={<IdeaListPage />} />
-        <Route path="/ideas/new" element={<PrivateRoute><IdeaCreatePage /></PrivateRoute>} />
-        <Route path="/ideas/:id" element={<IdeaDetailPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/changelog" element={<ChangelogPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AppShell>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/website/:id" element={<WebsiteDetailPage />} />
+          <Route path="/work/:id/map" element={<WorkMapPage />} />
+          <Route path="/discover" element={<DiscoverPage />} />
+          <Route
+            path="/website/:id/edit"
+            element={
+              <PrivateRoute>
+                <EditWebsitePage />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/create" element={<PrivateRoute><CreateWebsitePage /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+          <Route path="/user/:id" element={<CreatorProfilePage />} />
+          <Route path="/ideas" element={<IdeaListPage />} />
+          <Route path="/ideas/new" element={<PrivateRoute><IdeaCreatePage /></PrivateRoute>} />
+          <Route path="/ideas/:id" element={<IdeaDetailPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/changelog" element={<ChangelogPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AppShell>
     </>
   );
 }
