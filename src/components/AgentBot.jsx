@@ -1,9 +1,10 @@
 // src/components/AgentBot.jsx
-// 全站悬浮「站点助手」：免费规则问答，数据来自站内作品与静态 FAQ。
+// 全站悬浮「依力」：免费规则问答，数据来自站内作品与静态 FAQ。
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { searchWebsites } from '../services/search.js';
 import { getTopRatedWorks, getWorks, workTypeLabel } from '../services/works.js';
+import yiliAvatar from '../assets/yili-avatar.png';
 import {
   classifyAgentIntent,
   extractWorkType,
@@ -13,22 +14,6 @@ import {
 import '../styles/agent.css';
 
 const QUICK_QUESTIONS = ['推荐网站', '找小说', '怎么投稿', '联系我们'];
-
-const ChatIcon = () => (
-  <svg
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
 
 const CloseIcon = () => (
   <svg
@@ -70,7 +55,7 @@ export function AgentBot() {
   const [messages, setMessages] = useState(() => [
     {
       role: 'bot',
-      text: '你好，我是站点助手。想找作品、看推荐，或者了解投稿和联系方式，都可以直接问我。',
+      text: '你好呀，我是依力～想看点什么都可以直接问我，找作品、要推荐、问投稿都行！',
     },
   ]);
   const rootRef = useRef(null);
@@ -113,7 +98,7 @@ export function AgentBot() {
     setMessages((prev) => [
       ...prev,
       { role: 'user', text: query },
-      { role: 'bot', text: '正在查找...' },
+      { role: 'bot', text: '依力正在找…' },
     ]);
 
     try {
@@ -138,9 +123,9 @@ export function AgentBot() {
       if (seq !== seqRef.current) return;
       setMessages((prev) => [...prev.slice(0, -1), { role: 'bot', ...reply }]);
     } catch (err) {
-      console.error('站点助手回答失败:', err);
+      console.error('依力回答失败:', err);
       if (seq !== seqRef.current) return;
-      setMessages((prev) => [...prev.slice(0, -1), { role: 'bot', text: '暂时没查到，稍后再试或换个说法。' }]);
+      setMessages((prev) => [...prev.slice(0, -1), { role: 'bot', text: '唔，依力刚才卡了一下，稍等再试，或者换个说法？' }]);
     } finally {
       if (seq === seqRef.current) {
         busyRef.current = false;
@@ -157,14 +142,14 @@ export function AgentBot() {
   return (
     <div ref={rootRef} className="ym-agent">
       {open && (
-        <div className="ym-agent-panel" role="dialog" aria-label="站点助手">
+        <div className="ym-agent-panel" role="dialog" aria-label="依力">
           <div className="ym-agent-header">
-            <span className="ym-agent-title">站点助手</span>
+            <span className="ym-agent-title">依力</span>
             <button
               type="button"
               className="ym-agent-close"
               onClick={() => setOpen(false)}
-              aria-label="关闭站点助手"
+              aria-label="关闭依力"
               title="关闭"
             >
               <CloseIcon />
@@ -193,7 +178,9 @@ export function AgentBot() {
                 key={index}
                 className={'ym-agent-msg' + (msg.role === 'user' ? ' ym-agent-msg-user' : ' ym-agent-msg-bot')}
               >
-                {msg.role === 'bot' && <span className="ym-agent-avatar" aria-hidden="true">助</span>}
+                {msg.role === 'bot' && (
+                  <img className="ym-agent-avatar" src={yiliAvatar} alt="" aria-hidden="true" />
+                )}
                 <div className="ym-agent-bubble">
                   <div>{msg.text}</div>
                   {msg.works && msg.works.length > 0 && (
@@ -260,10 +247,14 @@ export function AgentBot() {
         type="button"
         className="ym-agent-launcher"
         onClick={() => setOpen((o) => !o)}
-        aria-label={open ? '关闭站点助手' : '打开站点助手'}
-        title="站点助手"
+        aria-label={open ? '关闭依力' : '打开依力'}
+        title="依力"
       >
-        {open ? <CloseIcon /> : <ChatIcon />}
+        {open ? (
+          <CloseIcon />
+        ) : (
+          <img className="ym-agent-launcher-avatar" src={yiliAvatar} alt="" aria-hidden="true" />
+        )}
       </button>
     </div>
   );

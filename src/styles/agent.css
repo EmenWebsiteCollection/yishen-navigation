@@ -1,4 +1,4 @@
-/* src/styles/agent.css — 站点助手 */
+/* src/styles/agent.css — 依力 */
 .ym-agent {
   position: fixed;
   right: 20px;
@@ -134,14 +134,16 @@
   width: 28px;
   height: 28px;
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 50%;
-  background-color: var(--ym-accent);
-  color: var(--ym-accent-text-on);
-  font-size: 12px;
-  font-weight: 600;
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.ym-agent-launcher-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .ym-agent-bubble {

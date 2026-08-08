@@ -1,8 +1,9 @@
-// agent.test.js — 站点助手逻辑测试
+// agent.test.js — 依力逻辑测试
 // 运行：node agent.test.js（仓库 package.json 为 ESM）
 import {
   AGENT_MAX_QUERY_LENGTH,
   AGENT_INTENTS,
+  YILI_PERSONA_PROMPT,
   normalizeAgentQuery,
   extractWorkType,
   classifyAgentIntent,
@@ -49,6 +50,9 @@ t('兜底意图', classifyAgentIntent('随便聊聊') === AGENT_INTENTS.FALLBACK
 t('空输入兜底', classifyAgentIntent('') === AGENT_INTENTS.FALLBACK);
 
 console.log('== formatAgentReply ==');
+const persona = YILI_PERSONA_PROMPT;
+t('人设包含依力', persona.includes('依力'));
+t('人设要求简短回复', persona.includes('2-3 句'));
 const WORKS = [
   { id: 1, title: '示例网站', url: 'https://example.com', username: '作者A', like_count: 10, work_type: 'website' },
   { id: 2, title: '示例小说', username: '作者B', like_count: 5, work_type: 'novel' },
