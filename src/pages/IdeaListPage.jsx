@@ -6,12 +6,13 @@ import { Pagination } from '../components/Pagination.jsx';
 import { getIdeas } from '../services/ideas.js';
 import { IDEA_CATEGORIES, IDEA_STATUSES } from '../services/idea-logic.js';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_DEFAULT = 10;
 
 export function IdeaListPage() {
   const [ideas, setIdeas] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('');
@@ -26,7 +27,7 @@ export function IdeaListPage() {
     try {
       const { ideas: list, total: count } = await getIdeas({
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         category: category || null,
         status: status || null,
         sort,
@@ -40,7 +41,7 @@ export function IdeaListPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, category, status, sort, query]);
+  }, [page, pageSize, category, status, sort, query]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -65,7 +66,13 @@ export function IdeaListPage() {
     });
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const handlePageSizeChange = (size) => {
+    if (size === pageSize) return;
+    setPageSize(size);
+    setPage(1);
+  };
 
   return (
     <div className="ym-content-page">
@@ -117,7 +124,15 @@ export function IdeaListPage() {
             <div className="ym-idea-list">
               {ideas.map((idea) => <IdeaCard key={idea.id} idea={idea} />)}
             </div>
-            <Pagination currentPage={page} totalPages={totalPages} totalItems={total} itemLabel="条想法" onPageChange={handlePageChange} />
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              itemLabel="条想法"
+              onPageChange={handlePageChange}
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </>
         )}
       </div>

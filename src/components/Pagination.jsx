@@ -29,6 +29,8 @@ export function Pagination({
   totalItems,
   itemLabel = '个作品',
   showJump = true,
+  pageSize,
+  onPageSizeChange,
 }) {
   const [jumpValue, setJumpValue] = useState(String(currentPage));
   const [jumpError, setJumpError] = useState('');
@@ -58,6 +60,15 @@ export function Pagination({
   };
 
   if (totalPages <= 1) return null;
+
+  const handlePageSizeChange = (event) => {
+    const value = Number(event.target.value);
+    if (value && onPageSizeChange) {
+      onPageSizeChange(value);
+      // 切换每页数量后回到第 1 页
+      if (currentPage !== 1) onPageChange(1);
+    }
+  };
 
   return (
     <div className="ym-pagination-block" aria-label="分页导航">
@@ -129,9 +140,28 @@ export function Pagination({
       </div>
 
       {typeof totalItems === 'number' && (
-        <p className="ym-pagination-summary">
-          共 {totalItems} {itemLabel}，第 {currentPage}/{totalPages} 页
-        </p>
+        <div className="ym-pagination-summary-row">
+          <p className="ym-pagination-summary">
+            共 {totalItems} {itemLabel}，第 {currentPage}/{totalPages} 页
+          </p>
+          {pageSize && onPageSizeChange && (
+            <label className="ym-pagination-size">
+              <span>每页</span>
+              <select
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                aria-label="每页显示数量"
+              >
+                {[10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <span>个</span>
+            </label>
+          )}
+        </div>
       )}
     </div>
   );

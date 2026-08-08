@@ -1,4 +1,4 @@
-/* macOS-inspired Liquid Glass design system */
+﻿/* macOS-inspired Liquid Glass design system */
 [data-theme="macos"] {
 
 
@@ -1411,14 +1411,28 @@
 
 }
 [data-theme="macos"] .ym-pagination-summary {
-
-
   margin: 14px 0 0;
   color: var(--ym-text-muted);
   font-size: 13px;
   text-align: center;
+}
 
+[data-theme="macos"] .ym-pagination-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ym-text-muted);
+  font-size: 13px;
+}
 
+[data-theme="macos"] .ym-pagination-size select {
+  padding: 3px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--ym-glass-edge-soft);
+  background-color: rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha));
+  color: var(--ym-text-primary);
+  font-size: 13px;
+  cursor: pointer;
 }
 /* Footer and floating controls */
 [data-theme="macos"] .ym-site-footer {
