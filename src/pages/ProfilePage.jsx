@@ -18,6 +18,7 @@ import {
   unfavoriteWork,
   workTypeLabel,
   workStatusLabel,
+  isAdmin,
 } from '../services/works.js';
 import { getProfile, updateProfile, getCreatorStats, bindContact } from '../services/users.js';
 import { getCommenterReputation, reputationScore, reputationBadge } from '../services/commentFeedback.js';
@@ -56,6 +57,15 @@ const labelStyle = {
 
 export function ProfilePage() {
   const { user, loading: authLoading, isAnonymous } = useAuth();
+  // Issue #50：精选仅管理员可设，按钮仅管理员可见
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  useEffect(() => {
+    if (user?.id) {
+      isAdmin(user.id).then(setIsAdminUser).catch(() => setIsAdminUser(false));
+    } else {
+      setIsAdminUser(false);
+    }
+  }, [user?.id]);
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(() => (searchParams.get('tab') === 'settings' ? 'settings' : 'works'));
   // Issue #39 P3：我的信誉
@@ -560,9 +570,11 @@ export function ProfilePage() {
                         <option key={g.id} value={g.id}>{g.name}</option>
                       ))}
                     </select>
-                    <button onClick={() => handleToggleFeatured(w)} style={smallBtnStyle}>
-                      {w.featured ? '取消精选' : '设精选'}
-                    </button>
+                    {isAdminUser && (
+                      <button onClick={() => handleToggleFeatured(w)} style={smallBtnStyle}>
+                        {w.featured ? '取消精选' : '设精选'}
+                      </button>
+                    )}
                     <button onClick={() => handleToggleVisibility(w)} style={smallBtnStyle}>
                       {w.visibility === 'private' ? '设为公开' : '设为私密'}
                     </button>
