@@ -182,9 +182,16 @@ export function HomePage() {
   };
 
   const handlePartitionClick = (id) => {
+    if (id === partitionId) return;
     const params = { page: '1' };
     if (id !== 'all') params.partition = id;
     setSearchParams(params);
+    window.requestAnimationFrame(() => {
+      listTopRef.current?.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
   };
 
   const handlePageChange = (newPage) => {
