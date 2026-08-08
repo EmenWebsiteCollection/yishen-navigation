@@ -1,10 +1,10 @@
 // src/components/YiliMascot.jsx
-// 依神看板郎（yili.jpg）：角落固定、可拖拽、点击冒泡对话、眨眼呼吸动画、可收起。
+// 依力看板郎（yili.jpg）：角落固定、可拖拽、点击冒泡对话、眨眼呼吸动画、可收起。
 // 纯前端实现，无 Live2D 模型文件依赖。
 import React, { useEffect, useRef, useState } from 'react';
 
 const LINES = [
-  '你好，我是依神看板郎 🤙',
+  '你好，我是依力 🤙',
   '今天想逛逛什么网站？',
   '点我试试，我有话要说',
   '收藏夹里存了不少好东西',
@@ -137,7 +137,7 @@ export function YiliMascot() {
           <div
             role="button"
             tabIndex={0}
-            aria-label="依神看板郎，拖动可移动，点击对话"
+            aria-label="依力看板郎，拖动可移动，点击对话"
             className="ym-mascot-body"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -150,7 +150,7 @@ export function YiliMascot() {
               }
             }}
           >
-            <img src="/yili.jpg" alt="依神看板郎" draggable={false} />
+            <img src="/yili.jpg" alt="依力看板郎" draggable={false} />
           </div>
 
           {/* 关闭按钮 */}
