@@ -1,78 +1,65 @@
 /* ========================================================= */
-/* TechLoader 科技风加载组件样式                              */
-/* 跟随主题色 var(--ym-accent)，无主题时回退科技青 #00ffc8    */
+/* TechLoader 翅膀 E logo 加载组件样式                          */
+/* 跟随主题色 var(--ym-accent)，无主题时回退 #1a1a2e           */
 /* ========================================================= */
 
 .tech-loader {
   position: relative;
   width: var(--tl-size, 56px);
-  height: var(--tl-size, 56px);
+  height: calc(var(--tl-size, 56px) * 0.667);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: var(--ym-accent, #1a1a2e);
 }
 
-/* 外环：旋转缺口弧 */
-.tl-ring-a {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 255, 200, 0.1);
-  border-top-color: var(--ym-accent, #00ffc8);
-  border-right-color: rgba(0, 255, 200, 0.45);
-  animation: tl-spin 0.9s linear infinite;
+.tl-logo {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-/* 内环：反向虚线环 */
-.tl-ring-b {
-  position: absolute;
-  inset: 8px;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(56, 189, 248, 0.4);
-  animation: tl-spin 2.6s linear infinite reverse;
+.tl-logo path {
+  fill: currentColor;
 }
 
-/* 虚线扫描段（第三层，微弱旋转） */
-.tl-dashes {
-  position: absolute;
-  inset: 16px;
-  border-radius: 50%;
-  border: 1px dotted rgba(0, 255, 200, 0.35);
-  animation: tl-spin 4s linear infinite;
+.tl-e-side {
+  opacity: 0.45;
 }
 
-/* 中心「神」字：旋转加载 */
-.tl-core {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  font-family: var(--ym-font-display);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--ym-accent, #00ffc8);
-  text-shadow: 0 0 12px var(--ym-accent, rgba(0, 255, 200, 0.9));
-  animation: tl-core-spin 1.4s linear infinite;
+/* 翅膀：循环展开 → 停留 → 扇动 → 收回 */
+.tl-wing {
+  transform-box: fill-box;
+  opacity: 0;
+}
+.tl-wing-left  { transform-origin: right center; }
+.tl-wing-right { transform-origin: left center; }
+
+.tl-wing-top { animation: tl-flap 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.tl-wing-mid { animation: tl-flap 2.4s cubic-bezier(0.4, 0, 0.2, 1) 0.12s infinite; }
+.tl-wing-bot { animation: tl-flap 2.4s cubic-bezier(0.4, 0, 0.2, 1) 0.24s infinite; }
+
+@keyframes tl-flap {
+  0%   { transform: scaleX(0);    opacity: 0; }
+  8%   { transform: scaleX(1);   opacity: 1; }
+  38%  { transform: scaleX(1);   opacity: 1; }
+  50%  { transform: scaleX(0.86); opacity: 1; }
+  62%  { transform: scaleX(1);   opacity: 1; }
+  80%  { transform: scaleX(1);   opacity: 1; }
+  92%  { transform: scaleX(0);   opacity: 0; }
+  100% { transform: scaleX(0);   opacity: 0; }
 }
 
-@keyframes tl-core-spin {
-  to { transform: rotate(360deg); }
+/* E 字母：呼吸 */
+.tl-letter {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tl-breathe 2.4s ease-in-out infinite;
 }
-
-/* HUD 四角角标 */
-.tl-corner {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid rgba(0, 255, 200, 0.6);
+@keyframes tl-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.96); }
+  20%, 75% { opacity: 1;    transform: scale(1); }
 }
-.tl-c1 { top: -3px; left: -3px; border-right: none; border-bottom: none; }
-.tl-c2 { top: -3px; right: -3px; border-left: none; border-bottom: none; }
-.tl-c3 { bottom: -3px; left: -3px; border-right: none; border-top: none; }
-.tl-c4 { bottom: -3px; right: -3px; border-left: none; border-top: none; }
 
 /* 下方文字 + 闪烁光标 */
 .tl-text {
@@ -83,7 +70,7 @@
   white-space: nowrap;
   font-size: 12px;
   letter-spacing: 2px;
-  color: var(--ym-text-secondary, rgba(0, 255, 200, 0.75));
+  color: var(--ym-text-secondary, #6c757d);
 }
 .tl-text::after {
   content: '▍';
@@ -91,14 +78,16 @@
   animation: tl-blink 1s steps(2) infinite;
 }
 
-@keyframes tl-spin {
-  to { transform: rotate(360deg); }
-}
 @keyframes tl-blink {
   50% { opacity: 0; }
 }
 
-/* 深色模式兜底：文字用浅色 */
-[data-theme='dark'] .tl-text {
-  color: rgba(0, 255, 200, 0.75);
+/* 无障碍：减少动画 */
+@media (prefers-reduced-motion: reduce) {
+  .tl-wing,
+  .tl-letter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

@@ -49,7 +49,7 @@ function App() {
 function AnimatedRoutes() {
   const location = useLocation();
   return (
-    <div className="ym-route-stage">
+    <div className="ym-route-stage" key={location.pathname}>
       <Routes location={location}>
           <Route path="/" element={<HomePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

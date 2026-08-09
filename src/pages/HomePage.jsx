@@ -23,7 +23,7 @@ const SkeletonCard = () => (
 
 function WorkCard({ site, index, page, user, liking, onToggleLike, onOpen }) {
   return (
-    <div className="ym-card ym-stagger-item" onClick={onOpen} style={{ '--ym-stagger-index': index % 10, cursor: 'pointer' }}>
+    <div className="ym-card ym-stagger-item" onClick={onOpen} style={{ animationDelay: `${(index % 10) * 60}ms`, cursor: 'pointer' }}>
       <div className="ym-card-media">
         <span className="ym-card-badge">{String((page - 1) * PAGE_SIZE + index + 1).padStart(2, '0')}</span>
         <div className="ym-card-media-fallback">{(site.title || '网').trim()[0]}</div>
@@ -219,7 +219,7 @@ export function HomePage() {
         <Link
           to="/ideas"
           className="ym-home-feature ym-glass-panel ym-stagger-item"
-          style={{ '--ym-stagger-index': 0 }}
+          style={{ animationDelay: '0ms' }}
         >
           <div className="ym-home-feature-copy">
             <div>
@@ -233,7 +233,7 @@ export function HomePage() {
         <Link
           to="/discover"
           className="ym-home-feature ym-glass-panel ym-stagger-item"
-          style={{ '--ym-stagger-index': 1 }}
+          style={{ animationDelay: '60ms' }}
         >
           <div>
             <strong>作品发现</strong>
@@ -245,7 +245,7 @@ export function HomePage() {
         </Link>
       </div>
 
-      <div ref={listTopRef} className="ym-flex-between ym-list-anchor ym-stagger-item" style={{ '--ym-stagger-index': 2, marginBottom: '8px' }}>
+      <div ref={listTopRef} className="ym-flex-between ym-list-anchor ym-stagger-item" style={{ animationDelay: '120ms', marginBottom: '8px' }}>
         <h2 className="ym-section-title" style={{ margin: '24px 0 12px' }}>全部作品</h2>
         {isLoggedIn && (
           <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={() => setShowPartitionManager(true)}>
@@ -254,7 +254,7 @@ export function HomePage() {
         )}
       </div>
 
-      <div className="ym-tabs ym-stagger-item" role="tablist" aria-label="作品分区" style={{ '--ym-stagger-index': 3 }}>
+      <div className="ym-tabs ym-stagger-item" role="tablist" aria-label="作品分区" style={{ animationDelay: '180ms' }}>
         <button
           type="button"
           role="tab"
