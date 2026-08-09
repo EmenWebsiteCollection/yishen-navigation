@@ -4,7 +4,7 @@
 import { supabase } from './supabase.js';
 import { normalizeQuery, escapeLike } from './search.js';
 import { getProfile } from './users.js';
-import { isAdmin as isAdminRpc } from './works.js';;
+import { isAdmin as isAdminRpc } from './works.js';
 
 // ========== 常量与纯逻辑（定义见 idea-logic.js，Node 可直测） ==========
 import {

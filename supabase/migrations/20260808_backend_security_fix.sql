@@ -72,8 +72,14 @@ returns void
 language plpgsql security definer
 set search_path = public
 as $$
+declare owner_id uuid;
 begin
-  delete from public.groups where id = target_group_id and user_id = auth.uid();
+  select user_id into owner_id from public.groups where id = target_group_id;
+  if owner_id is null then raise exception '分组不存在'; end if;
+  if auth.uid() <> owner_id and not public.is_admin() then
+    raise exception '您没有权限删除此分组';
+  end if;
+  delete from public.groups where id = target_group_id;
 end $$;
 grant execute on function public.rpc_delete_group(uuid) to authenticated;
 
@@ -214,3 +220,14 @@ create policy comments_update_own_or_admin on public.comments
   for update
   using ((auth.uid() = user_id) or public.is_admin())
   with check ((auth.uid() = user_id) or public.is_admin());
+
+-- ---------- 10. yili_corpus 安全（依力AI语料库：SELECT 公开、写仅管理员） ----------
+alter table public.yili_corpus enable row level security;
+drop policy if exists yili_corpus_select_public on public.yili_corpus;
+create policy yili_corpus_select_public on public.yili_corpus
+  for select using (true);
+drop policy if exists yili_corpus_write_admin on public.yili_corpus;
+create policy yili_corpus_write_admin on public.yili_corpus
+  for all using (public.is_admin()) with check (public.is_admin());
+revoke insert, update, delete, truncate on public.yili_corpus from anon, authenticated;
+-- upsert_yili_chunks 函数需加 is_admin() 校验（见线上已执行版本）
