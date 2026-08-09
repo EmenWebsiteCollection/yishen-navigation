@@ -630,6 +630,21 @@
 
 
 }
+
+[data-theme="macos"] .ym-theme-select {
+  --ym-select-bg: var(--ym-glass-surface-2);
+  --ym-select-hover: var(--ym-glass-surface-interactive);
+  --ym-select-active: color-mix(in srgb, var(--ym-glass-surface-2) 84%, var(--ym-accent));
+  --ym-select-border: var(--ym-glass-edge-muted);
+  --ym-select-shadow: var(--ym-glass-shadow-card);
+}
+
+[data-theme="macos"] .ym-theme-select__trigger,
+[data-theme="macos"] .ym-theme-select__menu {
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-select-shadow);
+  -webkit-backdrop-filter: blur(var(--ym-glass-blur-control)) saturate(132%);
+  backdrop-filter: blur(var(--ym-glass-blur-control)) saturate(132%);
+}
 [data-theme="macos"] .ym-input:focus,
 [data-theme="macos"] .ym-textarea:focus,
 [data-theme="macos"] .ym-select:focus,
@@ -2291,6 +2306,12 @@
   [data-theme="macos"] .ym-mobile-drawer.is-open {
     -webkit-backdrop-filter: blur(12px) saturate(132%);
     backdrop-filter: blur(12px) saturate(132%);
+  }
+
+  [data-theme="macos"] .ym-theme-select__trigger,
+  [data-theme="macos"] .ym-theme-select__menu {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   [data-theme="macos"] .ym-glass-panel,

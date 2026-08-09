@@ -13,6 +13,13 @@
 
   /* 过渡 */
   --ym-transition: 0.18s ease;
+
+  /* 选择器：从当前主题的基础 token 推导，避免原生下拉弹层的系统样式。 */
+  --ym-select-bg: var(--ym-bg-card);
+  --ym-select-hover: color-mix(in srgb, var(--ym-bg-subtle) 76%, var(--ym-accent));
+  --ym-select-active: color-mix(in srgb, var(--ym-bg-card) 84%, var(--ym-accent));
+  --ym-select-border: var(--ym-border);
+  --ym-select-shadow: 0 12px 28px color-mix(in srgb, var(--ym-text-primary) 14%, transparent);
 }
 
 /* ========================================================= */
