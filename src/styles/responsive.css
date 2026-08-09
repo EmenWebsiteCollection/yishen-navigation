@@ -168,6 +168,12 @@ select {
     border-color: var(--ym-border) !important;
   }
 
+  .ym-card:hover .ym-card-media > img,
+  .ym-work-card:hover .ym-work-card-media > img {
+    transform: none !important;
+    filter: none !important;
+  }
+
   .ym-hrc-arrow:hover:not(:disabled) {
     border-color: var(--ym-border) !important;
     color: var(--ym-text-secondary) !important;

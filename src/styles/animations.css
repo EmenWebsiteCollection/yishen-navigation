@@ -30,6 +30,15 @@
   100% { opacity: 1; }
 }
 
+.ym-skeleton,
+.ym-skeleton-grid {
+  animation: ym-skeleton-pulse 1.35s ease-in-out infinite;
+}
+
+.ym-skeleton-grid .ym-skeleton {
+  animation: none;
+}
+
 @keyframes ym-hrc-progress {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
@@ -83,7 +92,10 @@
   .ym-scale-in,
   .ym-scale-out,
   .ym-slide-down,
-  .ym-spin {
+  .ym-spin,
+  .ym-skeleton,
+  .ym-skeleton-grid,
+  .ym-stagger-item {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     animation-delay: 0ms !important;

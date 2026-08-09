@@ -1,13 +1,17 @@
 // src/components/BackToTop.jsx
 // 一键回到顶部按钮：滚动超过一定距离后浮现，点击平滑回到顶部。
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export function BackToTop() {
   const [visible, setVisible] = useState(false);
+  const visibleRef = useRef(false);
 
   useEffect(() => {
     const onScroll = () => {
-      setVisible(window.scrollY > 400);
+      const nextVisible = window.scrollY > 400;
+      if (nextVisible === visibleRef.current) return;
+      visibleRef.current = nextVisible;
+      setVisible(nextVisible);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();

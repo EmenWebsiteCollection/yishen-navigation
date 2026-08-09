@@ -30,6 +30,7 @@ export function IdeaListPage() {
   const [sort, setSort] = useState('latest');
   const [query, setQuery] = useState('');
   const listTopRef = useRef(null);
+  const pendingListScrollRef = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,31 +56,47 @@ export function IdeaListPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleSearch = (event) => {
-    event.preventDefault();
-    setPage(1);
-    setQuery(event.currentTarget.elements.search.value.trim());
-  };
+  useEffect(() => {
+    if (loading || !pendingListScrollRef.current) return undefined;
 
-  const resetAnd = (setter) => {
-    setPage(1);
-    setter();
-  };
-
-  const handlePageChange = (nextPage) => {
-    setPage(nextPage);
-    window.requestAnimationFrame(() => {
+    pendingListScrollRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
       listTopRef.current?.scrollIntoView({
         behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
         block: 'start',
       });
     });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, page, pageSize, category, status, sort, query]);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    pendingListScrollRef.current = true;
+    setLoading(true);
+    setPage(1);
+    setQuery(event.currentTarget.elements.search.value.trim());
+  };
+
+  const resetAnd = (setter) => {
+    pendingListScrollRef.current = true;
+    setLoading(true);
+    setPage(1);
+    setter();
+  };
+
+  const handlePageChange = (nextPage) => {
+    pendingListScrollRef.current = true;
+    setLoading(true);
+    setPage(nextPage);
   };
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const handlePageSizeChange = (size) => {
     if (size === pageSize) return;
+    pendingListScrollRef.current = true;
+    setLoading(true);
     try {
       sessionStorage.setItem(PAGE_SIZE_KEY, String(size));
     } catch {

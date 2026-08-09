@@ -8,7 +8,7 @@ const MIN_SITES = 3;
 
 function CarouselSkeleton() {
   return (
-    <div className="ym-section-block" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>
+    <div className="ym-section-block ym-skeleton">
       <div style={{ height: '16px', width: '160px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px', marginBottom: '14px' }} />
       <div style={{ aspectRatio: '16/6', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '8px' }} />
     </div>

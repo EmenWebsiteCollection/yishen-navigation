@@ -1,7 +1,7 @@
 // src/components/YiliMascot.jsx
 // 依力看板郎（yili.jpg）：角落固定、可拖拽、点击开启 AI 对话、眨眼呼吸动画、可收起。
 // 纯前端实现，无 Live2D 模型文件依赖。
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { YiliChatPanel } from './YiliChatPanel.jsx';
 import { setMascotPos } from '../services/mascotPos.js';
@@ -31,25 +31,33 @@ export function YiliMascot() {
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef(null); // 拖拽起始坐标
   const bubbleTimerRef = useRef(null);
+  const dragFrameRef = useRef(null);
+  const pendingDragPosRef = useRef(null);
   const mascotRef = useRef(null); // 看板郎本体，用于上报位置
 
   // 上报当前位置给 AgentBot，让对话框跟随看板郎
+  const reportMascotPosition = useCallback(() => {
+    const el = mascotRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setMascotPos({ x: rect.left, y: rect.top, w: rect.width, h: rect.height });
+    }
+  }, []);
+
   useEffect(() => {
-    const report = () => {
-      const el = mascotRef.current;
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        setMascotPos({ x: rect.left, y: rect.top, w: rect.width, h: rect.height });
-      }
-    };
-    report();
-    window.addEventListener('resize', report);
-    window.addEventListener('scroll', report, { passive: true });
-    return () => {
-      window.removeEventListener('resize', report);
-      window.removeEventListener('scroll', report);
-    };
-  }, [pos, open]);
+    reportMascotPosition();
+    window.addEventListener('resize', reportMascotPosition);
+    return () => window.removeEventListener('resize', reportMascotPosition);
+  }, [open, reportMascotPosition]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(reportMascotPosition);
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, pos, reportMascotPosition]);
+
+  useEffect(() => () => {
+    if (dragFrameRef.current !== null) window.cancelAnimationFrame(dragFrameRef.current);
+  }, []);
 
   // 每次出现随机说一句话（首次进入、重新打开时）
   useEffect(() => {
@@ -85,13 +93,24 @@ export function YiliMascot() {
     d.moved = true;
     setDragging(true);
     const rect = e.currentTarget.getBoundingClientRect();
-    setPos({ x: e.clientX - rect.width / 2, y: e.clientY - rect.height / 2 });
+    pendingDragPosRef.current = { x: e.clientX - rect.width / 2, y: e.clientY - rect.height / 2 };
+    if (dragFrameRef.current !== null) return;
+    dragFrameRef.current = window.requestAnimationFrame(() => {
+      dragFrameRef.current = null;
+      if (pendingDragPosRef.current) setPos(pendingDragPosRef.current);
+    });
   };
 
   const onPointerUp = (e) => {
     const d = dragRef.current;
     dragRef.current = null;
     if (d && d.moved) {
+      if (dragFrameRef.current !== null) {
+        window.cancelAnimationFrame(dragFrameRef.current);
+        dragFrameRef.current = null;
+      }
+      if (pendingDragPosRef.current) setPos(pendingDragPosRef.current);
+      pendingDragPosRef.current = null;
       setDragging(false);
       return; // 拖动过，不触发点击
     }
