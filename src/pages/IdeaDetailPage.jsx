@@ -168,9 +168,8 @@ export function IdeaDetailPage() {
   const { user, isAnonymous } = useAuth();
   const authed = user && !isAnonymous;
 
-  const [idea, setIdea] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [idea, setIdea] = useState({});
+  const [notFound, setNotFound] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -219,13 +218,11 @@ export function IdeaDetailPage() {
 
   const loadAll = useCallback(async () => {
     if (!id) return;
-    setLoading(true);
-    setError(null);
+    setNotFound(false);
     try {
       const data = await getIdeaById(id, user?.id);
       if (!data) {
-        setError('想法不存在');
-        setLoading(false);
+        setNotFound(true);
         return;
       }
       setIdea(data);
@@ -246,9 +243,7 @@ export function IdeaDetailPage() {
       }
     } catch (err) {
       console.error('加载想法详情失败:', err);
-      setError('加载失败，请稍后重试');
-    } finally {
-      setLoading(false);
+      setNotFound(true);
     }
   }, [id, user]);
 
@@ -466,19 +461,26 @@ export function IdeaDetailPage() {
   };
 
   // ---------- 渲染 ----------
-  if (loading) return null;
-
-  if (error || !idea) {
+  if (error) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
         <div style={{ maxWidth: '560px', margin: '60px auto', padding: '32px 28px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
-          <p style={{ color: 'var(--ym-danger)' }}>{error || '想法不存在'}</p>
+          <p style={{ color: 'var(--ym-danger)' }}>{error}</p>
           <Link to="/ideas" style={{ color: 'var(--ym-accent)', fontSize: '14px', textDecoration: 'none' }}>← 返回灵感</Link>
         </div>
       </div>
     );
   }
-
+  if (notFound) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
+        <div style={{ maxWidth: '560px', margin: '60px auto', padding: '32px 28px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
+          <p style={{ color: 'var(--ym-danger)' }}>想法不存在</p>
+          <Link to="/ideas" style={{ color: 'var(--ym-accent)', fontSize: '14px', textDecoration: 'none' }}>← 返回灵感</Link>
+        </div>
+      </div>
+    );
+  }
   const commentTree = buildCommentTree(comments);
   const showImplement = canManage && idea.status !== 'done' && idea.status !== 'closed';
 

@@ -308,8 +308,6 @@ const [videoUrl, setVideoUrl] = useState('');
     }
   };
 
-  if (authLoading || loading) return null;
-
   if (error && !message) {
     return (
       <div style={{

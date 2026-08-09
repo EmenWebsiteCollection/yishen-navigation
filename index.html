@@ -6,6 +6,11 @@
     <link rel="icon" type="image/jpeg" href="%BASE_URL%yili.jpg" />
     <title>网站导航平台</title>
     <style>
+      /* boot-skipped：同一会话已播放过，直接隐藏 */
+      html.boot-skipped #loading-screen {
+        display: none !important;
+      }
+
       #loading-screen {
         position: fixed;
         inset: 0;
@@ -59,7 +64,6 @@
         display: block;
       }
 
-      /* 暗色主题下黑线反白 */
       [data-theme="catppuccin"] .loading-frame-box img,
       [data-theme="tokyonight"] .loading-frame-box img,
       [data-theme="onedark"] .loading-frame-box img,
@@ -100,7 +104,19 @@
     </style>
     <script>
       (function () {
-        // 主题恢复
+        // 1. sessionStorage：同一会话只播放一次（刷新不播，关闭标签重新打开才播）
+        var bootKey = 'ym-boot-played';
+        var bootPlayed = false;
+        try {
+          bootPlayed = !!window.sessionStorage.getItem(bootKey);
+        } catch (e) {}
+        if (bootPlayed) {
+          document.documentElement.classList.add('boot-skipped');
+        } else {
+          try { window.sessionStorage.setItem(bootKey, '1'); } catch (e) {}
+        }
+
+        // 2. 主题恢复
         try {
           var saved = window.localStorage.getItem('ym-theme');
           var themes = ['default', 'catppuccin', 'tokyonight', 'onedark', 'dracula', 'macos'];
@@ -109,29 +125,30 @@
           }
         } catch (e) {}
 
-        // 翅膀帧动画（7帧依次展开，播放一次停在最后一帧）
-        function startWingFrames() {
-          var frames = document.querySelectorAll('.wing-frame');
-          if (!frames.length) return;
-          var idx = 0;
-          var interval = 110;
-          var timer = setInterval(function () {
-            frames[idx].classList.remove('is-active');
-            idx++;
-            if (idx >= frames.length) {
-              // 播完一遍，停在最后一帧
-              frames[frames.length - 1].classList.add('is-active');
-              clearInterval(timer);
-              return;
-            }
-            frames[idx].classList.add('is-active');
-          }, interval);
-          window.__wingTimer = timer;
-        }
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', startWingFrames);
-        } else {
-          startWingFrames();
+        // 3. 翅膀帧动画（跳过时不播放）
+        if (!bootPlayed) {
+          function startWingFrames() {
+            var frames = document.querySelectorAll('.wing-frame');
+            if (!frames.length) return;
+            var idx = 0;
+            var interval = 110;
+            var timer = setInterval(function () {
+              frames[idx].classList.remove('is-active');
+              idx++;
+              if (idx >= frames.length) {
+                frames[frames.length - 1].classList.add('is-active');
+                clearInterval(timer);
+                return;
+              }
+              frames[idx].classList.add('is-active');
+            }, interval);
+            window.__wingTimer = timer;
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startWingFrames);
+          } else {
+            startWingFrames();
+          }
         }
       })();
     </script>

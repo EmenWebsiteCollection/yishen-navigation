@@ -167,8 +167,7 @@ export function HighRatedCarousel() {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
-  if (loading) return <CarouselSkeleton />;
-  if (total < MIN_SITES) return null;
+  if (!loading && total < MIN_SITES) return null;
 
   return (
     <section

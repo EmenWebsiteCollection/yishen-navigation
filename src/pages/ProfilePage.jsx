@@ -440,9 +440,8 @@ export function ProfilePage() {
   };
 
   // ---------- 渲染 ----------
-  if (authLoading) return null;
 
-  if (!me) {
+  if (!me && !authLoading) {
     return (
       <div style={{ maxWidth: '420px', margin: '80px auto', padding: '32px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
         <div style={{ fontSize: '18px', color: 'var(--ym-text-primary)', marginBottom: '8px' }}>请先登录</div>
