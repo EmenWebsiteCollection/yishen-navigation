@@ -72,9 +72,8 @@ export function HighRatedCarousel() {
   const [progressKey, setProgressKey] = useState(0);
   const [noTransition, setNoTransition] = useState(false);
   const slideTrackRef = useRef(null);
-  const reducedMotion = useRef(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
   const total = sites.length;
 
   // 扩展数组：[末位克隆, site0, site1, ..., siteN-1, 首位克隆]
@@ -102,17 +101,20 @@ export function HighRatedCarousel() {
   }, []);
 
   // 过渡结束后，如果在克隆位置则瞬间跳回真实位置
-  const handleTransitionEnd = useCallback(() => {
-    if (currentIndex === 0) {
+  const handleTransitionEnd = useCallback((e) => {
+    // 只响应 transform 过渡，忽略子元素冒泡上来的其他属性过渡
+    if (e.propertyName !== 'transform') return;
+    const idx = currentIndexRef.current;
+    if (idx === 0) {
       // 到达末位克隆 → 跳到真实末位
       setNoTransition(true);
       setCurrentIndex(total);
-    } else if (currentIndex > total) {
+    } else if (idx > total) {
       // 到达首位克隆 → 跳到真实首位
       setNoTransition(true);
       setCurrentIndex(1);
     }
-  }, [currentIndex, total]);
+  }, [total]);
 
   // noTransition 标志位在一帧后复位，让下次切换恢复动画
   useEffect(() => {
@@ -147,7 +149,7 @@ export function HighRatedCarousel() {
 
   // 自动轮播
   useEffect(() => {
-    if (total <= 1 || paused || reducedMotion.current) return;
+    if (total <= 1 || paused) return;
     const timer = setInterval(() => {
       setCurrentIndex((i) => i + 1);
       setProgressKey((k) => k + 1);
