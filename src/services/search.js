@@ -69,7 +69,8 @@ export function highlightHtml(text, query) {
 
 // LIKE 通配符转义，避免用户输入的 % _ 变成模糊匹配（导出供 ideas.js 相似想法复用）
 export function escapeLike(s) {
-  return s.replace(/[\\%_]/g, (c) => '\\' + c);
+  // 转义 LIKE 通配符 + 双引号（值在 PostgREST or() 里用双引号包裹，防止解析破坏/注入）
+  return s.replace(/[\\%_"]/g, (c) => '\\' + c);
 }
 
 /**
@@ -85,7 +86,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
 
   // 动态 import：浏览器端由 Vite 正常打包，Node 测试不会加载 supabase 环境
   const { supabase } = await import('./supabase.js');
-  const like = '%' + escapeLike(q) + '%';
+  const like = `"%${escapeLike(q)}%"`;
   const or = `title.ilike.${like},url.ilike.${like},description.ilike.${like}`;
 
   const { data, error } = await supabase

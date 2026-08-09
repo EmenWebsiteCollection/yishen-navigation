@@ -72,8 +72,14 @@ returns void
 language plpgsql security definer
 set search_path = public
 as $$
+declare owner_id uuid;
 begin
-  delete from public.groups where id = target_group_id and user_id = auth.uid();
+  select user_id into owner_id from public.groups where id = target_group_id;
+  if owner_id is null then raise exception '分组不存在'; end if;
+  if auth.uid() <> owner_id and not public.is_admin() then
+    raise exception '您没有权限删除此分组';
+  end if;
+  delete from public.groups where id = target_group_id;
 end $$;
 grant execute on function public.rpc_delete_group(uuid) to authenticated;
 
@@ -207,3 +213,64 @@ alter table public.works
 -- ═══ 验证 ═══
 -- select proname from pg_proc where proname like 'rpc_%' order by proname;
 -- select * from pg_policies where schemaname='public' and tablename='partitions';
+
+-- ---------- 9. comments UPDATE 策略（反馈闭环：作者/管理员标记 feedback_status） ----------
+drop policy if exists comments_update_own_or_admin on public.comments;
+create policy comments_update_own_or_admin on public.comments
+  for update
+  using ((auth.uid() = user_id) or public.is_admin())
+  with check ((auth.uid() = user_id) or public.is_admin());
+
+-- ---------- 10. yili_corpus 安全（依力AI语料库：SELECT 公开、写仅管理员） ----------
+alter table public.yili_corpus enable row level security;
+drop policy if exists yili_corpus_select_public on public.yili_corpus;
+create policy yili_corpus_select_public on public.yili_corpus
+  for select using (true);
+drop policy if exists yili_corpus_write_admin on public.yili_corpus;
+create policy yili_corpus_write_admin on public.yili_corpus
+  for all using (public.is_admin()) with check (public.is_admin());
+revoke insert, update, delete, truncate on public.yili_corpus from anon, authenticated;
+
+-- upsert_yili_chunks：写入口仅管理员（SECURITY DEFINER 绕过 RLS，必须函数内校验）
+create or replace function public.upsert_yili_chunks(p_chunks jsonb)
+returns void
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  c jsonb;
+  v_vec vector(1024);
+begin
+  if not public.is_admin() then
+    raise exception '需要管理员权限才能更新记忆库';
+  end if;
+
+  for c in select value from jsonb_array_elements(p_chunks) loop
+    begin
+      v_vec := ('[' || (
+        select string_agg(elem, ',')
+        from jsonb_array_elements_text(c -> 'embedding') elem
+      ) || ']')::vector(1024);
+    exception when others then
+      v_vec := null;
+    end;
+
+    insert into public.yili_corpus (doc_id, chunk_index, content, token_count, source_file, embedding)
+    values (
+      c ->> 'doc_id',
+      (c ->> 'chunk_index')::int,
+      c ->> 'content',
+      (c ->> 'token_count')::int,
+      c ->> 'source_file',
+      v_vec
+    )
+    on conflict (doc_id, chunk_index) do update
+      set content = excluded.content,
+          token_count = excluded.token_count,
+          source_file = excluded.source_file,
+          embedding = excluded.embedding,
+          created_at = now();
+  end loop;
+end $$;
+
+grant execute on function public.upsert_yili_chunks(jsonb) to service_role;
