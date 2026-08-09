@@ -105,9 +105,7 @@ export function WorkMapPage() {
 
   useEffect(() => { loadMap(); }, [loadMap]);
 
-  if (loading) {
-    return <div style={{ textAlign: 'center', marginTop: '80px', color: 'var(--ym-text-secondary)' }}>加载灵感地图...</div>;
-  }
+  if (loading) return null;
 
   if (error) {
     return (

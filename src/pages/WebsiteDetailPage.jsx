@@ -1,6 +1,6 @@
 ﻿// src/pages/WebsiteDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { TechLoader } from '../components/TechLoader.jsx';
+
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
@@ -1022,9 +1022,7 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
   };
 
   // ---------- 渲染状态 ----------
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '60px' }}><TechLoader text="加载中..." /></div>;
-  }
+  if (loading) return null;
 
   if (error) {
     return (
@@ -1562,9 +1560,7 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
         </Link>
       </div>
 
-      {similarLoading ? (
-        <div style={{ color: 'var(--ym-text-secondary)', fontSize: '13px', marginBottom: '24px' }}>正在寻找同类作品...</div>
-      ) : similarWorks.length > 0 ? (
+      {similarLoading ? null : similarWorks.length > 0 ? (
         <div style={{ marginBottom: '28px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '12px' }}>
             同类型推荐
@@ -1778,9 +1774,7 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
           首次上传和每次编辑都会自动生成只读快照；被作者采纳的评论会回链到这里。
         </div>
 
-        {revisionsLoading ? (
-          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>加载成长档案...</div>
-        ) : revisions.length === 0 ? (
+        {revisionsLoading ? null : revisions.length === 0 ? (
           <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>
             暂无版本记录。首次上传或编辑作品后会自动生成版本快照。
           </div>

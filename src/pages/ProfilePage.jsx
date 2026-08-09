@@ -1,7 +1,7 @@
 ﻿// src/pages/ProfilePage.jsx
 // 个人中心：我的作品 / 我的收藏 / 设置（档案 + 分组）
 import React, { useEffect, useState, useCallback } from 'react';
-import { TechLoader } from '../components/TechLoader.jsx';
+
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
@@ -429,9 +429,7 @@ export function ProfilePage() {
   };
 
   // ---------- 渲染 ----------
-  if (authLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
-  }
+  if (authLoading) return null;
 
   if (!me) {
     return (
@@ -552,9 +550,7 @@ export function ProfilePage() {
               ))}
             </div>
 
-            {worksLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
-            ) : works.length === 0 ? (
+            {worksLoading ? null : works.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>暂无作品，点击右上角新建</div>
             ) : (
               works.map((w) => (
@@ -634,9 +630,7 @@ export function ProfilePage() {
         {/* Tab2 我的收藏 */}
         {tab === 'favorites' && (
           <div>
-            {favoritesLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
-            ) : favorites.length === 0 ? (
+            {favoritesLoading ? null : favorites.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>还没有收藏，去详情页点「收藏」吧</div>
             ) : (
               favorites.map((fav) => (
@@ -656,9 +650,7 @@ export function ProfilePage() {
 ﻿        {/* Tab3 我的想法 */}
         {tab === 'ideas' && (
           <div>
-            {ideasLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-muted)' }}>加载中...</div>
-            ) : (
+            {ideasLoading ? null : (
               <>
                 <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', color: 'var(--ym-text-primary)', marginBottom: '10px' }}>我发布的（{myIdeas.length}）</h3>
                 {myIdeas.length === 0 ? (
@@ -704,9 +696,7 @@ export function ProfilePage() {
 
         {tab === 'settings' && (
           <div>
-            {settingsLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><TechLoader size={40} text="加载中..." /></div>
-            ) : (
+            {settingsLoading ? null : (
               <form onSubmit={handleSaveSettings} style={{ backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', padding: '24px' }}>
                 <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', marginBottom: '16px' }}>基本资料</h3>
 
@@ -825,9 +815,7 @@ export function ProfilePage() {
                   <p style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', margin: '0 0 12px' }}>
                     依力会记住你和她说过的偏好（如「我喜欢科幻」），让推荐更懂你。仅你本人可见，随时可清除；也可在聊天面板右上角用 🧠/💤 开关停用。
                   </p>
-                  {yiliMemoryLoading ? (
-                    <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>加载中...</div>
-                  ) : yiliMemory?.memory_text ? (
+                  {yiliMemoryLoading ? null : yiliMemory?.memory_text ? (
                     <>
                       <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px', lineHeight: 1.7, color: 'var(--ym-text-primary)', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-sm)', padding: '12px', margin: '0 0 10px' }}>{yiliMemory.memory_text}</pre>
                       {Array.isArray(yiliMemory.preferences?.likes) && yiliMemory.preferences.likes.length > 0 && (

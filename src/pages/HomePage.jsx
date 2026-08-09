@@ -229,9 +229,7 @@ export function HomePage() {
     setSearchParams(params);
   };
 
-  if (authLoading) {
-    return <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
-  }
+  if (authLoading) return null;
 
   return (
     <div className="ym-home-page">
