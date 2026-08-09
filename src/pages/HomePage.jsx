@@ -44,7 +44,7 @@ function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onR
             )}
             <span>{site.username}</span>
           </Link>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', flexShrink: 0, whiteSpace: 'nowrap' }}>
             <span>👁 {site.view_count || 0}</span>
             <button
               type="button"
@@ -64,6 +64,7 @@ function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onR
                 cursor: liking ? 'not-allowed' : 'pointer',
                 fontSize: '13px',
                 fontWeight: isLiked ? '600' : '400',
+                whiteSpace: 'nowrap',
               }}
             >
               {isLiked ? '♥' : '♡'} {site.like_count || 0}
