@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getProfile, getCreatorStats } from '../services/users.js';
 import { getWorksByUser, workTypeLabel } from '../services/works.js';
-import { TechLoader } from '../components/TechLoader.jsx';
+
 import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
@@ -122,9 +122,7 @@ export function CreatorProfilePage() {
     };
   }, [profile?.bg_color, profile?.accent_color]);
 
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
-  }
+  if (loading) return null;
 
   if (error || !profile) {
     return (

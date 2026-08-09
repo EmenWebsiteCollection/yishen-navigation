@@ -52,9 +52,43 @@ const Version = ({ version, date, changes, latest }) => (
 
 const CHANGELOG = [
   {
+    version: 'v2.0.0',
+    date: '2026-08-09',
+    latest: true,
+    changes: {
+      '新增': [
+        '作品发现系统：/discover 每日随机 + 多入口推荐（最新/本周新锐/编辑精选/小众宝藏/正在成长/零评论/关注动态/收藏偏好）+ 标签筛选',
+        '灵感地图：作品关系（衍生/改编/同灵感/合作）可视化',
+        '想法集中营：发布想法、投票/关注/讨论、状态流转、合并重复想法、一键孵化成作品',
+        '创作标签体系：AI 参与度、创作类型、完成度、受众、内容警告、风格/工具标签、合作/二创/商用开关',
+        '结构化评论与反馈闭环：局部批注、评论质量评价、评论者信誉、作者采纳建议、评论处理状态',
+        '作品成长档案：首次上传/编辑自动生成版本快照与修改历史',
+        '依力 AI 3.0：语料风格注入 + 全站工具调用 + 个性化记忆，对话框跟随看板郎浮动球',
+        '主页卡片 ❤️ 直接点赞、浏览量与点赞数并排展示',
+        '分页支持每页数量切换（10/20/50 + 自定义输入），刷新后保持',
+        '高分榜单支持所有作品类型，轮播榜单多样化',
+        '拖拽文件一键部署（Supabase Storage 静态托管）',
+        '找回密码：邮箱验证码，阿里云发信',
+        '浏览量统计、编辑精选（仅管理员）',
+        'iOS 风格逐元素错峰入场动画',
+      ],
+      '优化': [
+        '深色 Catppuccin Mocha 主题',
+        '每页数量持久化（首页 URL / 灵感页 sessionStorage）',
+        '依力离线降级体验、看板郎默认收起',
+        '贡献者多数据源同步，兼容不同部署环境',
+      ],
+      '修复': [
+        '深度安全审计修复：merge_ideas 越权（P0）、profiles 隐私泄露（P1）、is_admin 落盘迁移、匿名登录噪音、密码重置 502',
+        '每页数量选择「自定义」后输入框无法展开的问题',
+        '详情页浏览量显示、首页卡片布局等多处 UI 细节',
+      ],
+    },
+  },
+  {
     version: 'v1.5.0',
     date: '2026-08-08',
-    latest: true,
+    latest: false,
     changes: {
       '新增': [
         'B站风格全站UI大改版：新视觉、头像功能、高分轮播、首页分区',
@@ -171,10 +205,14 @@ export function ChangelogPage() {
           emoji="📝"
           title="版本更新记录"
           subtitle="每一次迭代，都让这个项目变得更好"
+          className="ym-stagger-item"
+          style={{ animationDelay: '0ms' }}
         />
 
-        {CHANGELOG.map((v) => (
-          <Version key={v.version} version={v.version} date={v.date} changes={v.changes} latest={v.latest} />
+        {CHANGELOG.map((v, i) => (
+          <div className="ym-stagger-item" style={{ animationDelay: `${55 + i * 55}ms` }} key={v.version}>
+            <Version version={v.version} date={v.date} changes={v.changes} latest={v.latest} />
+          </div>
         ))}
     </div>
   );

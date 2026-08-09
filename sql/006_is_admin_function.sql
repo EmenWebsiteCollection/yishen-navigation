@@ -19,7 +19,7 @@
 alter table public.profiles add column if not exists is_admin boolean not null default false;
 
 -- 2. is_admin() 函数（仅缺失时创建；不覆盖线上已有版本）
-do $$
+do $do$
 begin
   if not exists (
     select 1
@@ -27,9 +27,9 @@ begin
     join pg_namespace n on n.oid = p.pronamespace
     where p.proname = 'is_admin' and n.nspname = 'public'
   ) then
-    execute 'create function public.is_admin() returns boolean language sql security definer set search_path = public stable as $$ select coalesce((select is_admin from public.profiles where id = auth.uid()), false) $$';
+    execute 'create function public.is_admin() returns boolean language sql security definer set search_path = public stable as $fn$ select coalesce((select is_admin from public.profiles where id = auth.uid()), false) $fn$';
   end if;
-end $$;
+end $do$;
 
 -- 3. 授权（幂等）
 grant execute on function public.is_admin() to anon, authenticated;

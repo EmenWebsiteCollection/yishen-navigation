@@ -99,18 +99,13 @@ const TeamMember = ({ member }) => {
 };
 
 export function AboutPage() {
-  const [contributors, setContributors] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [contributors, setContributors] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
-    getContributors()
-      .then((list) => {
-        if (!cancelled) setContributors(list);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    getContributors().then((data) => {
+      if (!cancelled) setContributors(data.contributors);
+    });
     return () => {
       cancelled = true;
     };
@@ -123,10 +118,10 @@ export function AboutPage() {
           title="关于依神网站汇总"
           subtitle="发现优质网站，共建网络资源库"
           className="ym-stagger-item"
-          style={{ '--ym-stagger-index': 0 }}
+          style={{ animationDelay: '0ms' }}
         />
 
-        <Section emoji="📖" title="项目简介" className="ym-stagger-item" style={{ '--ym-stagger-index': 1 }}>
+        <Section emoji="📖" title="项目简介" className="ym-stagger-item" style={{ animationDelay: '60ms' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <img
               src="https://github.com/EmenWebsiteCollection.png?size=120"
@@ -148,7 +143,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="💭" title="项目初衷" className="ym-stagger-item" style={{ '--ym-stagger-index': 2 }}>
+        <Section emoji="💭" title="项目初衷" className="ym-stagger-item" style={{ animationDelay: '120ms' }}>
           <p>
             互联网上优秀的网站散落各处，很难被系统性地发现和沉淀 🌊。
             这个项目的初衷，就是把这些好网站汇集到一起，让每个人都能基于真实体验推荐、评分和评论，
@@ -156,7 +151,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="🚀" title="项目愿景" className="ym-stagger-item" style={{ '--ym-stagger-index': 3 }}>
+        <Section emoji="🚀" title="项目愿景" className="ym-stagger-item" style={{ animationDelay: '180ms' }}>
           <p>
             我们希望依神网站汇总能够成长为一个活跃、可信、可持续的网站导航社区 🌱：
             内容由社区共建 ✍️、质量由社区把关 ⚖️，同时保持简洁、克制、注重体验的设计风格。
@@ -164,23 +159,15 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="🤝" title="开发团队与贡献者" className="ym-stagger-item" style={{ '--ym-stagger-index': 4 }}>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--ym-text-muted)', fontSize: '14px' }}>
-              ⏳ 加载贡献者中...
-            </div>
-          ) : (
-            <>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                {contributors.map((m) => (
-                  <TeamMember key={m.github || m.name} member={m} />
-                ))}
-              </div>
-              <p style={{ marginTop: '16px', fontSize: '13px', color: 'var(--ym-text-muted)' }}>
-                🙏 贡献者数据来自 GitHub API 实时同步，感谢每一位为这个项目贡献过代码、建议与反馈的伙伴。
-              </p>
-            </>
-          )}
+        <Section emoji="🤝" title="开发团队与贡献者" className="ym-stagger-item" style={{ animationDelay: '240ms' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+            {contributors.map((m) => (
+              <TeamMember key={m.github || m.name} member={m} />
+            ))}
+          </div>
+          <p style={{ marginTop: '16px', fontSize: '13px', color: 'var(--ym-text-muted)' }}>
+            🙏 感谢每一位为这个项目贡献过代码、建议与反馈的伙伴。
+          </p>
         </Section>
     </div>
   );

@@ -1,5 +1,5 @@
-// 首页高分网站轮播：每 5 秒自动切换，支持点选/暂停/减少动画偏好。
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+// 首页高分网站轮播：每 5 秒自动切换，首尾相接无缝循环。
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getTopRatedWorks } from '../services/works.js';
 
@@ -66,19 +66,30 @@ function Slide({ site, index }) {
 export function HighRatedCarousel() {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [index, setIndex] = useState(0);
+  // currentIndex 是扩展数组中的位置（0 = 末位克隆, 1~N = 真实, N+1 = 首位克隆）
+  const [currentIndex, setCurrentIndex] = useState(1);
   const [paused, setPaused] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
-  const reducedMotion = useRef(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  const [noTransition, setNoTransition] = useState(false);
+  const slideTrackRef = useRef(null);
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
   const total = sites.length;
+
+  // 扩展数组：[末位克隆, site0, site1, ..., siteN-1, 首位克隆]
+  const extendedSlides = useMemo(() => {
+    if (total === 0) return [];
+    return [sites[total - 1], ...sites, sites[0]];
+  }, [sites, total]);
+
+  // 真实展示序号（0-based）
+  const displayIndex = total > 0 ? ((currentIndex - 1) + total) % total : 0;
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getTopRatedWorks(8);
+        const data = await getTopRatedWorks(8, { diversify: true });
         if (!cancelled) setSites(data);
       } catch (err) {
         console.warn('加载高分网站失败:', err);
@@ -89,26 +100,64 @@ export function HighRatedCarousel() {
     return () => { cancelled = true; };
   }, []);
 
-  const goTo = useCallback((i) => {
+  // 过渡结束后，如果在克隆位置则瞬间跳回真实位置
+  const handleTransitionEnd = useCallback((e) => {
+    // 只响应 transform 过渡，忽略子元素冒泡上来的其他属性过渡
+    if (e.propertyName !== 'transform') return;
+    const idx = currentIndexRef.current;
+    if (idx === 0) {
+      // 到达末位克隆 → 跳到真实末位
+      setNoTransition(true);
+      setCurrentIndex(total);
+    } else if (idx > total) {
+      // 到达首位克隆 → 跳到真实首位
+      setNoTransition(true);
+      setCurrentIndex(1);
+    }
+  }, [total]);
+
+  // noTransition 标志位在一帧后复位，让下次切换恢复动画
+  useEffect(() => {
+    if (!noTransition) return;
+    let raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => {
+        setNoTransition(false);
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [noTransition]);
+
+  // 圆点导航（真实序号 → 扩展位置）
+  const goTo = useCallback((realIndex) => {
     if (total === 0) return;
-    const next = ((i % total) + total) % total;
-    setIndex(next);
+    setCurrentIndex(realIndex + 1);
     setProgressKey((k) => k + 1);
   }, [total]);
 
-  useEffect(() => {
-    if (index >= total) setIndex(0);
-  }, [total, index]);
+  // 向前/向后（直接操作扩展位置，边界由 handleTransitionEnd 处理）
+  const goPrev = useCallback(() => {
+    if (total === 0) return;
+    setCurrentIndex((i) => i - 1);
+    setProgressKey((k) => k + 1);
+  }, [total]);
 
+  const goNext = useCallback(() => {
+    if (total === 0) return;
+    setCurrentIndex((i) => i + 1);
+    setProgressKey((k) => k + 1);
+  }, [total]);
+
+  // 自动轮播
   useEffect(() => {
-    if (total <= 1 || paused || reducedMotion.current) return;
+    if (total <= 1 || paused) return;
     const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % total);
+      setCurrentIndex((i) => i + 1);
       setProgressKey((k) => k + 1);
     }, ROTATE_INTERVAL);
     return () => clearInterval(timer);
   }, [total, paused]);
 
+  // 页面隐藏时暂停
   useEffect(() => {
     const onVisibility = () => {
       if (document.hidden) setPaused(true);
@@ -120,8 +169,6 @@ export function HighRatedCarousel() {
 
   if (loading) return <CarouselSkeleton />;
   if (total < MIN_SITES) return null;
-
-  const current = sites[index];
 
   return (
     <section
@@ -136,8 +183,18 @@ export function HighRatedCarousel() {
       </h2>
 
       <div className="ym-section-block" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', transition: 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)', transform: `translateX(-${index * 100}%)` }}>
-          {sites.map((site, i) => <Slide key={site.id} site={site} index={i} />)}
+        <div
+          ref={slideTrackRef}
+          onTransitionEnd={handleTransitionEnd}
+          style={{
+            display: 'flex',
+            transition: noTransition ? 'none' : 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)',
+            transform: `translateX(-${currentIndex * 100}%)`,
+          }}
+        >
+          {extendedSlides.map((site, i) => (
+            <Slide key={`${site.id}-${i}`} site={site} index={(i - 1 + total) % total} />
+          ))}
         </div>
         <div style={{ height: '3px', backgroundColor: 'var(--ym-border)' }}>
           <div
@@ -154,7 +211,7 @@ export function HighRatedCarousel() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginTop: '12px', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '13px', color: 'var(--ym-text-muted)' }}>
-          第 <b style={{ color: 'var(--ym-text-secondary)' }}>{String(index + 1).padStart(2, '0')}</b> / {String(total).padStart(2, '0')} 名
+          第 <b style={{ color: 'var(--ym-text-secondary)' }}>{String(displayIndex + 1).padStart(2, '0')}</b> / {String(total).padStart(2, '0')} 名
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'center' }}>
           {sites.map((site, i) => (
@@ -164,12 +221,12 @@ export function HighRatedCarousel() {
               onClick={() => goTo(i)}
               aria-label={`第 ${i + 1} 名：${site.title}`}
               style={{
-                width: i === index ? '22px' : '8px',
+                width: i === displayIndex ? '22px' : '8px',
                 height: '8px',
                 border: 'none',
-                borderRadius: i === index ? '4px' : '50%',
+                borderRadius: i === displayIndex ? '4px' : '50%',
                 backgroundColor: 'var(--ym-accent)',
-                opacity: i === index ? 1 : 0.25,
+                opacity: i === displayIndex ? 1 : 0.25,
                 cursor: 'pointer',
                 padding: 0,
                 transition: 'width var(--ym-transition), opacity var(--ym-transition), border-radius var(--ym-transition)',
@@ -178,10 +235,10 @@ export function HighRatedCarousel() {
           ))}
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" disabled={index === 0} onClick={() => goTo(index - 1)}>
+          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={goPrev}>
             ←
           </button>
-          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" disabled={index === total - 1} onClick={() => goTo(index + 1)}>
+          <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={goNext}>
             →
           </button>
         </div>

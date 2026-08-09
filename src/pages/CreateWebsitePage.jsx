@@ -1,11 +1,12 @@
-// src/pages/CreateWebsitePage.jsx
+﻿// src/pages/CreateWebsitePage.jsx
 // 新建作品：类型选择（网站需 URL + 自动截图；其他类型可传图）、公开/私密、状态、分组、更新日志
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { createWork, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel } from '../services/works.js';
 import { getPartitions } from '../services/partitions.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
+import { uploadWorkDeploy, validateDeployFile } from '../services/workDeploy.js';
 import { linkIdeaToWork, getIdeaById } from '../services/ideas.js';
 import '../styles/global.css';
 
@@ -61,6 +62,11 @@ const [videoUrl, setVideoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // Issue #13：拖拽上传静态网站（可选）
+  const deployInputRef = useRef(null);
+  const [deployFile, setDeployFile] = useState(null);
+  const [deployMsg, setDeployMsg] = useState('');
+
   // 从想法详情页「去实现」跳转过来时，携带 source_idea_id 自动关联
   const [searchParams] = useSearchParams();
   const sourceIdeaId = searchParams.get('source_idea_id');
@@ -100,6 +106,17 @@ const [videoUrl, setVideoUrl] = useState('');
     setImagePreview(URL.createObjectURL(file));
   };
 
+
+  const handlePickDeploy = (file) => {
+    try {
+      validateDeployFile(file);
+      setDeployFile(file);
+      setDeployMsg('');
+    } catch (err) {
+      setDeployMsg('❌ ' + err.message);
+      setDeployFile(null);
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
@@ -194,6 +211,16 @@ const [videoUrl, setVideoUrl] = useState('');
           await linkIdeaToWork(sourceIdeaId, createdWork.id, user.id);
         } catch (linkErr) {
           console.warn('关联想法失败:', linkErr.message);
+        }
+      }
+      // Issue #13：若选择了部署文件，创建后自动上传部署
+      if (deployFile && createdWork?.id) {
+        setMessage({ type: 'info', text: '正在部署网站文件...' });
+        try {
+          const dep = await uploadWorkDeploy(createdWork.id, deployFile, user.id);
+          setDeployMsg('✅ 已部署：' + dep.deploy_url);
+        } catch (depErr) {
+          setDeployMsg('⚠️ 部署失败：' + depErr.message + '（可稍后到编辑页重新上传）');
         }
       }
       setMessage({ type: 'success', text: '✅ 作品提交成功！' });
@@ -424,6 +451,27 @@ const [videoUrl, setVideoUrl] = useState('');
           </div>
         </div>
 
+                {/* Issue #13：拖拽上传静态网站（可选） */}
+                <div
+                  style={{ marginBottom: '16px', padding: '18px', border: '2px dashed var(--ym-border)', borderRadius: 'var(--ym-radius-md)', textAlign: 'center', cursor: 'pointer', backgroundColor: 'var(--ym-bg-subtle)', transition: 'border-color var(--ym-transition)' }}
+                  onClick={() => deployInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handlePickDeploy(f); }}
+                >
+                  <input ref={deployInputRef} type='file' accept='.zip' style={{ display: 'none' }} onChange={(e) => handlePickDeploy(e.target.files?.[0])} />
+                  <div style={{ fontSize: '15px', color: 'var(--ym-text-secondary)' }}>📦 拖拽 zip 到此处，或点击选择（可选）</div>
+                  <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginTop: '4px', lineHeight: 1.6 }}>
+                    {deployFile ? `已选择：${deployFile.name}（创建成功后自动部署）` : "静态网站文件包 ≤50MB；仅支持纯静态站点（HTML/CSS/JS），不支持后端"}
+                  </div>
+                  {deployFile && (
+                    <button type='button' onClick={() => setDeployFile(null)} style={{ marginTop: '8px', padding: '4px 14px', border: '1px solid var(--ym-danger)', color: 'var(--ym-danger)', background: 'transparent', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }}>
+                      移除文件
+                    </button>
+                  )}
+                  {deployMsg && (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: deployMsg.startsWith('✅') ? 'var(--ym-success)' : 'var(--ym-danger)', wordBreak: 'break-all' }}>{deployMsg}</div>
+                  )}
+                </div>
         {/* Issue #39 P1：创作标签与信息 */}
         <div className="ym-create-step ym-create-meta ym-stagger-item" style={{ marginBottom: '20px', '--ym-stagger-index': 6 }}>
           <div style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '10px' }}>

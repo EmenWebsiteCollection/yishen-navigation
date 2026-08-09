@@ -356,5 +356,7 @@ select {
     width: auto;
     height: min(60vh, 480px);
     border-radius: 14px;
+    /* 盖过右下角主题切换悬浮球（z-index 1001），避免发送键被遮挡（Issue #83） */
+    z-index: 1002;
   }
 }

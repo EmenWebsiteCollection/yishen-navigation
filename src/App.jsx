@@ -27,7 +27,7 @@ import { YiliMascot } from './components/YiliMascot.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading, isAnonymous } = useAuth();
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
+  if (loading) return null;
   return user && !isAnonymous ? children : <Navigate to="/" replace />;
 };
 
@@ -49,7 +49,7 @@ function App() {
 function AnimatedRoutes() {
   const location = useLocation();
   return (
-    <div className="ym-route-stage">
+    <div className="ym-route-stage" key={location.pathname}>
       <Routes location={location}>
           <Route path="/" element={<HomePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

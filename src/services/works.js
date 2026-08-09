@@ -1,4 +1,4 @@
-// src/services/works.js
+﻿// src/services/works.js
 // 作品（works）服务层：由原 websites.js 演进而来。
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
@@ -123,7 +123,7 @@ const VIEW_SELECT = `
   work_type, featured, status, visibility, group_id, changelog,
   tags, styles, tools, creative_type, completion, seeking_collab,
   derivative_allowed, commercial_use, ai_degree, audience, content_warning,
-  created_at, updated_at, user_id, view_count, source_idea_id, video_url,
+  created_at, updated_at, user_id, view_count, source_idea_id, video_url, deploy_url, deploy_updated_at,
   like_count, username, avatar_url
 `;
 
@@ -364,15 +364,18 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
   return { works: data.map((item) => mapWork(item)), total: count || 0 };
 };
 
-// ========== 高分作品（首页轮播：仅网站类、公开） ==========
-export const getTopRatedWorks = async (limit = 8) => {
+// 高分作品（首页轮播：公开作品按点赞排序）。
+// diversify=true 时按作品类型轮换入选，保证高分榜单不被单一类型（如网站）独占。
+export const getTopRatedWorks = async (limit = 8, { diversify = false } = {}) => {
+  // 多样式榜单需要更大的候选池，保证各类型都能补位
+  const pool = diversify ? limit * 4 : limit;
+
   let query = supabase
     .from('works_with_likes')
     .select(VIEW_SELECT)
-    .eq('work_type', 'website')
     .eq('visibility', 'public')
     .order('like_count', { ascending: false })
-    .limit(limit);
+    .limit(pool);
 
   const { data, error } = await query;
 
@@ -381,10 +384,9 @@ export const getTopRatedWorks = async (limit = 8) => {
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('works')
       .select(await getTableSelect())
-      .eq('work_type', 'website')
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .limit(pool);
     if (fallbackError) throw fallbackError;
 
     const works = await Promise.all(
@@ -393,10 +395,30 @@ export const getTopRatedWorks = async (limit = 8) => {
         return { ...mapWork(item), like_count: likeCount };
       })
     );
-    return works.sort((a, b) => b.like_count - a.like_count).slice(0, limit);
+    works.sort((a, b) => b.like_count - a.like_count);
+    return diversify ? diversifyByType(works, limit) : works.slice(0, limit);
   }
 
-  return data.map((item) => mapWork(item));
+  const works = data.map((item) => mapWork(item));
+  return diversify ? diversifyByType(works, limit) : works;
+};
+
+// 按作品类型轮换取前 limit 个：同类型只占一个名额，各类作品都能上榜
+const diversifyByType = (works, limit) => {
+  const byType = {};
+  works.forEach((w) => {
+    if (!byType[w.work_type]) byType[w.work_type] = [];
+    byType[w.work_type].push(w);
+  });
+  const types = Object.keys(byType);
+  const result = [];
+  let i = 0;
+  while (result.length < limit && i < limit * types.length) {
+    const next = byType[types[i % types.length]]?.shift();
+    if (next) result.push(next);
+    i += 1;
+  }
+  return result;
 };
 
 // ========== 获取单个作品 ==========
@@ -759,3 +781,4 @@ export const incrementView = async (workId) => {
     console.warn('浏览量计数失败:', e.message);
   }
 };
+

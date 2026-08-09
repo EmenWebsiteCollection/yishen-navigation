@@ -94,10 +94,10 @@ export function DiscoverPage() {
           title="作品发现"
           subtitle="不只是按点赞数推荐——这里有多条入口，让每一件认真创作的作品都有机会被看见。"
           className="ym-stagger-item"
-          style={{ '--ym-stagger-index': 0 }}
+          style={{ animationDelay: '0ms' }}
         />
 
-        <section className="ym-discovery-random ym-glass-panel ym-stagger-item" style={{ '--ym-stagger-index': 1 }}>
+        <section className="ym-discovery-random ym-glass-panel ym-stagger-item" style={{ animationDelay: '60ms' }}>
           <div className="ym-discovery-random-head">
             <div>
               <h2 className="ym-discovery-random-title">今天看点不一样的</h2>
@@ -116,7 +116,7 @@ export function DiscoverPage() {
           {randomHint && !randomWork && <p className="ym-discovery-random-copy ym-random-hint">{randomHint}</p>}
         </section>
 
-        <div className="ym-filter-rail ym-stagger-item" aria-label="发现入口" style={{ '--ym-stagger-index': 2 }}>
+        <div className="ym-filter-rail ym-stagger-item" aria-label="发现入口" style={{ animationDelay: '120ms' }}>
           {visibleRails.map((item) => (
             <button
               key={item.id}
@@ -141,20 +141,20 @@ export function DiscoverPage() {
           </div>
         )}
 
-        {loading && works.length === 0 ? (
-          <div className="ym-state-message">加载中…</div>
-        ) : error ? (
+        {error ? (
           <div className="ym-alert ym-alert-error">{error}</div>
         ) : works.length === 0 ? (
-          <div className="ym-empty">
-            <h3>{rail === 'zero_comment' ? '当前没有零评论作品' : '这个入口暂时还没有作品'}</h3>
-            <p>{rail === 'zero_comment' ? '说明大家都在被认真回应。' : '发布你的第一件作品，让它在这里被看见。'}</p>
-            <Link to="/create" className="ym-btn ym-btn-primary">发布作品</Link>
-          </div>
+          loading ? null : (
+            <div className="ym-empty">
+              <h3>{rail === 'zero_comment' ? '当前没有零评论作品' : '这个入口暂时还没有作品'}</h3>
+              <p>{rail === 'zero_comment' ? '说明大家都在被认真回应。' : '发布你的第一件作品，让它在这里被看见。'}</p>
+              <Link to="/create" className="ym-btn ym-btn-primary">发布作品</Link>
+            </div>
+          )
         ) : (
           <>
             <div className="ym-grid ym-grid-wide">
-              {works.map((work, i) => <WorkCard key={work.id} work={work} className="ym-stagger-item" style={{ '--ym-stagger-index': i % 12 }} />)}
+              {works.map((work, i) => <WorkCard key={work.id} work={work} className="ym-stagger-item" style={{ animationDelay: `${(i % 12) * 60}ms` }} />)}
             </div>
             {works.length >= PAGE_SIZE && (
               <div className="ym-load-more">

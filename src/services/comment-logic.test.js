@@ -1,4 +1,4 @@
-// src/services/comment-logic.test.js
+﻿// src/services/comment-logic.test.js
 // Issue #39 P2 纯逻辑单测：node src/services/comment-logic.test.js
 import assert from 'node:assert';
 import {
@@ -6,6 +6,8 @@ import {
   validateFeedbackType,
   validateCommentContent,
   validateAnchor,
+  validateFeedbackStatus,
+  feedbackStatusLabel,
   checkTextQuoteMismatch,
   formatTime,
 } from './comment-logic.js';
@@ -90,5 +92,19 @@ ok('时间格式化 mm:ss', () => {
   assert.strictEqual(formatTime(3600), '60:00');
 });
 
+
+// ---------- 反馈处理状态（Issue #11） ----------
+ok('反馈状态：默认/合法/非法', () => {
+  assert.strictEqual(validateFeedbackStatus(undefined), 'open');
+  assert.strictEqual(validateFeedbackStatus('resolving'), 'resolving');
+  assert.strictEqual(validateFeedbackStatus('resolved'), 'resolved');
+  assert.throws(() => validateFeedbackStatus('unknown'));
+});
+ok('反馈状态标签', () => {
+  assert.strictEqual(feedbackStatusLabel('resolved'), '已处理');
+  assert.strictEqual(feedbackStatusLabel('bogus'), '待处理');
+});
+
 console.log(`\n${passed} 组断言通过`);
 if (process.exitCode) process.exit(process.exitCode);
+

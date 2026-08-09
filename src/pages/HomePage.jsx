@@ -1,4 +1,4 @@
-// 首页：高分轮播 + 可配置分区 Tab + B 站式网站卡片信息流。
+﻿// 首页：高分轮播 + 可配置分区 Tab + B 站式网站卡片信息流。
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
@@ -7,7 +7,7 @@ import { getPartitions } from '../services/partitions.js';
 import { supabase } from '../services/supabase.js';
 import { HighRatedCarousel } from '../components/HighRatedCarousel.jsx';
 import { PartitionManager } from '../components/PartitionManager.jsx';
-import { Pagination } from '../components/Pagination.jsx';
+import { Pagination, PAGE_SIZE_MAX } from '../components/Pagination.jsx';
 
 const PAGE_SIZE_DEFAULT = 10;
 
@@ -21,9 +21,10 @@ const SkeletonCard = () => (
   </div>
 );
 
-function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onOpen }) {
+function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onRequireLogin, onOpen }) {
+  const isLiked = site.liked_by_user || false;
   return (
-    <div className="ym-card ym-stagger-item" onClick={onOpen} style={{ '--ym-stagger-index': index % 10, cursor: 'pointer' }}>
+    <div className="ym-card ym-stagger-item" onClick={onOpen} style={{ animationDelay: `${(index % 10) * 60}ms`, cursor: 'pointer' }}>
       <div className="ym-card-media">
         <span className="ym-card-badge">{String((page - 1) * pageSize + index + 1).padStart(2, '0')}</span>
         <div className="ym-card-media-fallback">{(site.title || '网').trim()[0]}</div>
@@ -43,25 +44,31 @@ function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onO
             )}
             <span>{site.username}</span>
           </Link>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
-            <span>❤️ {site.like_count || 0}</span>
-            {user && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onToggleLike(site.id, site.liked_by_user || false); }}
-                disabled={liking}
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  color: site.liked_by_user ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
-                  cursor: liking ? 'not-allowed' : 'pointer',
-                  fontSize: '12px',
-                  fontWeight: site.liked_by_user ? '600' : '400',
-                }}
-              >
-                {site.liked_by_user ? '已赞' : '点赞'}
-              </button>
-            )}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            <span>👁 {site.view_count || 0}</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!user) {
+                  onRequireLogin();
+                  return;
+                }
+                onToggleLike(site.id, isLiked);
+              }}
+              disabled={liking}
+              style={{
+                border: 'none',
+                background: 'none',
+                color: isLiked ? 'var(--ym-accent)' : 'var(--ym-text-muted)',
+                cursor: liking ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: isLiked ? '600' : '400',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {isLiked ? '♥' : '♡'} {site.like_count || 0}
+            </button>
           </span>
         </div>
       </div>
@@ -83,7 +90,9 @@ export function HomePage() {
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   // pageSize 也同步到 URL（?size=20），刷新后保持每页数量
   const pageSize = parseInt(searchParams.get('size') || String(PAGE_SIZE_DEFAULT), 10);
-  const normalizedSize = [10, 20, 50].includes(pageSize) ? pageSize : PAGE_SIZE_DEFAULT;
+  const normalizedSize = Number.isFinite(pageSize)
+    ? Math.min(PAGE_SIZE_MAX, Math.max(1, pageSize))
+    : PAGE_SIZE_DEFAULT;
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const likedRefs = useRef({});
@@ -204,6 +213,7 @@ export function HomePage() {
     pendingListScrollRef.current = true;
     setLoading(true);
     const params = { page: '1' };
+    if (normalizedSize !== PAGE_SIZE_DEFAULT) params.size = String(normalizedSize);
     if (id !== 'all') params.partition = id;
     setSearchParams(params);
   };
@@ -230,9 +240,7 @@ export function HomePage() {
     setSearchParams(params);
   };
 
-  if (authLoading) {
-    return <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
-  }
+  if (authLoading) return null;
 
   return (
     <div className="ym-home-page">
@@ -242,7 +250,7 @@ export function HomePage() {
         <Link
           to="/ideas"
           className="ym-home-feature ym-glass-panel ym-stagger-item"
-          style={{ '--ym-stagger-index': 0 }}
+          style={{ animationDelay: '0ms' }}
         >
           <div className="ym-home-feature-copy">
             <div>
@@ -256,7 +264,7 @@ export function HomePage() {
         <Link
           to="/discover"
           className="ym-home-feature ym-glass-panel ym-stagger-item"
-          style={{ '--ym-stagger-index': 1 }}
+          style={{ animationDelay: '60ms' }}
         >
           <div>
             <strong>作品发现</strong>
@@ -264,11 +272,11 @@ export function HomePage() {
               本周新锐 · 编辑精选 · 小众宝藏 · 零评论作品 · 每日随机……不只按点赞数推荐
             </p>
           </div>
-          <span className="ym-btn ym-btn-sm">去看看</span>
+          <span className="ym-btn ym-btn-primary ym-btn-sm">去看看</span>
         </Link>
       </div>
 
-      <div ref={listTopRef} className="ym-flex-between ym-list-anchor ym-stagger-item" style={{ '--ym-stagger-index': 2, marginBottom: '8px' }}>
+      <div ref={listTopRef} className="ym-flex-between ym-list-anchor ym-stagger-item" style={{ animationDelay: '120ms', marginBottom: '8px' }}>
         <h2 className="ym-section-title" style={{ margin: '24px 0 12px' }}>全部作品</h2>
         {isLoggedIn && (
           <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={() => setShowPartitionManager(true)}>
@@ -277,7 +285,7 @@ export function HomePage() {
         )}
       </div>
 
-      <div className="ym-tabs ym-stagger-item" role="tablist" aria-label="作品分区" style={{ '--ym-stagger-index': 3 }}>
+      <div className="ym-tabs ym-stagger-item" role="tablist" aria-label="作品分区" style={{ animationDelay: '180ms' }}>
         <button
           type="button"
           role="tab"
@@ -308,10 +316,12 @@ export function HomePage() {
       ) : error ? (
         <div className="ym-alert ym-alert-error">{error}</div>
       ) : websites.length === 0 ? (
-        <div className="ym-empty">
-          <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '6px' }}>这个分区还没有作品</div>
-          <div>点击右上角提交第一个作品</div>
-        </div>
+        loading ? null : (
+          <div className="ym-empty">
+            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '6px' }}>这个分区还没有作品</div>
+            <div>点击右上角提交第一个作品</div>
+          </div>
+        )
       ) : (
         <>
           <div className="ym-grid ym-grid-wide">
@@ -325,6 +335,7 @@ export function HomePage() {
                 user={isLoggedIn ? user : null}
                 liking={likingRefs.current[site.id]}
                 onToggleLike={handleLikeToggle}
+                onRequireLogin={() => navigate('/login')}
                 onOpen={() => navigate(`/website/${site.id}`)}
               />
             ))}
@@ -354,3 +365,4 @@ export function HomePage() {
     </div>
   );
 }
+

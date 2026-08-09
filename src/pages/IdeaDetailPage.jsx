@@ -444,13 +444,7 @@ export function IdeaDetailPage() {
   };
 
   // ---------- 渲染 ----------
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-        <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ym-text-muted)' }}>加载中…</div>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   if (error || !idea) {
     return (
