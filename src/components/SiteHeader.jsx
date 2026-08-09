@@ -29,6 +29,7 @@ export function SiteHeader({ onLogin }) {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const [indicator, setIndicator] = useState({ x: 0, width: 0, visible: false });
+  const scrolledRef = useRef(false);
   const profileRef = useRef(null);
   const navRef = useRef(null);
   const linkRefs = useRef(new Map());
@@ -58,7 +59,12 @@ export function SiteHeader({ onLogin }) {
     const onPointerDown = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) setProfileOpen(false);
     };
-    const onScroll = () => setScrolled(window.scrollY > 16);
+    const onScroll = () => {
+      const nextScrolled = window.scrollY > 16;
+      if (nextScrolled === scrolledRef.current) return;
+      scrolledRef.current = nextScrolled;
+      setScrolled(nextScrolled);
+    };
     document.addEventListener('mousedown', onPointerDown);
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();

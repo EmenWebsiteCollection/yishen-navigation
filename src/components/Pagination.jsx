@@ -66,7 +66,6 @@ export function Pagination({
     if (value && onPageSizeChange) {
       onPageSizeChange(value);
       // 切换每页数量后回到第 1 页
-      if (currentPage !== 1) onPageChange(1);
     }
   };
 

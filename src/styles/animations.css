@@ -30,6 +30,15 @@
   100% { opacity: 1; }
 }
 
+.ym-skeleton,
+.ym-skeleton-grid {
+  animation: ym-skeleton-pulse 1.35s ease-in-out infinite;
+}
+
+.ym-skeleton-grid .ym-skeleton {
+  animation: none;
+}
+
 @keyframes ym-hrc-progress {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
@@ -48,8 +57,8 @@
 }
 
 .ym-stagger-item {
-  opacity: 0;
-  animation: ym-stagger-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 1;
+  animation: ym-stagger-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(var(--ym-stagger-index, 0) * 55ms);
 }
 
@@ -80,6 +89,8 @@
   .ym-scale-out,
   .ym-slide-down,
   .ym-spin,
+  .ym-skeleton,
+  .ym-skeleton-grid,
   .ym-stagger-item {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

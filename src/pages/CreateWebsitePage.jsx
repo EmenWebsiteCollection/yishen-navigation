@@ -228,30 +228,31 @@ const [videoUrl, setVideoUrl] = useState('');
   };
 
   return (
-    <div className="ym-detail-layout">
-      <div className="ym-section-block" style={{ padding: '28px' }}>
-      <h2 style={{
+    <div className="ym-detail-layout ym-create-page">
+      <div className="ym-section-block ym-create-panel ym-stagger-item" style={{ padding: '28px', '--ym-stagger-index': 0 }}>
+      <h2 className="ym-create-title ym-stagger-item" style={{
         fontFamily: 'var(--ym-font-display)',
         fontSize: '22px',
         fontWeight: '500',
         color: 'var(--ym-text-primary)',
         marginBottom: '24px',
         letterSpacing: '1px',
+        '--ym-stagger-index': 1,
       }}>
         新建作品
       </h2>
 
       {sourceIdea && (
-        <div style={{ padding: '10px 14px', marginBottom: '14px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-success-bg)', color: 'var(--ym-success)', fontSize: '14px' }}>
+        <div className="ym-create-source ym-stagger-item" style={{ padding: '10px 14px', marginBottom: '14px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-success-bg)', color: 'var(--ym-success)', fontSize: '14px', '--ym-stagger-index': 2 }}>
           💡 正在孵化想法「{sourceIdea.title}」：作品发布后，该想法将自动点亮「已实现」并回链作品。
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form className="ym-create-form" onSubmit={handleSubmit}>
         {/* 作品类型 */}
-        <div style={{ marginBottom: '18px' }}>
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '18px', '--ym-stagger-index': 2 }}>
           <label style={labelStyle}>作品类型</label>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="ym-create-type-options" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {partitions.map((t) => (
               <button
                 key={t.work_type || t.id}
@@ -292,7 +293,7 @@ const [videoUrl, setVideoUrl] = useState('');
 
         {/* URL（仅网站类） */}
         {workType === 'website' && (
-          <div style={{ marginBottom: '16px' }}>
+          <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '16px', '--ym-stagger-index': 3 }}>
             <label htmlFor="create-url" style={labelStyle}>URL</label>
             <input
               id="create-url"
@@ -307,7 +308,7 @@ const [videoUrl, setVideoUrl] = useState('');
         )}
 
         {/* 演示视频链接（可选） */}
-        <div style={{ marginBottom: '16px' }}>
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '16px', '--ym-stagger-index': 3 }}>
           <label htmlFor="create-video-url" style={labelStyle}>演示视频链接（可选）</label>
           <input
             id="create-video-url"
@@ -323,7 +324,7 @@ const [videoUrl, setVideoUrl] = useState('');
         </div>
 
         {/* 标题 */}
-        <div style={{ marginBottom: '16px' }}>
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '16px', '--ym-stagger-index': 3 }}>
           <label htmlFor="create-title" style={labelStyle}>标题</label>
           <input
             id="create-title"
@@ -337,7 +338,7 @@ const [videoUrl, setVideoUrl] = useState('');
         </div>
 
         {/* 描述 */}
-        <div style={{ marginBottom: '20px' }}>
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '20px', '--ym-stagger-index': 3 }}>
           <label htmlFor="create-desc" style={labelStyle}>详情描述（可选）</label>
           <textarea
             id="create-desc"
@@ -350,10 +351,10 @@ const [videoUrl, setVideoUrl] = useState('');
         </div>
 
         {/* 图片上传 */}
-        <div style={{ marginBottom: '20px' }}>
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '20px', '--ym-stagger-index': 4 }}>
           <label htmlFor="create-image" style={labelStyle}>{workType === 'website' ? '网站大图（可选）' : '作品图片（可选）'}</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{
+            <div className="ym-create-media-preview" style={{
               width: '120px',
               height: '68px',
               borderRadius: 'var(--ym-radius-sm)',
@@ -395,7 +396,7 @@ const [videoUrl, setVideoUrl] = useState('');
         </div>
 
         {/* 状态 / 可见性 / 分组 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+        <div className="ym-create-step ym-stagger-item" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px', marginBottom: '20px', '--ym-stagger-index': 5 }}>
           <div>
             <label style={labelStyle}>创作状态</label>
             <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
@@ -424,7 +425,7 @@ const [videoUrl, setVideoUrl] = useState('');
         </div>
 
         {/* Issue #39 P1：创作标签与信息 */}
-        <div style={{ marginBottom: '20px' }}>
+        <div className="ym-create-step ym-create-meta ym-stagger-item" style={{ marginBottom: '20px', '--ym-stagger-index': 6 }}>
           <div style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '10px' }}>
             创作标签与信息（除 AI 参与程度外均可选）
           </div>
@@ -518,7 +519,7 @@ const [videoUrl, setVideoUrl] = useState('');
         </div>
 
         {/* 更新日志 */}
-        <div style={{ marginBottom: '20px' }}>
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '20px', '--ym-stagger-index': 7 }}>
           <label htmlFor="create-changelog" style={labelStyle}>更新日志（可选）</label>
           <textarea
             id="create-changelog"
@@ -532,7 +533,7 @@ const [videoUrl, setVideoUrl] = useState('');
 
         {/* 消息 */}
         {message.text && (
-          <div style={{
+          <div className="ym-create-message ym-stagger-item" style={{
             padding: '12px 16px',
             marginBottom: '16px',
             borderRadius: 'var(--ym-radius-sm)',
@@ -554,7 +555,7 @@ const [videoUrl, setVideoUrl] = useState('');
                   : 'var(--ym-success)'
             }`,
             fontSize: '14px',
-            animation: 'ym-slide-down var(--ym-transition) forwards',
+            '--ym-stagger-index': 8,
           }}>
             {message.text}
           </div>
@@ -562,6 +563,7 @@ const [videoUrl, setVideoUrl] = useState('');
 
         {/* 提交按钮 */}
         <button
+          className="ym-create-submit ym-stagger-item"
           type="submit"
           disabled={loading}
           style={{
@@ -580,6 +582,7 @@ const [videoUrl, setVideoUrl] = useState('');
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
+            '--ym-stagger-index': 9,
           }}
         >
           {loading ? (
@@ -598,12 +601,12 @@ const [videoUrl, setVideoUrl] = useState('');
         </button>
       </form>
 
-      <div style={{ marginTop: '16px', textAlign: 'center' }}>
+      <div className="ym-create-return ym-stagger-item" style={{ marginTop: '16px', textAlign: 'center', '--ym-stagger-index': 10 }}>
         <Link to="/" style={{ color: 'var(--ym-text-secondary)', fontSize: '14px', textDecoration: 'none' }}>← 返回首页</Link>
       </div>
       </div>
 
-      <aside className="ym-detail-side">
+      <aside className="ym-detail-side ym-create-aside ym-stagger-item" style={{ '--ym-stagger-index': 11 }}>
         <div className="ym-section-block">
           <h3 className="ym-section-title" style={{ margin: '0 0 12px' }}>提交提示</h3>
           <div style={{ fontSize: '13px', lineHeight: 1.8, color: 'var(--ym-text-secondary)' }}>

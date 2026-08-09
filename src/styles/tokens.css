@@ -182,12 +182,12 @@
 /* 主题：macOS（浅色系统风）                                 */
 /* ========================================================= */
 [data-theme="macos"] {
-  --ym-bg-page: #F5F5F7;
-  --ym-bg-card: #FFFFFF;
-  --ym-bg-subtle: #E8E8ED;
+  --ym-bg-page: #EEF5FB;
+  --ym-bg-card: #FBFDFF;
+  --ym-bg-subtle: #E4EEF8;
 
-  --ym-accent: #0A84FF;
-  --ym-accent-hover: #0873E6;
+  --ym-accent: #087BE8;
+  --ym-accent-hover: #006DD2;
   --ym-accent-text-on: #FFFFFF;
 
   --ym-danger: #FF3B30;
@@ -199,12 +199,26 @@
   --ym-success-bg: #E4F5E9;
   --ym-success-text-on: #FFFFFF;
 
-  --ym-text-primary: #1D1D1F;
-  --ym-text-secondary: #6E6E73;
-  --ym-text-muted: #AEAEB2;
+  --ym-text-primary: #172334;
+  --ym-text-secondary: #536579;
+  --ym-text-muted: #8394A8;
 
-  --ym-border: #D1D1D6;
-  --ym-border-strong: #0A84FF;
+  --ym-border: #C8D7E6;
+  --ym-border-strong: #7EAEE0;
 
-  --ym-focus-ring: rgba(10, 132, 255, 0.15);
+  --ym-focus-ring: rgba(8, 123, 232, 0.18);
+
+  /* Liquid Glass 材质层级；移动端在主题样式中退化为静态表面。 */
+  --ym-glass-surface-0: rgba(244, 250, 255, 0.48);
+  --ym-glass-surface-1: rgba(248, 252, 255, 0.68);
+  --ym-glass-surface-2: rgba(252, 254, 255, 0.82);
+  --ym-glass-surface-interactive: rgba(249, 253, 255, 0.76);
+  --ym-glass-edge: rgba(255, 255, 255, 0.84);
+  --ym-glass-edge-muted: rgba(114, 151, 190, 0.22);
+  --ym-glass-edge-soft: rgba(255, 255, 255, 0.56);
+  --ym-glass-blur-nav: 22px;
+  --ym-glass-blur-surface: 16px;
+  --ym-glass-blur-control: 10px;
+  --ym-glass-shadow-panel: 0 24px 60px rgba(54, 86, 122, 0.12), 0 3px 12px rgba(54, 86, 122, 0.05);
+  --ym-glass-shadow-card: 0 14px 34px rgba(54, 86, 122, 0.09), 0 2px 8px rgba(54, 86, 122, 0.04);
 }

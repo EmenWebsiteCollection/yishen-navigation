@@ -12,7 +12,7 @@ import { Pagination } from '../components/Pagination.jsx';
 const PAGE_SIZE_DEFAULT = 10;
 
 const SkeletonCard = () => (
-  <div className="ym-card" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>
+  <div className="ym-card ym-skeleton">
     <div style={{ aspectRatio: '16/9', backgroundColor: 'var(--ym-bg-subtle)' }} />
     <div style={{ padding: '14px 16px' }}>
       <div style={{ height: '16px', width: '70%', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px', marginBottom: '8px' }} />
@@ -89,6 +89,7 @@ export function HomePage() {
   const likedRefs = useRef({});
   const likingRefs = useRef({});
   const listTopRef = useRef(null);
+  const pendingListScrollRef = useRef(false);
 
   const partitionId = searchParams.get('partition') || 'all';
   const activePartition = partitions.find((p) => p.id === partitionId) || null;
@@ -153,6 +154,20 @@ export function HomePage() {
     if (page > 0) loadWebsites(page, activeType);
   }, [searchParams, user, partitionsLoaded, activeType]);
 
+  useEffect(() => {
+    if (loading || !pendingListScrollRef.current) return undefined;
+
+    pendingListScrollRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      listTopRef.current?.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, currentPage, normalizedSize, partitionId]);
+
   const handleLikeToggle = async (websiteId, currentLiked) => {
     if (!user || likingRefs.current[websiteId]) return;
     const newLiked = !currentLiked;
@@ -186,32 +201,29 @@ export function HomePage() {
 
   const handlePartitionClick = (id) => {
     if (id === partitionId) return;
+    pendingListScrollRef.current = true;
+    setLoading(true);
     const params = { page: '1' };
     if (id !== 'all') params.partition = id;
     setSearchParams(params);
-    window.requestAnimationFrame(() => {
-      listTopRef.current?.scrollIntoView({
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-        block: 'start',
-      });
-    });
   };
 
   const handlePageChange = (newPage) => {
     if (newPage === currentPage || newPage < 1 || newPage > totalPages) return;
+    pendingListScrollRef.current = true;
+    setLoading(true);
     const params = { page: String(newPage) };
+    if (normalizedSize !== PAGE_SIZE_DEFAULT || searchParams.has('size')) {
+      params.size = String(normalizedSize);
+    }
     if (partitionId !== 'all') params.partition = partitionId;
     setSearchParams(params);
-    window.requestAnimationFrame(() => {
-      listTopRef.current?.scrollIntoView({
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-        block: 'start',
-      });
-    });
   };
 
   const handlePageSizeChange = (size) => {
     if (size === normalizedSize) return;
+    pendingListScrollRef.current = true;
+    setLoading(true);
     // 每页数量写入 URL，页码回到第 1 页（避免超出新页数上限）
     const params = { page: '1', size: String(size) };
     if (partitionId !== 'all') params.partition = partitionId;
@@ -290,7 +302,7 @@ export function HomePage() {
       </div>
 
       {loading ? (
-        <div className="ym-grid">
+        <div className="ym-grid ym-skeleton-grid">
           {Array.from({ length: normalizedSize }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : error ? (
