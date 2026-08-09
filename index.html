@@ -5,8 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/jpeg" href="%BASE_URL%yili.jpg" />
     <title>网站导航平台</title>
+    <style>
+      #loading-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      #loading-screen.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      [data-theme="catppuccin"] #loading-screen,
+      [data-theme="tokyonight"] #loading-screen,
+      [data-theme="onedark"] #loading-screen,
+      [data-theme="dracula"] #loading-screen {
+        background: #1e1e2e;
+      }
+      [data-theme="macos"] #loading-screen {
+        background: #f5f5f7;
+      }
+      [data-theme="macos"][data-theme-dark] #loading-screen {
+        background: #1c1c1e;
+      }
+
+      .loading-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .loading-frame-box {
+        width: 280px;
+        height: 280px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .loading-frame-box img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: none;
+      }
+      .loading-frame-box img.is-active {
+        display: block;
+      }
+
+      /* 暗色主题下黑线反白 */
+      [data-theme="catppuccin"] .loading-frame-box img,
+      [data-theme="tokyonight"] .loading-frame-box img,
+      [data-theme="onedark"] .loading-frame-box img,
+      [data-theme="dracula"] .loading-frame-box img,
+      [data-theme="macos"][data-theme-dark] .loading-frame-box img {
+        filter: invert(1);
+      }
+
+      .loading-text {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #6c757d;
+        letter-spacing: 4px;
+        text-align: center;
+        animation: text-fade 0.5s ease 0.65s forwards;
+        opacity: 0;
+      }
+      [data-theme="catppuccin"] .loading-text,
+      [data-theme="tokyonight"] .loading-text,
+      [data-theme="onedark"] .loading-text,
+      [data-theme="dracula"] .loading-text,
+      [data-theme="macos"][data-theme-dark] .loading-text {
+        color: #a6adc8;
+      }
+
+      @keyframes text-fade {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .loading-frame-box img,
+        .loading-text {
+          animation: none !important;
+          opacity: 1 !important;
+        }
+      }
+    </style>
     <script>
       (function () {
+        // 主题恢复
         try {
           var saved = window.localStorage.getItem('ym-theme');
           var themes = ['default', 'catppuccin', 'tokyonight', 'onedark', 'dracula', 'macos'];
@@ -14,10 +108,49 @@
             document.documentElement.setAttribute('data-theme', saved);
           }
         } catch (e) {}
+
+        // 翅膀帧动画（7帧依次展开，播放一次停在最后一帧）
+        function startWingFrames() {
+          var frames = document.querySelectorAll('.wing-frame');
+          if (!frames.length) return;
+          var idx = 0;
+          var interval = 110;
+          var timer = setInterval(function () {
+            frames[idx].classList.remove('is-active');
+            idx++;
+            if (idx >= frames.length) {
+              // 播完一遍，停在最后一帧
+              frames[frames.length - 1].classList.add('is-active');
+              clearInterval(timer);
+              return;
+            }
+            frames[idx].classList.add('is-active');
+          }, interval);
+          window.__wingTimer = timer;
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', startWingFrames);
+        } else {
+          startWingFrames();
+        }
       })();
     </script>
   </head>
   <body>
+    <div id="loading-screen">
+      <div class="loading-wrap">
+        <div class="loading-frame-box">
+          <img src="/loading/frame-1.png" alt="" class="wing-frame is-active">
+          <img src="/loading/frame-2.png" alt="" class="wing-frame">
+          <img src="/loading/frame-3.png" alt="" class="wing-frame">
+          <img src="/loading/frame-4.png" alt="" class="wing-frame">
+          <img src="/loading/frame-5.png" alt="" class="wing-frame">
+          <img src="/loading/frame-6.png" alt="" class="wing-frame">
+          <img src="/loading/frame-7.png" alt="" class="wing-frame">
+        </div>
+        <div class="loading-text">LOADING</div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

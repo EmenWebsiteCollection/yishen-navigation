@@ -3,4 +3,8 @@ dist/
 .env.local
 .env
 .el-ai-memory-state.json
+.workbuddy/
+dist_bak/
+dist-old-*/
+vite.config.js.timestamp-*.mjs
 public/contributors.json
