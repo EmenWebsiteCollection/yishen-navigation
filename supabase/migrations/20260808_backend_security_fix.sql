@@ -207,3 +207,10 @@ alter table public.works
 -- ═══ 验证 ═══
 -- select proname from pg_proc where proname like 'rpc_%' order by proname;
 -- select * from pg_policies where schemaname='public' and tablename='partitions';
+
+-- ---------- 9. comments UPDATE 策略（反馈闭环：作者/管理员标记 feedback_status） ----------
+drop policy if exists comments_update_own_or_admin on public.comments;
+create policy comments_update_own_or_admin on public.comments
+  for update
+  using ((auth.uid() = user_id) or public.is_admin())
+  with check ((auth.uid() = user_id) or public.is_admin());

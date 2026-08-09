@@ -86,7 +86,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
   // 动态 import：浏览器端由 Vite 正常打包，Node 测试不会加载 supabase 环境
   const { supabase } = await import('./supabase.js');
   const like = '%' + escapeLike(q) + '%';
-  const or = `title.ilike.${like},url.ilike.${like},description.ilike.${like}`;
+  const or = `(title.ilike.${like},url.ilike.${like},description.ilike.${like})`;
 
   const { data, error } = await supabase
     .from('works_with_likes')
