@@ -18,7 +18,6 @@ import { IdeaDetailPage } from './pages/IdeaDetailPage.jsx';
 import { DiscoverPage } from './pages/DiscoverPage.jsx';
 import { WorkMapPage } from './pages/WorkMapPage.jsx';
 import { ThemeSwitcher } from './components/ThemeSwitcher.jsx';
-import { TechLoader } from './components/TechLoader.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { BackToTop } from './components/BackToTop.jsx';
 import { useDevice } from './hooks/useDevice.js';
@@ -27,8 +26,9 @@ import { YiliMascot } from './components/YiliMascot.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading, isAnonymous } = useAuth();
-  if (loading) return null;
-  return user && !isAnonymous ? children : <Navigate to="/" replace />;
+  // 不阻塞渲染，让子组件自行处理未登录状态
+  if (!loading && (!user || isAnonymous)) return <Navigate to="/" replace />;
+  return children;
 };
 
 function App() {
@@ -49,7 +49,7 @@ function App() {
 function AnimatedRoutes() {
   const location = useLocation();
   return (
-    <div className="ym-route-stage" key={location.pathname}>
+    <div className="ym-route-stage is-entering" key={location.pathname}>
       <Routes location={location}>
           <Route path="/" element={<HomePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

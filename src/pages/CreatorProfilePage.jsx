@@ -122,9 +122,7 @@ export function CreatorProfilePage() {
     };
   }, [profile?.bg_color, profile?.accent_color]);
 
-  if (loading) return null;
-
-  if (error || !profile) {
+  if (error || (!loading && !profile)) {
     return (
       <div style={{ maxWidth: '560px', margin: '60px auto', padding: '32px 28px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
         <p style={{ color: 'var(--ym-danger)' }}>{error || '用户不存在'}</p>
@@ -132,6 +130,8 @@ export function CreatorProfilePage() {
       </div>
     );
   }
+  // 加载中渲染空壳
+  if (!profile) return <div />;
 
   const username = profile.username || '未命名用户';
   const featuredWorks = works.filter((w) => w.featured).slice(0, 6);

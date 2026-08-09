@@ -105,8 +105,6 @@ export function WorkMapPage() {
 
   useEffect(() => { loadMap(); }, [loadMap]);
 
-  if (loading) return null;
-
   if (error) {
     return (
       <div style={{ maxWidth: '560px', margin: '80px auto', textAlign: 'center', color: 'var(--ym-danger)' }}>
@@ -116,7 +114,7 @@ export function WorkMapPage() {
     );
   }
 
-  if (!work) {
+  if (!loading && !work) {
     return (
       <div style={{ maxWidth: '560px', margin: '80px auto', textAlign: 'center', color: 'var(--ym-text-secondary)' }}>
         <p>作品不存在</p>
@@ -124,6 +122,8 @@ export function WorkMapPage() {
       </div>
     );
   }
+  // 加载中渲染空壳
+  if (!work) return <div />;
 
   // 节点布局：中心 + 显式环 + 相似环
   const explicitNodes = nodes.filter((n) => n.group === 'explicit');

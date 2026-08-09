@@ -394,8 +394,9 @@ export function WebsiteDetailPage() {
   }, [id]);
 
   // 网站详情
-  const [website, setWebsite] = useState(null);
+  const [website, setWebsite] = useState({});
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -468,37 +469,41 @@ export function WebsiteDetailPage() {
       try {
         setLoading(true);
         setError(null);
+        setNotFound(false);
         const data = await getWorkById(id, user?.id);
         if (data === null) {
-          setError('网站不存在');
-          setWebsite(null);
+          setLoading(false);
+          setNotFound(true);
           return;
         }
         setWebsite(data);
         setLikeCount(data.like_count || 0);
-        setFavoriteCount(await getWorkFavoriteCount(id));
         setFavoritedByUser(data.favorited_by_user || false);
 
-        if (user) {
-          const liked = await hasLikedWork(id, user.id);
-          setLikedByUser(liked);
-          if (user.id !== data.user_id) {
-            isFollowing(user.id, data.user_id).then(setFollowing).catch(() => setFollowing(false));
-          }
-        } else {
-          setLikedByUser(false);
+        // 并行请求，不互相阻塞
+        const [favCount, liked] = await Promise.all([
+          getWorkFavoriteCount(id),
+          user ? hasLikedWork(id, user.id) : Promise.resolve(false),
+        ]);
+        setFavoriteCount(favCount);
+        setLikedByUser(liked);
+
+        if (user && user.id !== data.user_id) {
+          isFollowing(user.id, data.user_id)
+            .then(setFollowing)
+            .catch(() => setFollowing(false));
         }
+        setLoading(false);
       } catch (err) {
         console.error('加载详情错误:', err);
-        setError('加载网站详情失败，请稍后重试。');
-      } finally {
         setLoading(false);
+        setNotFound(true);
       }
     };
     if (id) loadWebsite();
     else {
-      setError('无效的网站 ID');
       setLoading(false);
+      setNotFound(true);
     }
   }, [id, user]);
 
@@ -1022,8 +1027,6 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
   };
 
   // ---------- 渲染状态 ----------
-  if (loading) return null;
-
   if (error) {
     return (
       <div
@@ -1054,7 +1057,75 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
     );
   }
 
-  if (!website) {
+  if (loading) {
+    return (
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px 16px' }}>
+        {/* 封面骨架 */}
+        <div
+          style={{
+            aspectRatio: '16/9',
+            borderRadius: 'var(--ym-radius-lg)',
+            backgroundColor: 'var(--ym-bg-subtle)',
+            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+          }}
+        />
+        {/* 标题骨架 */}
+        <div
+          style={{
+            height: '28px',
+            width: '60%',
+            marginTop: '20px',
+            borderRadius: '6px',
+            backgroundColor: 'var(--ym-bg-subtle)',
+            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+          }}
+        />
+        {/* 描述骨架 */}
+        <div
+          style={{
+            height: '16px',
+            marginTop: '16px',
+            borderRadius: '6px',
+            backgroundColor: 'var(--ym-bg-subtle)',
+            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+          }}
+        />
+        <div
+          style={{
+            height: '16px',
+            width: '80%',
+            marginTop: '8px',
+            borderRadius: '6px',
+            backgroundColor: 'var(--ym-bg-subtle)',
+            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+          }}
+        />
+        {/* 元信息骨架 */}
+        <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+          <div
+            style={{
+              height: '36px',
+              width: '80px',
+              borderRadius: 'var(--ym-radius-md)',
+              backgroundColor: 'var(--ym-bg-subtle)',
+              animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+            }}
+          />
+          <div
+            style={{
+              height: '36px',
+              width: '80px',
+              borderRadius: 'var(--ym-radius-md)',
+              backgroundColor: 'var(--ym-bg-subtle)',
+              animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
     return (
       <div
         style={{
@@ -1088,7 +1159,7 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
 
   // ---------- 主界面 ----------
   return (
-    <div className="ym-detail-layout" onClickCapture={handleComponentCapture}>
+    <div className="ym-detail-layout ym-fade-in" onClickCapture={handleComponentCapture}>
       <div
         style={{
           padding: '28px',
@@ -1560,7 +1631,22 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
         </Link>
       </div>
 
-      {similarLoading ? null : similarWorks.length > 0 ? (
+      {similarLoading ? (
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '28px' }}>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                flex: '1',
+                aspectRatio: '16/9',
+                borderRadius: '8px',
+                backgroundColor: 'var(--ym-bg-subtle)',
+                animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+              }}
+            />
+          ))}
+        </div>
+      ) : similarWorks.length > 0 ? (
         <div style={{ marginBottom: '28px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '12px' }}>
             同类型推荐
@@ -1601,7 +1687,42 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
         </h3>
 
         {loadingComments ? (
-          <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>加载评论...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[0, 1].map((i) => (
+              <div key={i} style={{ display: 'flex', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    flexShrink: '0',
+                    backgroundColor: 'var(--ym-bg-subtle)',
+                    animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+                  }}
+                />
+                <div style={{ flex: '1' }}>
+                  <div
+                    style={{
+                      height: '14px',
+                      width: '120px',
+                      borderRadius: '4px',
+                      marginBottom: '8px',
+                      backgroundColor: 'var(--ym-bg-subtle)',
+                      animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+                    }}
+                  />
+                  <div
+                    style={{
+                      height: '14px',
+                      borderRadius: '4px',
+                      backgroundColor: 'var(--ym-bg-subtle)',
+                      animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : commentsError ? (
           <div style={{ color: 'var(--ym-danger)', fontSize: '14px' }}>评论加载失败</div>
         ) : comments.length === 0 ? (
@@ -1774,7 +1895,21 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
           首次上传和每次编辑都会自动生成只读快照；被作者采纳的评论会回链到这里。
         </div>
 
-        {revisionsLoading ? null : revisions.length === 0 ? (
+        {revisionsLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                style={{
+                  height: '40px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--ym-bg-subtle)',
+                  animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
+                }}
+              />
+            ))}
+          </div>
+        ) : revisions.length === 0 ? (
           <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>
             暂无版本记录。首次上传或编辑作品后会自动生成版本快照。
           </div>

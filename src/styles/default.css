@@ -26,6 +26,10 @@
   min-height: 1px;
 }
 
+.ym-route-stage.is-entering {
+  animation: ym-fade-in 0.25s ease-out both;
+}
+
 /* ---------- Logo ---------- */
 .ym-brand-link {
   display: flex;

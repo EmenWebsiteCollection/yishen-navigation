@@ -179,8 +179,7 @@ export function AboutPage() {
         </Section>
 
         <Section emoji="🤝" title="开发团队与贡献者" className="ym-stagger-item" style={{ animationDelay: '240ms' }}>
-          {loading ? null : (
-            <>
+          <>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                 {contributors.map((m) => (
                   <TeamMember key={m.github || m.name} member={m} />
@@ -193,7 +192,6 @@ export function AboutPage() {
                 ，感谢每一位为这个项目贡献过代码、建议与反馈的伙伴。
               </p>
             </>
-          )}
         </Section>
     </div>
   );

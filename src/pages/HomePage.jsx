@@ -11,16 +11,6 @@ import { Pagination, PAGE_SIZE_MAX } from '../components/Pagination.jsx';
 
 const PAGE_SIZE_DEFAULT = 10;
 
-const SkeletonCard = () => (
-  <div className="ym-card" style={{ animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite' }}>
-    <div style={{ aspectRatio: '16/9', backgroundColor: 'var(--ym-bg-subtle)' }} />
-    <div style={{ padding: '14px 16px' }}>
-      <div style={{ height: '16px', width: '70%', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px', marginBottom: '8px' }} />
-      <div style={{ height: '13px', width: '50%', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: '4px' }} />
-    </div>
-  </div>
-);
-
 function WorkCard({ site, index, page, pageSize, user, liking, onToggleLike, onRequireLogin, onOpen }) {
   const isLiked = site.liked_by_user || false;
   return (
@@ -229,8 +219,6 @@ export function HomePage() {
     setSearchParams(params);
   };
 
-  if (authLoading) return null;
-
   return (
     <div className="ym-home-page">
       <HighRatedCarousel />
@@ -301,12 +289,10 @@ export function HomePage() {
       {error ? (
         <div className="ym-alert ym-alert-error">{error}</div>
       ) : websites.length === 0 ? (
-        loading ? null : (
           <div className="ym-empty">
             <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '6px' }}>这个分区还没有作品</div>
             <div>点击右上角提交第一个作品</div>
           </div>
-        )
       ) : (
         <>
           <div className="ym-grid ym-grid-wide">
