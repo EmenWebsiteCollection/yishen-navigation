@@ -26,6 +26,7 @@ import { uploadAvatar, uploadCover, validateImageFile } from '../services/screen
 import { getMyIdeas, getMyFavoritedIdeas } from '../services/ideas.js';
 import { getMyMemory, clearMyMemory } from '../services/yiliMemory.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
+import { ThemeSelect } from '../components/ThemeSelect.jsx';
 import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
@@ -55,6 +56,16 @@ const labelStyle = {
   marginBottom: '4px',
   fontWeight: '500',
 };
+
+function ProfileContentPlaceholder() {
+  return (
+    <div className="ym-profile-loading" aria-label="内容加载中" aria-busy="true">
+      <div className="ym-profile-loading__row" />
+      <div className="ym-profile-loading__row" />
+      <div className="ym-profile-loading__row" />
+    </div>
+  );
+}
 
 export function ProfilePage() {
   const { user, loading: authLoading, isAnonymous } = useAuth();
@@ -473,6 +484,7 @@ export function ProfilePage() {
           <Link to="/create" className="ym-btn ym-btn-primary">+ 新建作品</Link>
         </div>
 
+        <div className="ym-profile-overview">
         {/* 统计卡 */}
         <div className="ym-stats">
           {[
@@ -489,7 +501,7 @@ export function ProfilePage() {
         </div>
 
         {/* Issue #39 P3：我的信誉 */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', padding: '16px 18px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)' }}>
+        <div className="ym-profile-reputation">
           <div style={{ flex: 1, minWidth: '180px' }}>
             <div style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '6px' }}>
               {reputationBadge(reputation).emoji} 我的评论者信誉 · {reputationBadge(reputation).label}
@@ -509,7 +521,7 @@ export function ProfilePage() {
         </div>
 
         {/* Tab 切换 */}
-        <div className="ym-tabs" role="tablist">
+        <div className="ym-tabs" role="tablist" aria-label="个人中心内容">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -517,16 +529,21 @@ export function ProfilePage() {
               className={'ym-tab' + (tab === t.id ? ' active' : '')}
               role="tab"
               aria-selected={tab === t.id}
+              id={`profile-tab-${t.id}`}
+              aria-controls={`profile-panel-${t.id}`}
             >
               {t.label}
             </button>
           ))}
         </div>
+        </div>
+
+        <section key={tab} className="ym-profile-content" role="tabpanel" id={`profile-panel-${tab}`} aria-labelledby={`profile-tab-${tab}`}>
 
         {/* Tab1 我的作品 */}
         {tab === 'works' && (
           <div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+            <div className="ym-stagger-item" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', animationDelay: '0ms' }}>
               <button
                 onClick={() => { setSelectedGroup('all'); setWorksPage(1); }}
                 style={chipStyle(selectedGroup === 'all')}
@@ -550,11 +567,12 @@ export function ProfilePage() {
               ))}
             </div>
 
-            {worksLoading ? null : works.length === 0 ? (
+            <div className="ym-profile-list-slot">
+            {worksLoading ? <ProfileContentPlaceholder /> : works.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>暂无作品，点击右上角新建</div>
             ) : (
-              works.map((w) => (
-                <div key={w.id} style={{ display: 'flex', gap: '14px', padding: '14px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              works.map((w, index) => (
+                <div key={`${selectedGroup}-${worksPage}-${w.id}`} className="ym-stagger-item" style={{ display: 'flex', gap: '14px', padding: '14px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px', flexWrap: 'wrap', alignItems: 'center', animationDelay: `${55 + Math.min(index, 8) * 55}ms` }}>
                   <div style={{ width: '88px', height: '56px', borderRadius: 'var(--ym-radius-sm)', overflow: 'hidden', backgroundColor: 'var(--ym-bg-subtle)', flexShrink: 0 }}>
                     {w.image_url ? (
                       <img src={w.image_url} alt={w.title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -578,16 +596,7 @@ export function ProfilePage() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <select
-                      value={w.group_id || 'none'}
-                      onChange={(e) => handleAssignGroup(w.id, e.target.value)}
-                      style={{ padding: '5px 8px', fontSize: '12px', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-bg-card)', color: 'var(--ym-text-secondary)' }}
-                    >
-                      <option value="none">未分组</option>
-                      {groups.map((g) => (
-                        <option key={g.id} value={g.id}>{g.name}</option>
-                      ))}
-                    </select>
+                    <ThemeSelect className="ym-theme-select--compact" value={w.group_id || 'none'} onChange={(groupId) => handleAssignGroup(w.id, groupId)} ariaLabel={`${w.title} 的分组`} options={[{ value: 'none', label: '未分组' }, ...groups.map((g) => ({ value: g.id, label: g.name }))]} />
                     {isAdminUser && (
                       <button onClick={() => handleToggleFeatured(w)} style={smallBtnStyle}>
                         {w.featured ? '取消精选' : '设精选'}
@@ -602,6 +611,7 @@ export function ProfilePage() {
                 </div>
               ))
             )}
+            </div>
 
             {worksTotal > pageSize && (
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
@@ -629,12 +639,12 @@ export function ProfilePage() {
 
         {/* Tab2 我的收藏 */}
         {tab === 'favorites' && (
-          <div>
-            {favoritesLoading ? null : favorites.length === 0 ? (
+          <div className="ym-profile-list-slot">
+            {favoritesLoading ? <ProfileContentPlaceholder /> : favorites.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ym-text-secondary)' }}>还没有收藏，去详情页点「收藏」吧</div>
             ) : (
-              favorites.map((fav) => (
-                <div key={fav.favorite_id} style={{ display: 'flex', gap: '14px', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              favorites.map((fav, index) => (
+                <div key={fav.favorite_id} className="ym-stagger-item" style={{ display: 'flex', gap: '14px', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px', alignItems: 'center', flexWrap: 'wrap', animationDelay: `${index * 55}ms` }}>
                   <Link to={`/website/${fav.work.id}`} style={{ fontSize: '15px', color: 'var(--ym-text-primary)', textDecoration: 'none', flex: 1, minWidth: '160px' }}>
                     {fav.work.title}
                     <span style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginLeft: '8px' }}>{workTypeLabel(fav.work.work_type)}</span>
@@ -649,10 +659,10 @@ export function ProfilePage() {
 
 ﻿        {/* Tab3 我的想法 */}
         {tab === 'ideas' && (
-          <div>
-            {ideasLoading ? null : (
+          <div className="ym-profile-list-slot">
+            {ideasLoading ? <ProfileContentPlaceholder /> : (
               <>
-                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', color: 'var(--ym-text-primary)', marginBottom: '10px' }}>我发布的（{myIdeas.length}）</h3>
+                <h3 className="ym-stagger-item" style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', color: 'var(--ym-text-primary)', marginBottom: '10px', animationDelay: '0ms' }}>我发布的（{myIdeas.length}）</h3>
                 {myIdeas.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '24px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px dashed var(--ym-border)', marginBottom: '20px' }}>
                     还没有发布想法，去
@@ -660,8 +670,8 @@ export function ProfilePage() {
                     吧
                   </div>
                 ) : (
-                  myIdeas.map((idea) => (
-                    <div key={idea.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px' }}>
+                  myIdeas.map((idea, index) => (
+                    <div key={idea.id} className="ym-stagger-item" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px', animationDelay: `${55 + Math.min(index, 8) * 55}ms` }}>
                       <IdeaStatusBadge status={idea.status} size="sm" />
                       <Link to={`/ideas/${idea.id}`} style={{ flex: 1, minWidth: '160px', fontSize: '15px', color: 'var(--ym-text-primary)', textDecoration: 'none' }}>
                         {idea.title}
@@ -671,14 +681,14 @@ export function ProfilePage() {
                   ))
                 )}
 
-                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', color: 'var(--ym-text-primary)', margin: '20px 0 10px' }}>我关注的（{myIdeaFavorites.length}）</h3>
+                <h3 className="ym-stagger-item" style={{ fontFamily: 'var(--ym-font-display)', fontSize: '16px', color: 'var(--ym-text-primary)', margin: '20px 0 10px', animationDelay: '165ms' }}>我关注的（{myIdeaFavorites.length}）</h3>
                 {myIdeaFavorites.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '24px', color: 'var(--ym-text-secondary)', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px dashed var(--ym-border)' }}>
                     关注想法后，它的状态进展会出现在这里
                   </div>
                 ) : (
-                  myIdeaFavorites.map((f) => (
-                    <div key={f.favorite_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px' }}>
+                  myIdeaFavorites.map((f, index) => (
+                    <div key={f.favorite_id} className="ym-stagger-item" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '12px 16px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-md)', border: '1px solid var(--ym-border)', marginBottom: '10px', animationDelay: `${220 + Math.min(index, 8) * 55}ms` }}>
                       <IdeaStatusBadge status={f.idea.status} size="sm" />
                       <Link to={`/ideas/${f.idea.id}`} style={{ flex: 1, minWidth: '160px', fontSize: '15px', color: 'var(--ym-text-primary)', textDecoration: 'none' }}>
                         {f.idea.title}
@@ -696,9 +706,9 @@ export function ProfilePage() {
 
         {tab === 'settings' && (
           <div>
-            {settingsLoading ? null : (
-              <form onSubmit={handleSaveSettings} style={{ backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', padding: '24px' }}>
-                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', marginBottom: '16px' }}>基本资料</h3>
+            {settingsLoading ? <ProfileContentPlaceholder /> : (
+              <form onSubmit={handleSaveSettings} className="ym-stagger-item" style={{ backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', padding: '24px', animationDelay: '0ms' }}>
+                <h3 className="ym-stagger-item" style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', marginBottom: '16px', animationDelay: '55ms' }}>基本资料</h3>
 
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '16px' }}>
                   <div>
@@ -758,18 +768,11 @@ export function ProfilePage() {
                   </div>
                   <div>
                     <label style={labelStyle}>合作状态</label>
-                    <select value={form.collab_status || 'open'} onChange={(e) => setForm({ ...form, collab_status: e.target.value })} style={inputStyle}>
-                      <option value="open">开放合作</option>
-                      <option value="limited">有限合作</option>
-                      <option value="closed">暂不合作</option>
-                    </select>
+                    <ThemeSelect value={form.collab_status || 'open'} onChange={(collab_status) => setForm({ ...form, collab_status })} ariaLabel="合作状态" options={[{ value: 'open', label: '开放合作' }, { value: 'limited', label: '有限合作' }, { value: 'closed', label: '暂不合作' }]} />
                   </div>
                   <div>
                     <label style={labelStyle}>商业委托</label>
-                    <select value={form.commission_status || 'open'} onChange={(e) => setForm({ ...form, commission_status: e.target.value })} style={inputStyle}>
-                      <option value="open">接受委托</option>
-                      <option value="closed">暂不接受</option>
-                    </select>
+                    <ThemeSelect value={form.commission_status || 'open'} onChange={(commission_status) => setForm({ ...form, commission_status })} ariaLabel="商业委托" options={[{ value: 'open', label: '接受委托' }, { value: 'closed', label: '暂不接受' }]} />
                   </div>
                 </div>
 
@@ -909,6 +912,7 @@ export function ProfilePage() {
             )}
           </div>
         )}
+        </section>
       </div>
     </div>
   );

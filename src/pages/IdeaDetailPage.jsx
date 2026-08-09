@@ -5,6 +5,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { isAdmin as isAdminRpc } from '../services/works.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
+import { ThemeSelect } from '../components/ThemeSelect.jsx';
 import {
   getIdeaById,
   getIdeaUpdates,
@@ -596,11 +597,7 @@ export function IdeaDetailPage() {
               <form onSubmit={handleStatusChange}>
                 <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '8px' }}>状态变更（会自动写入进展时间线）</div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '8px' }}>
-                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
-                    {IDEA_STATUSES.map((s) => (
-                      <option key={s.id} value={s.id}>{s.label}</option>
-                    ))}
-                  </select>
+                  <ThemeSelect className="ym-theme-select--compact" value={newStatus} onChange={setNewStatus} ariaLabel="想法状态" options={IDEA_STATUSES.map((s) => ({ value: s.id, label: s.label }))} />
                   <input
                     value={statusNote}
                     onChange={(e) => setStatusNote(e.target.value)}

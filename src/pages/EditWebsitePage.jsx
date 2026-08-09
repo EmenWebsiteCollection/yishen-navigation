@@ -9,6 +9,7 @@ import { getPartitions } from '../services/partitions.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import { uploadWorkDeploy, deleteWorkDeploy, validateDeployFile, deployPreviewUrl } from '../services/workDeploy.js';
 import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
+import { ThemeSelect } from '../components/ThemeSelect.jsx';
 import '../styles/global.css';
 
 const inputStyle = {
@@ -490,28 +491,15 @@ const [videoUrl, setVideoUrl] = useState('');
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px', marginBottom: '20px' }}>
           <div>
             <label style={labelStyle}>创作状态</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
-              <option value="">未设置</option>
-              {WORK_STATUS.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
-              ))}
-            </select>
+            <ThemeSelect value={status} onChange={setStatus} ariaLabel="创作状态" options={[{ value: '', label: '未设置' }, ...WORK_STATUS.map((s) => ({ value: s.id, label: s.label }))]} />
           </div>
           <div>
             <label style={labelStyle}>可见性</label>
-            <select value={visibility} onChange={(e) => setVisibility(e.target.value)} style={inputStyle}>
-              <option value="public">公开</option>
-              <option value="private">私密</option>
-            </select>
+            <ThemeSelect value={visibility} onChange={setVisibility} ariaLabel="可见性" options={[{ value: 'public', label: '公开' }, { value: 'private', label: '私密' }]} />
           </div>
           <div>
             <label style={labelStyle}>分组</label>
-            <select value={groupId} onChange={(e) => setGroupId(e.target.value)} style={inputStyle}>
-              <option value="">未分组</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
+            <ThemeSelect value={groupId} onChange={setGroupId} ariaLabel="分组" options={[{ value: '', label: '未分组' }, ...groups.map((g) => ({ value: g.id, label: g.name }))]} />
           </div>
         </div>
 
@@ -558,22 +546,13 @@ const [videoUrl, setVideoUrl] = useState('');
 
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>AI 参与程度（合规标识）</label>
-            <select value={aiDegree} onChange={(e) => setAiDegree(e.target.value)} style={inputStyle}>
-              {AI_DEGREES.map((d) => (
-                <option key={d.id} value={d.id}>{d.label}</option>
-              ))}
-            </select>
+            <ThemeSelect value={aiDegree} onChange={setAiDegree} ariaLabel="AI 参与程度" options={AI_DEGREES.map((d) => ({ value: d.id, label: d.label }))} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={labelStyle}>创作类型</label>
-              <select value={creativeType} onChange={(e) => setCreativeType(e.target.value)} style={inputStyle}>
-                <option value="">未设置</option>
-                {CREATIVE_TYPES.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
+              <ThemeSelect value={creativeType} onChange={setCreativeType} ariaLabel="创作类型" options={[{ value: '', label: '未设置' }, ...CREATIVE_TYPES.map((c) => ({ value: c.id, label: c.label }))]} />
             </div>
             <div>
               <label style={labelStyle}>完成度（0-100）</label>
@@ -581,12 +560,7 @@ const [videoUrl, setVideoUrl] = useState('');
             </div>
             <div>
               <label style={labelStyle}>适合受众</label>
-              <select value={audience} onChange={(e) => setAudience(e.target.value)} style={inputStyle}>
-                <option value="">未设置</option>
-                {AUDIENCES.map((a) => (
-                  <option key={a.id} value={a.id}>{a.label}</option>
-                ))}
-              </select>
+              <ThemeSelect value={audience} onChange={setAudience} ariaLabel="适合受众" options={[{ value: '', label: '未设置' }, ...AUDIENCES.map((a) => ({ value: a.id, label: a.label }))]} />
             </div>
           </div>
 

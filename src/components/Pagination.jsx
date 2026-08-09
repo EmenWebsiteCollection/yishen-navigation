@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ThemeSelect } from './ThemeSelect.jsx';
 
 // 每页数量的预设值与上限（与 services/works.js 中 getWorks 的钳制保持一致）
 export const PAGE_SIZE_PRESETS = [10, 20, 50];
@@ -89,8 +90,7 @@ export function Pagination({
     }
   };
 
-  const handlePageSizeSelect = (event) => {
-    const value = event.target.value;
+  const handlePageSizeSelect = (value) => {
     if (value === 'custom') {
       setSizeError('');
       setCustomActive(true);
@@ -198,14 +198,13 @@ export function Pagination({
           {pageSize && onPageSizeChange && (
             <div className="ym-pagination-size" role="group" aria-label="每页显示数量">
               <span>每页</span>
-              <select value={customActive ? 'custom' : pageSize} onChange={handlePageSizeSelect}>
-                {PAGE_SIZE_PRESETS.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-                <option value="custom">自定义</option>
-              </select>
+              <ThemeSelect
+                className="ym-theme-select--compact"
+                value={customActive ? 'custom' : pageSize}
+                onChange={handlePageSizeSelect}
+                ariaLabel="每页显示数量"
+                options={[...PAGE_SIZE_PRESETS.map((size) => ({ value: size, label: String(size) })), { value: 'custom', label: '自定义' }]}
+              />
               {customActive && (
                 <form className="ym-pagination-custom-size" onSubmit={submitCustomSize} noValidate>
                   <input
