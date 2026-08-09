@@ -14,9 +14,9 @@ const formatRelativeTime = (value) => {
   return date.toLocaleDateString('zh-CN');
 };
 
-export function IdeaCard({ idea }) {
+export function IdeaCard({ idea, className, style }) {
   return (
-    <article className="ym-idea-card">
+    <article className={`ym-idea-card${className ? ' ' + className : ''}`} style={style}>
       <Link to={`/ideas/${idea.id}`} className="ym-idea-card-main">
         <div className="ym-idea-card-tags">
           <IdeaStatusBadge status={idea.status} size="sm" />

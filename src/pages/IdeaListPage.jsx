@@ -96,9 +96,11 @@ export function IdeaListPage() {
           emoji="光"
           title="灵感"
           subtitle="把脑洞说出来：点赞、收藏、讨论，被看中的想法会变成作品"
+          className="ym-stagger-item"
+          style={{ animationDelay: '0ms' }}
         />
 
-        <div className="ym-idea-toolbar">
+        <div className="ym-idea-toolbar ym-stagger-item" style={{ animationDelay: '55ms' }}>
           <form className="ym-idea-search" onSubmit={handleSearch}>
             <input className="ym-input" name="search" defaultValue={query} placeholder="搜索想法…" aria-label="搜索想法" />
             <button type="submit" className="ym-btn ym-btn-primary">搜索</button>
@@ -110,14 +112,14 @@ export function IdeaListPage() {
           </div>
         </div>
 
-        <div className="ym-chip-row" aria-label="状态筛选">
+        <div className="ym-chip-row ym-stagger-item" style={{ animationDelay: '110ms' }} aria-label="状态筛选">
           <button type="button" className={`ym-chip-button${status === '' ? ' is-active' : ''}`} onClick={() => resetAnd(() => setStatus(''))}>全部</button>
           {IDEA_STATUSES.map((item) => (
             <button key={item.id} type="button" className={`ym-chip-button${status === item.id ? ' is-active' : ''}`} onClick={() => resetAnd(() => setStatus(item.id))}>{item.label}</button>
           ))}
         </div>
 
-        <div className="ym-chip-row" aria-label="分类筛选">
+        <div className="ym-chip-row ym-stagger-item" style={{ animationDelay: '165ms' }} aria-label="分类筛选">
           <button type="button" className={`ym-chip-button${category === '' ? ' is-active' : ''}`} onClick={() => resetAnd(() => setCategory(''))}>全部分类</button>
           {IDEA_CATEGORIES.map((item) => (
             <button key={item.id} type="button" className={`ym-chip-button${category === item.id ? ' is-active' : ''}`} onClick={() => resetAnd(() => setCategory(item.id))}>{item.label}</button>
@@ -126,18 +128,18 @@ export function IdeaListPage() {
 
         <div ref={listTopRef} className="ym-list-anchor" />
         {error && <div className="ym-alert ym-alert-error">{error}</div>}
-        {loading ? (
-          <div className="ym-state-message">加载中…</div>
-        ) : ideas.length === 0 ? (
-          <div className="ym-empty">
-            <h3>还没有符合条件的想法</h3>
-            <p>换一个筛选条件，或者发布第一条想法。</p>
-            <Link to="/ideas/new" className="ym-btn ym-btn-primary">发布想法</Link>
-          </div>
+        {ideas.length === 0 ? (
+          loading ? null : (
+            <div className="ym-empty">
+              <h3>还没有符合条件的想法</h3>
+              <p>换一个筛选条件，或者发布第一条想法。</p>
+              <Link to="/ideas/new" className="ym-btn ym-btn-primary">发布想法</Link>
+            </div>
+          )
         ) : (
           <>
             <div className="ym-idea-list">
-              {ideas.map((idea) => <IdeaCard key={idea.id} idea={idea} />)}
+              {ideas.map((idea, i) => <IdeaCard key={idea.id} idea={idea} className="ym-stagger-item" style={{ animationDelay: `${220 + i * 55}ms` }} />)}
             </div>
             <Pagination
               currentPage={page}

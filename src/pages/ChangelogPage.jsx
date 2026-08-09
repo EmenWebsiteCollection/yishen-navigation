@@ -205,10 +205,14 @@ export function ChangelogPage() {
           emoji="📝"
           title="版本更新记录"
           subtitle="每一次迭代，都让这个项目变得更好"
+          className="ym-stagger-item"
+          style={{ animationDelay: '0ms' }}
         />
 
-        {CHANGELOG.map((v) => (
-          <Version key={v.version} version={v.version} date={v.date} changes={v.changes} latest={v.latest} />
+        {CHANGELOG.map((v, i) => (
+          <div className="ym-stagger-item" style={{ animationDelay: `${55 + i * 55}ms` }} key={v.version}>
+            <Version version={v.version} date={v.date} changes={v.changes} latest={v.latest} />
+          </div>
         ))}
     </div>
   );

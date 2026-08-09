@@ -118,10 +118,10 @@ export function AboutPage() {
           title="关于依神网站汇总"
           subtitle="发现优质网站，共建网络资源库"
           className="ym-stagger-item"
-          style={{ '--ym-stagger-index': 0 }}
+          style={{ animationDelay: '0ms' }}
         />
 
-        <Section emoji="📖" title="项目简介" className="ym-stagger-item" style={{ '--ym-stagger-index': 1 }}>
+        <Section emoji="📖" title="项目简介" className="ym-stagger-item" style={{ animationDelay: '60ms' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <img
               src="https://github.com/EmenWebsiteCollection.png?size=120"
@@ -143,7 +143,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="💭" title="项目初衷" className="ym-stagger-item" style={{ '--ym-stagger-index': 2 }}>
+        <Section emoji="💭" title="项目初衷" className="ym-stagger-item" style={{ animationDelay: '120ms' }}>
           <p>
             互联网上优秀的网站散落各处，很难被系统性地发现和沉淀 🌊。
             这个项目的初衷，就是把这些好网站汇集到一起，让每个人都能基于真实体验推荐、评分和评论，
@@ -151,7 +151,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="🚀" title="项目愿景" className="ym-stagger-item" style={{ '--ym-stagger-index': 3 }}>
+        <Section emoji="🚀" title="项目愿景" className="ym-stagger-item" style={{ animationDelay: '180ms' }}>
           <p>
             我们希望依神网站汇总能够成长为一个活跃、可信、可持续的网站导航社区 🌱：
             内容由社区共建 ✍️、质量由社区把关 ⚖️，同时保持简洁、克制、注重体验的设计风格。
@@ -159,7 +159,7 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section emoji="🤝" title="开发团队与贡献者" className="ym-stagger-item" style={{ '--ym-stagger-index': 4 }}>
+        <Section emoji="🤝" title="开发团队与贡献者" className="ym-stagger-item" style={{ animationDelay: '240ms' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
             {contributors.map((m) => (
               <TeamMember key={m.github || m.name} member={m} />
