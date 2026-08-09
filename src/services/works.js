@@ -1,4 +1,4 @@
-// src/services/works.js
+﻿// src/services/works.js
 // 作品（works）服务层：由原 websites.js 演进而来。
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
@@ -91,12 +91,9 @@ export const normalizeUrl = (url) => {
 export const isAdmin = async (userId) => {
   if (!userId) return false;
   try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .maybeSingle();
-    return !!data?.is_admin;
+    // 走 SECURITY DEFINER RPC（基于 auth.uid() 判定），不再直读 is_admin 列
+    const { data } = await supabase.rpc('is_admin');
+    return !!data;
   } catch (e) {
     return false;
   }
@@ -122,9 +119,12 @@ const TABLE_SELECT_META = `
 // works_with_likes 视图字段（视图已 join profiles）
 // ⚠️ 视图未包含 video_url（列表页不需要），若需列表展示需由团队重建视图并补列
 const VIEW_SELECT = `
-  id, url, title, description, image_url, cover_url, work_type,
-  featured, status, visibility, group_id, changelog,
-  created_at, updated_at, user_id, view_count, like_count, username, avatar_url
+  id, url, title, description, image_url, cover_url, media_url,
+  work_type, featured, status, visibility, group_id, changelog,
+  tags, styles, tools, creative_type, completion, seeking_collab,
+  derivative_allowed, commercial_use, ai_degree, audience, content_warning,
+  created_at, updated_at, user_id, view_count, source_idea_id, video_url, deploy_url, deploy_updated_at,
+  like_count, username, avatar_url
 `;
 
 // 运行时探测 works.video_url 列是否存在（结果缓存，避免每次请求都探测）
@@ -323,6 +323,9 @@ export const createWork = async (payload, userId) => {
 
 // ========== 分页查询（首页网站导航，可扩展任意类型） ==========
 export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', userId = null } = {}) => {
+  // 分页参数钳制，防止 416/超大请求
+  page = Math.max(1, Math.floor(Number(page) || 1));
+  pageSize = Math.min(50, Math.max(1, Math.floor(Number(pageSize) || 10)));
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -361,15 +364,18 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
   return { works: data.map((item) => mapWork(item)), total: count || 0 };
 };
 
-// ========== 高分作品（首页轮播：仅网站类、公开） ==========
-export const getTopRatedWorks = async (limit = 8) => {
+// 高分作品（首页轮播：公开作品按点赞排序）。
+// diversify=true 时按作品类型轮换入选，保证高分榜单不被单一类型（如网站）独占。
+export const getTopRatedWorks = async (limit = 8, { diversify = false } = {}) => {
+  // 多样式榜单需要更大的候选池，保证各类型都能补位
+  const pool = diversify ? limit * 4 : limit;
+
   let query = supabase
     .from('works_with_likes')
     .select(VIEW_SELECT)
-    .eq('work_type', 'website')
     .eq('visibility', 'public')
     .order('like_count', { ascending: false })
-    .limit(limit);
+    .limit(pool);
 
   const { data, error } = await query;
 
@@ -378,10 +384,9 @@ export const getTopRatedWorks = async (limit = 8) => {
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('works')
       .select(await getTableSelect())
-      .eq('work_type', 'website')
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .limit(pool);
     if (fallbackError) throw fallbackError;
 
     const works = await Promise.all(
@@ -390,10 +395,30 @@ export const getTopRatedWorks = async (limit = 8) => {
         return { ...mapWork(item), like_count: likeCount };
       })
     );
-    return works.sort((a, b) => b.like_count - a.like_count).slice(0, limit);
+    works.sort((a, b) => b.like_count - a.like_count);
+    return diversify ? diversifyByType(works, limit) : works.slice(0, limit);
   }
 
-  return data.map((item) => mapWork(item));
+  const works = data.map((item) => mapWork(item));
+  return diversify ? diversifyByType(works, limit) : works;
+};
+
+// 按作品类型轮换取前 limit 个：同类型只占一个名额，各类作品都能上榜
+const diversifyByType = (works, limit) => {
+  const byType = {};
+  works.forEach((w) => {
+    if (!byType[w.work_type]) byType[w.work_type] = [];
+    byType[w.work_type].push(w);
+  });
+  const types = Object.keys(byType);
+  const result = [];
+  let i = 0;
+  while (result.length < limit && i < limit * types.length) {
+    const next = byType[types[i % types.length]]?.shift();
+    if (next) result.push(next);
+    i += 1;
+  }
+  return result;
 };
 
 // ========== 获取单个作品 ==========
@@ -406,7 +431,6 @@ export const getWorkById = async (id, currentUserId = null) => {
     .maybeSingle();
 
   if (error) {
-    if (error.code === 'PGRST116') return null;
     // 视图不可用时降级到表直查（点赞数单独获取，失败为 0）
     const { data: tableData, error: tableError } = await supabase
       .from('works')
@@ -414,7 +438,6 @@ export const getWorkById = async (id, currentUserId = null) => {
       .eq('id', id)
       .maybeSingle();
     if (tableError) {
-      if (tableError.code === 'PGRST116') return null;
       throw tableError;
     }
     if (!tableData) return null;
@@ -611,7 +634,7 @@ export const hasLikedWork = async (workId, userId) => {
       .eq('website_id', workId)
       .eq('user_id', userId)
       .maybeSingle();
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return !!data;
   } catch (e) {
     console.warn('检查点赞状态失败:', e.message);
@@ -623,7 +646,10 @@ export const likeWork = async (workId, userId) => {
   const { error } = await supabase
     .from('website_likes')
     .insert({ website_id: workId, user_id: userId });
-  if (error) throw error;
+  if (error) {
+    if (error.code === '23505') throw new Error('你已经点过赞了');
+    throw error;
+  }
 };
 
 export const unlikeWork = async (workId, userId) => {
@@ -654,7 +680,7 @@ export const hasFavoritedWork = async (workId, userId) => {
       .eq('work_id', workId)
       .eq('user_id', userId)
       .maybeSingle();
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return !!data;
   } catch (e) {
     console.warn('检查收藏状态失败:', e.message);
@@ -755,3 +781,4 @@ export const incrementView = async (workId) => {
     console.warn('浏览量计数失败:', e.message);
   }
 };
+

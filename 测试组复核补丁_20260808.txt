@@ -1,0 +1,67 @@
+【依神网站汇总 · 测试组复核补丁（2026-08-08 晚间）】
+提交人：测试/产品组 轻歌
+基于：main 248936c（含后端组 #76 深度审计修复）
+
+━━━━━━━━━━━━━━━━━━━━━━
+一、复核结论（对照后端组审计报告 21 项）
+━━━━━━━━━━━━━━━━━━━━━━
+✅ 抽查通过：
+- merge_ideas 越权修复（is_admin() 校验，p_admin_id 参数不再信任）
+- profiles 隐私（表级 REVOKE + 列级白名单，不含 email/phone/is_admin）
+- works_with_likes 视图重建（meta 列 + video_url）
+- 删除类 RPC 落盘迁移、works INSERT auth.role() 双保险、
+  partitions 管理员门禁、isAdmin RPC 链路、useAuth console.log 清理、
+  updateProfile 字段白名单
+
+✅ Issue #50 精选权限：测试组实测全线生效
+- 普通用户个人中心已无「设精选」按钮（前端隐藏）
+- 直连 API PATCH works.featured=true → 400「permission denied: 精选仅管理员可设置」
+  （005 触发器线上已生效，即使绕过 UI 也拦得住）
+- 代码：ProfilePage isAdminUser 判断 + works.js 走 set_featured RPC
+
+━━━━━━━━━━━━━━━━━━━━━━
+二、本次补丁（测试组发现并修复的遗漏）
+━━━━━━━━━━━━━━━━━━━━━━
+1. 🔴 is_admin() 函数 + profiles.is_admin 列从未入迁移（新环境会崩）
+   8 个迁移引用 is_admin()，但历史上是控制台手动建的。
+   → 新增 sql/006_is_admin_function.sql（幂等：仅缺失时创建，不覆盖线上已有实现），
+     并镜像到 supabase/migrations/20260808_is_admin_function.sql
+
+2. 🟡 迁移目录分裂（sql/ 编号 vs supabase/migrations/ 日期）
+   → 005_featured_admin_only.sql 补镜像到 supabase/migrations/20260808_featured_admin_only.sql；
+     AGENTS.md 明确「新迁移统一放 supabase/migrations/，关键迁移双份镜像」
+
+3. 🟢 匿名登录失败警告刷屏（Anonymous sign-ins disabled，游客每次初始化都报）
+   → useAuth.js：匿名登录未启用时失败是预期路径，首次 warn 一次便于诊断，
+     之后静默；删除冗余的「无法获取用户」warn
+
+4. 🟡 .env.local 又被跟踪进公开仓库（BobHieuro「图片上传功能」提交 e171c7d 加回）
+   → 本次已 git rm --cached 移除跟踪（本地文件保留，开发不受影响）。
+     注意：移除跟踪的提交推送后才会在远程生效，之后任何人再 add 需要强提醒
+
+━━━━━━━━━━━━━━━━━━━━━━
+三、已确认不需要改的项
+━━━━━━━━━━━━━━━━━━━━━━
+- profiles.socials 列在公开白名单：已确认是产品功能——CreatorProfilePage
+  在创作者主页渲染社交链接（用户自愿填的微博/小红书等），必须公开。
+  当前线上 socials 全为空数组，无实际泄漏。
+- 依力AI：按产品决定暂不动（函数未配 LLM_API_KEY，规则兜底运行中）
+
+━━━━━━━━━━━━━━━━━━━━━━
+四、遗留提醒（需负责人/产品决策，非代码问题）
+━━━━━━━━━━━━━━━━━━━━━━
+- ⏳ 依力AI 函数线上未配 LLM_API_KEY（curl 返回 503 降级文案）——真 AI 未上线，
+  目前全靠 agentFallback.js 规则兜底。若正式上线需配 Netlify 环境变量：
+  LLM_API_KEY / LLM_URL / LLM_MODEL / SUPABASE_URL / SUPABASE_ANON_KEY
+- ⏳ 打包习惯：交付包别再带上 .env.local（anon key 扩散）
+
+━━━━━━━━━━━━━━━━━━━━━━
+五、代码状态
+━━━━━━━━━━━━━━━━━━━━━━
+- 改动文件：src/hooks/useAuth.js、sql/006_is_admin_function.sql（新增）、
+  supabase/migrations/20260808_is_admin_function.sql（新增）、
+  supabase/migrations/20260808_featured_admin_only.sql（新增）、AGENTS.md、
+  .env.local（移除 git 跟踪）
+- 验证：npm run build 通过 ✅
+- 数据库迁移需在 Supabase Dashboard 执行：006_is_admin_function.sql（幂等，
+  新环境与线上均可跑；线上跑仅补函数缺失场景）

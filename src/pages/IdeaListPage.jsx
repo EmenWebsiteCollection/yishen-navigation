@@ -2,16 +2,27 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHero } from '../components/PageHero.jsx';
 import { IdeaCard } from '../components/IdeaCard.jsx';
-import { Pagination } from '../components/Pagination.jsx';
+import { Pagination, PAGE_SIZE_MAX } from '../components/Pagination.jsx';
 import { getIdeas } from '../services/ideas.js';
 import { IDEA_CATEGORIES, IDEA_STATUSES } from '../services/idea-logic.js';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_DEFAULT = 10;
+const PAGE_SIZE_KEY = 'ym-page-size';
+
+function readPageSize() {
+  try {
+    const saved = parseInt(sessionStorage.getItem(PAGE_SIZE_KEY) || '', 10);
+    return Number.isFinite(saved) && saved >= 1 && saved <= PAGE_SIZE_MAX ? saved : PAGE_SIZE_DEFAULT;
+  } catch {
+    return PAGE_SIZE_DEFAULT;
+  }
+}
 
 export function IdeaListPage() {
   const [ideas, setIdeas] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(readPageSize);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('');
@@ -26,7 +37,7 @@ export function IdeaListPage() {
     try {
       const { ideas: list, total: count } = await getIdeas({
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         category: category || null,
         status: status || null,
         sort,
@@ -40,7 +51,7 @@ export function IdeaListPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, category, status, sort, query]);
+  }, [page, pageSize, category, status, sort, query]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -65,7 +76,18 @@ export function IdeaListPage() {
     });
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const handlePageSizeChange = (size) => {
+    if (size === pageSize) return;
+    try {
+      sessionStorage.setItem(PAGE_SIZE_KEY, String(size));
+    } catch {
+      /* 隐私模式等场景忽略 */
+    }
+    setPageSize(size);
+    setPage(1);
+  };
 
   return (
     <div className="ym-content-page">
@@ -119,7 +141,15 @@ export function IdeaListPage() {
             <div className="ym-idea-list">
               {ideas.map((idea, i) => <IdeaCard key={idea.id} idea={idea} className="ym-stagger-item" style={{ animationDelay: `${220 + i * 55}ms` }} />)}
             </div>
-            <Pagination currentPage={page} totalPages={totalPages} totalItems={total} itemLabel="条想法" onPageChange={handlePageChange} />
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              itemLabel="条想法"
+              onPageChange={handlePageChange}
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </>
         )}
       </div>

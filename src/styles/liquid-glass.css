@@ -1,4 +1,4 @@
-/* macOS-inspired Liquid Glass design system */
+﻿/* macOS-inspired Liquid Glass design system */
 [data-theme="macos"] {
 
 
@@ -778,7 +778,7 @@
 [data-theme="macos"] .ym-grid {
 
 
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* auto-fill 保留空轨道，单作品不全屏（#62） */
   gap: 22px;
 
 
@@ -786,7 +786,7 @@
 [data-theme="macos"] .ym-grid-wide {
 
 
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* auto-fill 保留空轨道，单作品不全屏（#62） */
 
 
 }
@@ -1411,14 +1411,45 @@
 
 }
 [data-theme="macos"] .ym-pagination-summary {
-
-
   margin: 14px 0 0;
   color: var(--ym-text-muted);
   font-size: 13px;
   text-align: center;
+}
 
+[data-theme="macos"] .ym-pagination-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ym-text-muted);
+  font-size: 13px;
+}
 
+[data-theme="macos"] .ym-pagination-size select {
+  padding: 3px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--ym-glass-edge-soft);
+  background-color: rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha));
+  color: var(--ym-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+[data-theme="macos"] .ym-pagination-custom-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-theme="macos"] .ym-pagination-custom-size input {
+  width: 54px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--ym-glass-edge-soft);
+  background-color: rgba(var(--ym-glass-rgb), var(--ym-glass-control-alpha));
+  color: var(--ym-text-primary);
+  font-size: 13px;
+  text-align: center;
 }
 /* Footer and floating controls */
 [data-theme="macos"] .ym-site-footer {
@@ -2037,3 +2068,4 @@
 
 }
 }
+

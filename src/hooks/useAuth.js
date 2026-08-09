@@ -2,6 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase.js';
 
+// 匿名登录未启用（Anonymous sign-ins disabled）时，游客每次初始化都会尝试
+// 匿名登录并失败——这是预期路径而非异常。首次 warn 一次便于诊断，之后静默防刷屏。
+let anonymousLoginWarned = false;
+
 export function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,17 +17,23 @@ export function useAuth() {
   };
 
   const signInAnonymously = useCallback(async () => {
-    console.log('🔐 尝试匿名登录...');
+
     try {
       const { data, error } = await supabase.auth.signInAnonymously();
       if (error) {
-        console.warn('匿名登录失败:', error.message);
+        if (!anonymousLoginWarned) {
+          console.warn('匿名登录失败:', error.message);
+          anonymousLoginWarned = true;
+        }
         return null;
       }
-      console.log('✅ 匿名登录成功，用户ID:', data.user?.id);
+
       return data.user;
     } catch (err) {
-      console.warn('匿名登录异常:', err.message);
+      if (!anonymousLoginWarned) {
+        console.warn('匿名登录异常:', err.message);
+        anonymousLoginWarned = true;
+      }
       return null;
     }
   }, []);
@@ -31,24 +41,23 @@ export function useAuth() {
   const initAuth = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔄 初始化认证...');
 
       const { data: sessionData } = await supabase.auth.getSession();
       let currentUser = sessionData?.session?.user || null;
 
       if (!currentUser) {
-        console.log('👤 无会话，执行匿名登录');
+
         currentUser = await signInAnonymously();
       } else {
-        console.log('👤 已有会话，用户ID:', currentUser.id);
+
       }
 
       if (currentUser) {
         setUser(currentUser);
         setIsAnonymous(checkIsAnonymous(currentUser));
-        console.log('✅ 用户已设置:', currentUser.id, '匿名:', checkIsAnonymous(currentUser));
+
       } else {
-        console.warn('⚠️ 无法获取用户，设置 user 为 null');
+        // 匿名登录失败时 user 为 null 是预期路径（signInAnonymously 已报过诊断）
         setUser(null);
         setIsAnonymous(false);
       }
@@ -58,7 +67,7 @@ export function useAuth() {
       setIsAnonymous(false);
     } finally {
       setLoading(false);
-      console.log('🏁 认证初始化完成，loading = false');
+
     }
   }, [signInAnonymously]);
 
@@ -67,14 +76,14 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('📢 Auth 状态变化:', event);
+
         const newUser = session?.user || null;
         setUser(newUser);
         setIsAnonymous(newUser ? checkIsAnonymous(newUser) : false);
         setLoading(false);
 
         if (!newUser && event === 'SIGNED_OUT') {
-          console.log('🚪 退出登录，重新匿名登录');
+
           const anonymousUser = await signInAnonymously();
           if (anonymousUser) {
             setUser(anonymousUser);
@@ -90,7 +99,7 @@ export function useAuth() {
   }, [initAuth, signInAnonymously]);
 
   const refreshAnonymous = useCallback(async () => {
-    console.log('🔄 刷新匿名身份...');
+
     const { data } = await supabase.auth.getSession();
     const currentUser = data?.session?.user || null;
     if (!currentUser) {

@@ -1,12 +1,13 @@
 ﻿// src/pages/EditWebsitePage.jsx
 // 编辑作品：类型/URL/标题/描述/图片/状态/公开·私密/分组/更新日志
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TechLoader } from '../components/TechLoader.jsx';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS, isAdmin, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel } from '../services/works.js';
 import { getPartitions } from '../services/partitions.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
+import { uploadWorkDeploy, deleteWorkDeploy, validateDeployFile, deployPreviewUrl } from '../services/workDeploy.js';
 import { uploadWorkMedia, validateMediaFile } from '../services/media.js';
 import '../styles/global.css';
 
@@ -36,6 +37,13 @@ export function EditWebsitePage() {
   const { user, loading: authLoading } = useAuth();
   const [url, setUrl] = useState('');
 const [videoUrl, setVideoUrl] = useState('');
+
+  // Issue #13：在线部署（可选）
+  const deployInputRef = useRef(null);
+  const [deployUrl, setDeployUrl] = useState('');
+  const [deployFile, setDeployFile] = useState(null);
+  const [deployBusy, setDeployBusy] = useState(false);
+  const [deployMsg, setDeployMsg] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [workType, setWorkType] = useState('website');
@@ -76,22 +84,26 @@ const [videoUrl, setVideoUrl] = useState('');
       setLoading(false);
       return;
     }
-    isAdmin(user.id).then(setIsAdminUser).catch(() => setIsAdminUser(false));
     const loadWork = async () => {
       try {
         setLoading(true);
         setError('');
-        const data = await getWorkById(id, user.id);
+        const [data, adminFlag] = await Promise.all([
+          getWorkById(id, user.id),
+          isAdmin(user.id).catch(() => false),
+        ]);
+        setIsAdminUser(!!adminFlag);
         if (!data) {
           setError('作品不存在');
           return;
         }
-        if (user.id !== data.user_id && !isAdminUser) {
+        if (user.id !== data.user_id && !adminFlag) {
           setError('您没有权限编辑此作品');
           return;
         }
         setUrl(data.url || '');
         setVideoUrl(data.video_url || '');
+        setDeployUrl(data.deploy_url || '');
         setTitle(data.title);
         setDescription(data.description || '');
         setWorkType(data.work_type || 'website');
@@ -179,6 +191,48 @@ const [videoUrl, setVideoUrl] = useState('');
     setImageUrl('');
   };
 
+'',
+'  // Issue #13：在线部署（上传/删除）',
+'  const handlePickDeploy = (file) => {',
+'    try {',
+'      validateDeployFile(file);',
+'      setDeployFile(file);',
+"      setDeployMsg('');",
+'    } catch (err) {',
+"      setDeployMsg('❌ ' + err.message);",
+'      setDeployFile(null);',
+'    }',
+'  };',
+'',
+'  const handleUploadDeploy = async () => {',
+'    if (!deployFile || deployBusy) return;',
+'    setDeployBusy(true);',
+"    setDeployMsg('');",
+'    try {',
+'      const dep = await uploadWorkDeploy(id, deployFile, user.id);',
+'      setDeployUrl(dep.deploy_url);',
+"      setDeployMsg('✅ 部署成功：' + dep.deploy_url);",
+'      setDeployFile(null);',
+'    } catch (err) {',
+"      setDeployMsg('❌ 部署失败：' + err.message);",
+'    } finally {',
+'      setDeployBusy(false);',
+'    }',
+'  };',
+'',
+'  const handleDeleteDeploy = async () => {',
+"    if (deployBusy || !window.confirm('确定删除在线部署吗？')) return;",
+'    setDeployBusy(true);',
+'    try {',
+'      await deleteWorkDeploy(id, user.id);',
+"      setDeployUrl('');",
+"      setDeployMsg('已删除部署');",
+'    } catch (err) {',
+"      setDeployMsg('❌ 删除失败：' + err.message);",
+'    } finally {',
+'      setDeployBusy(false);',
+'    }',
+'  };'
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -629,6 +683,39 @@ const [videoUrl, setVideoUrl] = useState('');
             {error}
           </div>
         )}
+        {/* Issue #13：在线部署（可选） */}
+        <div style={{ marginBottom: '18px', padding: '18px', border: '2px dashed var(--ym-border)', borderRadius: 'var(--ym-radius-md)', backgroundColor: 'var(--ym-bg-subtle)' }}>
+          <div style={{ fontSize: '15px', color: 'var(--ym-text-primary)', marginBottom: '6px' }}>📦 在线部署（可选）</div>
+          <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)', marginBottom: '10px', lineHeight: 1.6 }}>
+            上传 zip 自动部署为可访问的静态站点（≤50MB，仅支持纯静态 HTML/CSS/JS，不支持后端；SPA 子路由刷新会 404）。
+          </div>
+          {deployUrl ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <a href={deployUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ym-accent)', fontSize: '13px', wordBreak: 'break-all' }}>🔗 在线预览：{deployUrl}</a>
+              <button type="button" onClick={handleDeleteDeploy} disabled={deployBusy} style={{ padding: '4px 12px', border: '1px solid var(--ym-danger)', color: 'var(--ym-danger)', background: 'transparent', borderRadius: '8px', cursor: deployBusy ? 'not-allowed' : 'pointer', fontSize: '12px' }}>删除部署</button>
+            </div>
+          ) : (
+            <div
+              style={{ padding: '14px', border: '1px dashed var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => deployInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handlePickDeploy(f); }}
+            >
+              <input ref={deployInputRef} type="file" accept=".zip" style={{ display: 'none' }} onChange={(e) => handlePickDeploy(e.target.files?.[0])} />
+              <div style={{ fontSize: '14px', color: 'var(--ym-text-secondary)' }}>拖拽 zip 到此处，或点击选择</div>
+              {deployFile && (
+                <div style={{ marginTop: '8px', display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--ym-text-primary)' }}>已选择：{deployFile.name}</span>
+                  <button type="button" onClick={handleUploadDeploy} disabled={deployBusy} style={{ padding: '4px 14px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', border: 'none', borderRadius: '8px', cursor: deployBusy ? 'not-allowed' : 'pointer', fontSize: '12px' }}>{deployBusy ? '部署中...' : '开始部署'}</button>
+                  <button type="button" onClick={() => setDeployFile(null)} style={{ padding: '4px 12px', border: '1px solid var(--ym-border)', color: 'var(--ym-text-secondary)', background: 'transparent', borderRadius: '8px', cursor: 'pointer', fontSize: '12px' }}>移除</button>
+                </div>
+              )}
+            </div>
+          )}
+          {deployMsg && (
+            <div style={{ marginTop: '8px', fontSize: '12px', color: deployMsg.startsWith('✅') ? 'var(--ym-success)' : 'var(--ym-danger)', wordBreak: 'break-all' }}>{deployMsg}</div>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
             type="submit"

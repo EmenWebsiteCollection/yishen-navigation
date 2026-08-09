@@ -1,6 +1,6 @@
 <!-- 顶部：项目名 + 徽章（占位，可按需替换） -->
 <p align="center">
-  <img src="https://via.placeholder.com/200x80?text=Your+Logo" alt="项目 Logo" width="200" />
+  <img src="https://github.com/EmenWebsiteCollection/yishen-navigation/blob/main/public/yili.jpg" alt="项目 Logo" width="200" />
 </p>
 
 <h1 align="center">🚀 依神网站汇总</h1>
