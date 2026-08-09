@@ -18,7 +18,7 @@ import {
   buildStyleBlock,
   detectPreferenceSignals,
 } from '../../src/services/yili-retrieval-logic.mjs';
-import { getYiliSamples } from '../../src/services/yiliRetrieval.js';
+import { getStyleBlock } from '../../src/services/yiliRetrieval.js';
 import { buildStyleDnaBlock } from '../../src/services/yili-style-dna.js';
 
 export { tokenizeKeyword }; // 向后兼容导出（如外部测试引用）
@@ -476,7 +476,7 @@ async function runAgent(messages, { persona = '', userId = null, idToken = null 
     const supabase = makeAnonClient();
     if (supabase) {
       try {
-        const { block } = await getYiliSamples(query, {
+        const { block } = await getStyleBlock(query, {
           supabase,
           limit: 6,
           apiKey: ENV.DASHSCOPE_API_KEY,
@@ -650,6 +650,7 @@ export default async (req) => {
     return json({ reply: fb.reply, actions: fb.actions }, 200);
   }
 };
+
 
 
 
