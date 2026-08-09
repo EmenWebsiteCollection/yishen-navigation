@@ -230,4 +230,47 @@ drop policy if exists yili_corpus_write_admin on public.yili_corpus;
 create policy yili_corpus_write_admin on public.yili_corpus
   for all using (public.is_admin()) with check (public.is_admin());
 revoke insert, update, delete, truncate on public.yili_corpus from anon, authenticated;
--- upsert_yili_chunks 函数需加 is_admin() 校验（见线上已执行版本）
+
+-- upsert_yili_chunks：写入口仅管理员（SECURITY DEFINER 绕过 RLS，必须函数内校验）
+create or replace function public.upsert_yili_chunks(p_chunks jsonb)
+returns void
+language plpgsql security definer
+set search_path = public
+as $$
+declare
+  c jsonb;
+  v_vec vector(1024);
+begin
+  if not public.is_admin() then
+    raise exception '需要管理员权限才能更新记忆库';
+  end if;
+
+  for c in select value from jsonb_array_elements(p_chunks) loop
+    begin
+      v_vec := ('[' || (
+        select string_agg(elem, ',')
+        from jsonb_array_elements_text(c -> 'embedding') elem
+      ) || ']')::vector(1024);
+    exception when others then
+      v_vec := null;
+    end;
+
+    insert into public.yili_corpus (doc_id, chunk_index, content, token_count, source_file, embedding)
+    values (
+      c ->> 'doc_id',
+      (c ->> 'chunk_index')::int,
+      c ->> 'content',
+      (c ->> 'token_count')::int,
+      c ->> 'source_file',
+      v_vec
+    )
+    on conflict (doc_id, chunk_index) do update
+      set content = excluded.content,
+          token_count = excluded.token_count,
+          source_file = excluded.source_file,
+          embedding = excluded.embedding,
+          created_at = now();
+  end loop;
+end $$;
+
+grant execute on function public.upsert_yili_chunks(jsonb) to service_role;

@@ -85,7 +85,7 @@ export const getIdeas = async ({
   if (status) q = q.eq('status', status);
   if (userId) q = q.eq('user_id', userId);
   if (query) {
-    const like = '%' + escapeLike(normalizeQuery(query)) + '%';
+    const like = `"%${escapeLike(normalizeQuery(query))}%"`;
     q = q.or(`title.ilike.${like},description.ilike.${like}`);
   }
 
@@ -373,7 +373,7 @@ export const deleteIdeaComment = async (commentId) => {
 export const findSimilarIdeas = async (query, { limit = 5 } = {}) => {
   const q = normalizeQuery(query);
   if (!q || q.length < 2) return [];
-  const like = '%' + escapeLike(q) + '%';
+  const like = `"%${escapeLike(q)}%"`;
   const { data, error } = await supabase
     .from('ideas_with_stats')
     .select('id, title, status, category, vote_count, created_at, tags')
