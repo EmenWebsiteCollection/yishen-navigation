@@ -207,10 +207,6 @@ export function HomePage() {
     });
   };
 
-  if (authLoading) {
-    return <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ym-text-secondary)' }}>加载中...</div>;
-  }
-
   return (
     <div className="ym-home-page">
       <HighRatedCarousel />
@@ -278,17 +274,15 @@ export function HomePage() {
         ))}
       </div>
 
-      {loading ? (
-        <div className="ym-grid">
-          {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-      ) : error ? (
+      {error ? (
         <div className="ym-alert ym-alert-error">{error}</div>
       ) : websites.length === 0 ? (
-        <div className="ym-empty">
-          <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '6px' }}>这个分区还没有作品</div>
-          <div>点击右上角提交第一个作品</div>
-        </div>
+        loading ? null : (
+          <div className="ym-empty">
+            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '6px' }}>这个分区还没有作品</div>
+            <div>点击右上角提交第一个作品</div>
+          </div>
+        )
       ) : (
         <>
           <div className="ym-grid ym-grid-wide">

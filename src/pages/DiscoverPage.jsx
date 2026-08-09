@@ -141,16 +141,16 @@ export function DiscoverPage() {
           </div>
         )}
 
-        {loading && works.length === 0 ? (
-          <div className="ym-state-message">加载中…</div>
-        ) : error ? (
+        {error ? (
           <div className="ym-alert ym-alert-error">{error}</div>
         ) : works.length === 0 ? (
-          <div className="ym-empty">
-            <h3>{rail === 'zero_comment' ? '当前没有零评论作品' : '这个入口暂时还没有作品'}</h3>
-            <p>{rail === 'zero_comment' ? '说明大家都在被认真回应。' : '发布你的第一件作品，让它在这里被看见。'}</p>
-            <Link to="/create" className="ym-btn ym-btn-primary">发布作品</Link>
-          </div>
+          loading ? null : (
+            <div className="ym-empty">
+              <h3>{rail === 'zero_comment' ? '当前没有零评论作品' : '这个入口暂时还没有作品'}</h3>
+              <p>{rail === 'zero_comment' ? '说明大家都在被认真回应。' : '发布你的第一件作品，让它在这里被看见。'}</p>
+              <Link to="/create" className="ym-btn ym-btn-primary">发布作品</Link>
+            </div>
+          )
         ) : (
           <>
             <div className="ym-grid ym-grid-wide">

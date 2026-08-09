@@ -27,7 +27,7 @@ import { YiliMascot } from './components/YiliMascot.jsx';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading, isAnonymous } = useAuth();
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '200px' }}><TechLoader text="加载中..." /></div>;
+  if (loading) return null;
   return user && !isAnonymous ? children : <Navigate to="/" replace />;
 };
 

@@ -106,14 +106,14 @@ export function IdeaListPage() {
 
         <div ref={listTopRef} className="ym-list-anchor" />
         {error && <div className="ym-alert ym-alert-error">{error}</div>}
-        {loading ? (
-          <div className="ym-state-message">加载中…</div>
-        ) : ideas.length === 0 ? (
-          <div className="ym-empty">
-            <h3>还没有符合条件的想法</h3>
-            <p>换一个筛选条件，或者发布第一条想法。</p>
-            <Link to="/ideas/new" className="ym-btn ym-btn-primary">发布想法</Link>
-          </div>
+        {ideas.length === 0 ? (
+          loading ? null : (
+            <div className="ym-empty">
+              <h3>还没有符合条件的想法</h3>
+              <p>换一个筛选条件，或者发布第一条想法。</p>
+              <Link to="/ideas/new" className="ym-btn ym-btn-primary">发布想法</Link>
+            </div>
+          )
         ) : (
           <>
             <div className="ym-idea-list">
