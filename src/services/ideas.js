@@ -116,6 +116,17 @@ export const getIdeaById = async (id, currentUserId = null) => {
   }
   if (!data) return null;
   const idea = mapIdea(data);
+  // 补充：已导出的 GitHub Issue 编号（独立字段，不在视图中）
+  try {
+    const { data: ext } = await supabase
+      .from('ideas')
+      .select('github_issue_number')
+      .eq('id', id)
+      .maybeSingle();
+    idea.github_issue_number = ext?.github_issue_number ?? null;
+  } catch (_) {
+    idea.github_issue_number = null;
+  }
   if (currentUserId) {
     idea.has_voted = await hasVotedIdea(id, currentUserId);
     idea.has_favorited = await hasFavoritedIdea(id, currentUserId);
@@ -468,4 +479,24 @@ export const getMyFavoritedIdeas = async (userId) => {
       favorited_at: f.created_at,
       idea: f.ideas,
     }));
+};
+
+// ========== 管理员：一键导出 GitHub Issue ==========
+export const exportIdeaToGithub = async (ideaId) => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error('请先登录');
+
+  const res = await fetch('/.netlify/functions/export-idea', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ ideaId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `导出失败（HTTP ${res.status}）`);
+  return body;
 };

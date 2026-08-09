@@ -16,6 +16,7 @@ import {
   updateIdeaStatus,
   addIdeaUpdate,
   mergeIdeas,
+  exportIdeaToGithub,
 } from '../services/ideas.js';
 import { IDEA_STATUSES } from '../services/idea-logic.js';
 import { getProfile } from '../services/users.js';
@@ -194,6 +195,26 @@ export function IdeaDetailPage() {
   const [progressSubmitting, setProgressSubmitting] = useState(false);
   const [mergeInput, setMergeInput] = useState('');
   const [mergeSubmitting, setMergeSubmitting] = useState(false);
+  const [exportSubmitting, setExportSubmitting] = useState(false);
+
+  const handleExportIssue = async () => {
+    if (!isAdmin || exportSubmitting) return;
+    const confirmed = window.confirm(
+      '确认把这个想法导出为 GitHub Issue 吗？\n导出后会记录 issue 编号，不可重复导出。'
+    );
+    if (!confirmed) return;
+    setExportSubmitting(true);
+    setNotice('');
+    try {
+      const result = await exportIdeaToGithub(idea.id);
+      setIdea((prev) => ({ ...prev, github_issue_number: result.issueNumber }));
+      setNotice(`✅ 已导出为 GitHub Issue #${result.issueNumber}`);
+    } catch (err) {
+      setNotice(err.message || '导出失败');
+    } finally {
+      setExportSubmitting(false);
+    }
+  };
 
   const loadAll = useCallback(async () => {
     if (!id) return;
@@ -588,6 +609,32 @@ export function IdeaDetailPage() {
                 </button>
               </div>
             </form>
+          )}
+
+          {/* 管理员：一键导出 GitHub Issue */}
+          {isAdmin && (
+            <div style={{ marginTop: '18px', padding: '14px 16px', backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-sm)' }}>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '8px' }}>🐙 管理员：导出到 GitHub Issue（进入开发队列）</div>
+              {idea.github_issue_number ? (
+                <a
+                  href={`https://github.com/EmenWebsiteCollection/yishen-navigation/issues/${idea.github_issue_number}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: '14px', color: 'var(--ym-accent)', textDecoration: 'none' }}
+                >
+                  ✅ 已导出 → Issue #{idea.github_issue_number} ↗
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleExportIssue}
+                  disabled={exportSubmitting}
+                  style={{ padding: '8px 16px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', border: 'none', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px', cursor: exportSubmitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {exportSubmitting ? '导出中…' : '一键导出为 GitHub Issue'}
+                </button>
+              )}
+            </div>
           )}
 
           {/* 作者/管理员：状态变更 + 补进展 */}

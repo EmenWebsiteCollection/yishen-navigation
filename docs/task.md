@@ -56,6 +56,7 @@
 ## 服务层（src/services/ideas.js + idea-logic.js）
 
 - [x] getIdeas（分类/状态/搜索/最新·最热/置顶优先）/ getIdeaById（含本人投票·关注状态）
+- [x] 管理员一键导出 GitHub Issue（sql/010_idea_github_issue.sql + netlify/functions/export-idea.mjs + 详情页入口）
 - [x] createIdea（校验 + 服务端限流 1h≤3 / 24h≤10）
 - [x] 投票/关注 toggle、评论树（回复/删除）、进展时间线
 - [x] updateIdeaStatus（状态变更自动写时间线，关闭必填理由）/ addIdeaUpdate
