@@ -12,9 +12,10 @@ const BUCKET = 'work_deploys';
 const MAX_ZIP_MB = 50;
 const MAX_SINGLE_FILE_MB = 10;
 
-// 允许的扩展名（与存储桶 MIME 白名单对齐）
+// 允许的扩展名（与存储桶 MIME 白名单严格对齐：桶白名单无 text/plain/markdown，
+// 故 txt/md 不放行——zip 内 README 等文档会被静默跳过）
 const ALLOWED_EXT = new Set([
-  'html', 'htm', 'css', 'js', 'mjs', 'json', 'txt', 'md',
+  'html', 'htm', 'css', 'js', 'mjs', 'json',
   'png', 'jpg', 'jpeg', 'svg', 'webp', 'gif', 'ico',
   'woff', 'woff2', 'ttf', 'mp4', 'webm', 'mp3', 'ogg',
 ]);
@@ -26,6 +27,21 @@ const BLOCKED_EXT = new Set([
 ]);
 
 const extOf = (name) => (name.includes('.') ? name.split('.').pop().toLowerCase() : '');
+
+// 扩展名 → MIME 映射（与 work_deploys 桶 allowed_mime_types 白名单逐项对齐；
+// JSZip blob.type 恒为空，必须按扩展名显式指定，否则上传会被桶 MIME 白名单拒绝）
+const EXT_MIME = {
+  html: 'text/html', htm: 'text/html',
+  css: 'text/css',
+  js: 'text/javascript', mjs: 'application/javascript',
+  json: 'application/json',
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+  svg: 'image/svg+xml', webp: 'image/webp', gif: 'image/gif', ico: 'image/x-icon',
+  woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf',
+  mp4: 'video/mp4', webm: 'video/webm',
+  mp3: 'audio/mpeg', ogg: 'audio/ogg',
+};
+const mimeOf = (name) => EXT_MIME[extOf(name)] || 'application/octet-stream';
 
 export const deployPreviewUrl = (workId, entry) => {
   if (!workId) return '';
@@ -48,6 +64,10 @@ async function collectFiles(zip) {
 
   for (const name of names) {
     const clean = name.replace(/\\/g, '/');
+    // 防 zip slip 路径穿越：拒绝 .. 与绝对路径
+    if (clean.includes('..') || clean.startsWith('/')) {
+      throw new Error(`包含非法文件路径：${name}`);
+    }
     const ext = extOf(clean);
     if (BLOCKED_EXT.has(ext)) throw new Error(`包含不允许的文件类型：${name}`);
     if (!ALLOWED_EXT.has(ext)) continue; // 非白名单静默跳过（如 .DS_Store）
@@ -96,7 +116,7 @@ export async function uploadWorkDeploy(workId, file, userId) {
     const path = `${workId}/${f.path}`;
     const { error } = await supabase.storage
       .from(BUCKET)
-      .upload(path, f.blob, { contentType: f.blob.type || 'application/octet-stream', upsert: true });
+      .upload(path, f.blob, { contentType: mimeOf(f.path), upsert: true });
     if (error) throw new Error(`上传失败：${f.path}（${error.message}）`);
   }
 
