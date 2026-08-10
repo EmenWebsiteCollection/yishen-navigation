@@ -1,4 +1,5 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 function firstEnabledIndex(options) {
   return options.findIndex((option) => !option.disabled);
@@ -31,8 +32,10 @@ export function ThemeSelect({
   const [activeIndex, setActiveIndex] = useState(selectedIndex);
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const listboxId = useId();
   const selectedOption = options[selectedIndex];
+  const [menuPosition, setMenuPosition] = useState(null);
 
   useEffect(() => {
     setActiveIndex(selectedIndex);
@@ -40,23 +43,84 @@ export function ThemeSelect({
 
   useEffect(() => {
     if (!open) return undefined;
-    const closeOnOutsidePress = (event) => {
-      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    const closeOnOutsideInteraction = (event) => {
+      const insideTrigger = rootRef.current?.contains(event.target);
+      const insideMenu = menuRef.current?.contains(event.target);
+      if (!insideTrigger && !insideMenu) setOpen(false);
     };
-    const closeOnFocusAway = (event) => {
-      if (!rootRef.current?.contains(event.target)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', closeOnOutsidePress);
-    document.addEventListener('focusin', closeOnFocusAway);
+    document.addEventListener('pointerdown', closeOnOutsideInteraction);
+    document.addEventListener('focusin', closeOnOutsideInteraction);
     return () => {
-      document.removeEventListener('pointerdown', closeOnOutsidePress);
-      document.removeEventListener('focusin', closeOnFocusAway);
+      document.removeEventListener('pointerdown', closeOnOutsideInteraction);
+      document.removeEventListener('focusin', closeOnOutsideInteraction);
     };
   }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPosition(null);
+      return undefined;
+    }
+
+    let frameId = 0;
+    const updateMenuPosition = () => {
+      const trigger = triggerRef.current;
+      const menu = menuRef.current;
+      if (!trigger || !menu) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportMargin = 8;
+      const gap = 6;
+      const minimumWidth = className.includes('ym-theme-select--compact') ? 132 : 0;
+      const width = Math.min(
+        Math.max(triggerRect.width, minimumWidth),
+        Math.max(viewportMargin, window.innerWidth - viewportMargin * 2),
+      );
+      const menuHeight = menu.getBoundingClientRect().height;
+      const belowTop = triggerRect.bottom + gap;
+      const aboveTop = triggerRect.top - gap - menuHeight;
+      const canFlipAbove = aboveTop >= viewportMargin;
+      const fitsBelow = belowTop + menuHeight <= window.innerHeight - viewportMargin;
+      const top = fitsBelow || !canFlipAbove
+        ? Math.min(belowTop, Math.max(viewportMargin, window.innerHeight - viewportMargin - menuHeight))
+        : aboveTop;
+      const left = Math.min(
+        Math.max(viewportMargin, triggerRect.left),
+        Math.max(viewportMargin, window.innerWidth - viewportMargin - width),
+      );
+      const nextPosition = { top, left, width };
+
+      setMenuPosition((previous) => {
+        if (
+          previous &&
+          previous.top === nextPosition.top &&
+          previous.left === nextPosition.left &&
+          previous.width === nextPosition.width
+        ) {
+          return previous;
+        }
+        return nextPosition;
+      });
+    };
+    const scheduleUpdate = () => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(updateMenuPosition);
+    };
+
+    scheduleUpdate();
+    window.addEventListener('resize', scheduleUpdate);
+    window.addEventListener('scroll', scheduleUpdate, true);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', scheduleUpdate);
+      window.removeEventListener('scroll', scheduleUpdate, true);
+    };
+  }, [className, open, options.length]);
 
   const openMenu = () => {
     if (disabled) return;
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(options));
+    setMenuPosition(null);
     setOpen(true);
   };
 
@@ -88,6 +152,7 @@ export function ThemeSelect({
       const direction = event.key === 'ArrowDown' ? 1 : -1;
       const fallback = direction === 1 ? -1 : 0;
       setActiveIndex(nextEnabledIndex(options, currentIndex >= 0 ? currentIndex : fallback, direction));
+      setMenuPosition(null);
       setOpen(true);
       return;
     }
@@ -96,6 +161,7 @@ export function ThemeSelect({
       const ordered = event.key === 'Home' ? options : [...options].reverse();
       const enabled = ordered.find((option) => !option.disabled);
       if (enabled) setActiveIndex(options.indexOf(enabled));
+      setMenuPosition(null);
       setOpen(true);
     }
   };
@@ -118,8 +184,22 @@ export function ThemeSelect({
         <span className="ym-theme-select__value">{selectedOption?.label ?? '请选择'}</span>
         <span className="ym-theme-select__chevron" aria-hidden="true">⌄</span>
       </button>
-      {open && (
-        <div id={listboxId} className="ym-theme-select__menu" role="listbox" aria-label={ariaLabel}>
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          id={listboxId}
+          className={`ym-theme-select__menu${className ? ` ${className}` : ''}`}
+          role="listbox"
+          aria-label={ariaLabel}
+          style={{
+            position: 'fixed',
+            top: menuPosition?.top ?? 0,
+            left: menuPosition?.left ?? 0,
+            width: menuPosition?.width ?? triggerRef.current?.getBoundingClientRect().width,
+            visibility: menuPosition ? 'visible' : 'hidden',
+            zIndex: 1100,
+          }}
+        >
           {options.map((option, index) => (
             <button
               id={`${listboxId}-option-${index}`}
@@ -136,7 +216,8 @@ export function ThemeSelect({
               {index === selectedIndex && <span className="ym-theme-select__check" aria-hidden="true">✓</span>}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

@@ -31,8 +31,12 @@ export function IdeaListPage() {
   const [query, setQuery] = useState('');
   const listTopRef = useRef(null);
   const pendingListScrollRef = useRef(false);
+  const requestIdRef = useRef(0);
+  const [resultRevision, setResultRevision] = useState(0);
 
   const load = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
     setError(null);
     try {
@@ -44,13 +48,16 @@ export function IdeaListPage() {
         sort,
         query: query || null,
       });
+      if (requestId !== requestIdRef.current) return;
       setIdeas(list);
       setTotal(count);
+      setResultRevision((revision) => revision + 1);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error('加载想法失败:', err);
       setError('加载失败，请稍后重试');
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [page, pageSize, category, status, sort, query]);
 
@@ -72,22 +79,21 @@ export function IdeaListPage() {
 
   const handleSearch = (event) => {
     event.preventDefault();
+    const nextQuery = event.currentTarget.elements.search.value.trim();
+    if (nextQuery === query && page === 1) return;
     pendingListScrollRef.current = true;
-    setLoading(true);
     setPage(1);
-    setQuery(event.currentTarget.elements.search.value.trim());
+    setQuery(nextQuery);
   };
 
-  const resetAnd = (setter) => {
-    pendingListScrollRef.current = true;
-    setLoading(true);
+  const resetAnd = (setter, nextValue, currentValue) => {
+    if (nextValue === currentValue && page === 1) return;
     setPage(1);
-    setter();
+    setter(nextValue);
   };
 
   const handlePageChange = (nextPage) => {
     pendingListScrollRef.current = true;
-    setLoading(true);
     setPage(nextPage);
   };
 
@@ -96,7 +102,6 @@ export function IdeaListPage() {
   const handlePageSizeChange = (size) => {
     if (size === pageSize) return;
     pendingListScrollRef.current = true;
-    setLoading(true);
     try {
       sessionStorage.setItem(PAGE_SIZE_KEY, String(size));
     } catch {
@@ -123,50 +128,62 @@ export function IdeaListPage() {
             <button type="submit" className="ym-btn ym-btn-primary">搜索</button>
           </form>
           <div className="ym-idea-actions">
-            <button type="button" className={`ym-chip-button${sort === 'latest' ? ' is-active' : ''}`} onClick={() => resetAnd(() => setSort('latest'))}>最新</button>
-            <button type="button" className={`ym-chip-button${sort === 'hot' ? ' is-active' : ''}`} onClick={() => resetAnd(() => setSort('hot'))}>最热</button>
+            <button type="button" className={`ym-chip-button${sort === 'latest' ? ' is-active' : ''}`} onClick={() => resetAnd(setSort, 'latest', sort)}>最新</button>
+            <button type="button" className={`ym-chip-button${sort === 'hot' ? ' is-active' : ''}`} onClick={() => resetAnd(setSort, 'hot', sort)}>最热</button>
             <Link to="/ideas/new" className="ym-btn ym-btn-primary">发布想法</Link>
           </div>
         </div>
 
         <div className="ym-chip-row ym-stagger-item" style={{ animationDelay: '110ms' }} aria-label="状态筛选">
-          <button type="button" className={`ym-chip-button${status === '' ? ' is-active' : ''}`} onClick={() => resetAnd(() => setStatus(''))}>全部</button>
-          {IDEA_STATUSES.map((item) => (
-            <button key={item.id} type="button" className={`ym-chip-button${status === item.id ? ' is-active' : ''}`} onClick={() => resetAnd(() => setStatus(item.id))}>{item.label}</button>
-          ))}
+           <button type="button" className={`ym-chip-button${status === '' ? ' is-active' : ''}`} onClick={() => resetAnd(setStatus, '', status)}>全部</button>
+           {IDEA_STATUSES.map((item) => (
+             <button key={item.id} type="button" className={`ym-chip-button${status === item.id ? ' is-active' : ''}`} onClick={() => resetAnd(setStatus, item.id, status)}>{item.label}</button>
+           ))}
         </div>
 
         <div className="ym-chip-row ym-stagger-item" style={{ animationDelay: '165ms' }} aria-label="分类筛选">
-          <button type="button" className={`ym-chip-button${category === '' ? ' is-active' : ''}`} onClick={() => resetAnd(() => setCategory(''))}>全部分类</button>
-          {IDEA_CATEGORIES.map((item) => (
-            <button key={item.id} type="button" className={`ym-chip-button${category === item.id ? ' is-active' : ''}`} onClick={() => resetAnd(() => setCategory(item.id))}>{item.label}</button>
-          ))}
+           <button type="button" className={`ym-chip-button${category === '' ? ' is-active' : ''}`} onClick={() => resetAnd(setCategory, '', category)}>全部分类</button>
+           {IDEA_CATEGORIES.map((item) => (
+             <button key={item.id} type="button" className={`ym-chip-button${category === item.id ? ' is-active' : ''}`} onClick={() => resetAnd(setCategory, item.id, category)}>{item.label}</button>
+           ))}
         </div>
 
         <div ref={listTopRef} className="ym-list-anchor" />
         {error && <div className="ym-alert ym-alert-error">{error}</div>}
-        {ideas.length === 0 ? (
-            <div className="ym-empty">
-              <h3>还没有符合条件的想法</h3>
-              <p>换一个筛选条件，或者发布第一条想法。</p>
-              <Link to="/ideas/new" className="ym-btn ym-btn-primary">发布想法</Link>
+        <div className={`ym-idea-results${loading ? ' is-loading' : ''}`} aria-busy={loading}>
+          {loading && ideas.length === 0 ? (
+            <div className="ym-idea-loading" aria-label="想法加载中">
+              <div className="ym-idea-loading__row" />
+              <div className="ym-idea-loading__row" />
+              <div className="ym-idea-loading__row" />
             </div>
-        ) : (
-          <>
-            <div className="ym-idea-list">
-              {ideas.map((idea, i) => <IdeaCard key={idea.id} idea={idea} className="ym-stagger-item" style={{ animationDelay: `${220 + i * 55}ms` }} />)}
+          ) : (
+            <div key={resultRevision} className="ym-idea-results__content">
+              {ideas.length === 0 ? (
+                <div className="ym-empty">
+                  <h3>还没有符合条件的想法</h3>
+                  <p>换一个筛选条件，或者发布第一条想法。</p>
+                  <Link to="/ideas/new" className="ym-btn ym-btn-primary">发布想法</Link>
+                </div>
+              ) : (
+                <>
+                  <div className="ym-idea-list">
+                    {ideas.map((idea) => <IdeaCard key={idea.id} idea={idea} />)}
+                  </div>
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    totalItems={total}
+                    itemLabel="条想法"
+                    onPageChange={handlePageChange}
+                    pageSize={pageSize}
+                    onPageSizeChange={handlePageSizeChange}
+                  />
+                </>
+              )}
             </div>
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={total}
-              itemLabel="条想法"
-              onPageChange={handlePageChange}
-              pageSize={pageSize}
-              onPageSizeChange={handlePageSizeChange}
-            />
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

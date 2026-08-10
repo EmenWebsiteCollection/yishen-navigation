@@ -357,6 +357,34 @@
   gap: 12px;
 }
 
+.ym-idea-results {
+  min-height: 220px;
+  transition: opacity 160ms ease;
+}
+
+.ym-idea-results.is-loading > .ym-idea-results__content {
+  opacity: 0.72;
+}
+
+.ym-idea-results__content {
+  animation: ym-idea-results-in 160ms ease-out both;
+  will-change: opacity, transform;
+}
+
+.ym-idea-loading {
+  display: grid;
+  gap: 12px;
+}
+
+.ym-idea-loading__row {
+  min-height: 142px;
+  border: 1px solid var(--ym-border);
+  border-radius: var(--ym-radius-md);
+  background: linear-gradient(100deg, var(--ym-bg-card) 20%, var(--ym-bg-subtle) 50%, var(--ym-bg-card) 80%);
+  background-size: 220% 100%;
+  animation: ym-profile-skeleton 1.5s ease-in-out infinite;
+}
+
 .ym-idea-card {
   padding: 18px 20px;
   background-color: var(--ym-bg-card);
@@ -467,7 +495,7 @@
   cursor: pointer;
   font-size: 13px;
   white-space: nowrap;
-  transition: all var(--ym-transition);
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
 }
 
 .ym-chip-button:hover:not(:disabled) {
@@ -479,6 +507,13 @@
   background-color: var(--ym-accent);
   border-color: var(--ym-accent);
   color: var(--ym-accent-text-on);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ym-idea-results__content,
+  .ym-idea-loading__row {
+    animation: none;
+  }
 }
 
 /* ---------- 发现页 ---------- */

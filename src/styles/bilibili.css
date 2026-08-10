@@ -600,6 +600,9 @@ body.ym-has-bg::before {
   box-shadow: var(--ym-select-shadow);
 }
 
+/* Portal 菜单脱离选择器根节点后，紧凑尺寸仍需保持原有宽度。 */
+.ym-theme-select__menu.ym-theme-select--compact { min-width: 132px; }
+
 .ym-theme-select__option {
   display: flex;
   width: 100%;
