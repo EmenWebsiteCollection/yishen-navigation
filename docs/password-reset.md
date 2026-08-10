@@ -73,6 +73,7 @@ Netlify 后台 → Site settings → Environment variables，添加：
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJ...` | **service_role** 密钥，非 anon key |
 | `EMAIL_PROVIDER` | `aliyun` | 固定值 |
 | `EMAIL_FROM` | `noreply@你的域名.com` | 3.1 里创建的发信地址 |
+| `EMAIL_FROM_NAME` | `依神网站汇总` | 可选，发件人显示名；不配时使用默认值 |
 | `ALIYUN_ACCESS_KEY_ID` | `LTAI...` | RAM 子账号 |
 | `ALIYUN_ACCESS_KEY_SECRET` | `****` | RAM 子账号 |
 | `ALIYUN_REGION_ID` | `cn-hangzhou` | 可选，默认杭州；新加坡填 `ap-southeast-1` |
@@ -83,7 +84,19 @@ Netlify 后台 → Site settings → Environment variables，添加：
 
 ---
 
-## 四、第三步：验证
+## 四、防垃圾邮件与送达率（Outlook 进垃圾箱排查）
+
+验证码邮件被 Outlook 等邮箱判为垃圾邮件，通常与发信域名信誉和邮件内容有关，按下面顺序排查：
+
+1. 发信域名必须在阿里云 DirectMail 控制台显示「验证通过」，SPF、MX、DKIM 三项齐全，建议再配置 DMARC；`EMAIL_FROM` 必须使用控制台里已验证的发信地址，不要用免费邮箱或转发地址。
+2. 新域名或共享 IP 需要低量预热，持续关注阿里云控制台的退信和投诉数据，投诉率过高会直接拉低发信域名信誉。
+3. 邮件内容保持纯文本 + 简洁 HTML：无外链、图片、附件与跟踪像素；不要把验证码写进邮件主题，避免更贴近钓鱼邮件特征。
+4. Outlook 用户首次收到时选择「标记为不是垃圾邮件」，可在 Outlook 安全发件人列表中加入发信地址；若仍进垃圾箱，优先回阿里云控制台确认域名验证状态，并核对 `InvalidSendingDomain` / `InvalidAccountName` 报错。
+5. 修改 `EMAIL_FROM_NAME` 或域名验证后，在 Netlify 触发一次带缓存的重新部署再测试。
+
+---
+
+## 五、第三步：验证
 
 ### 本地验证
 
@@ -120,10 +133,11 @@ curl -X POST http://localhost:8888/.netlify/functions/password-reset \
 | `服务器未配置发信地址（EMAIL_FROM）` | `EMAIL_FROM` 没配 | 补齐并重新部署 |
 | `发送过于频繁，请 N 秒后再试` | 触发了 60 秒限频 | 正常保护，等待即可 |
 | 收不到邮件但接口返回成功 | 进了垃圾箱 / 该邮箱未绑定任何账号 | 查垃圾箱；确认已在个人中心绑定 |
+| 验证码进了 Outlook 垃圾箱 | 发信域名未验证、信誉不足或邮件内容触发垃圾规则 | 按「四、防垃圾邮件与送达率」检查 SPF/DKIM/DMARC、发信地址与预热；Outlook 首次标记为非垃圾邮件 |
 
 ---
 
-## 五、老用户补绑说明（重要）
+## 六、老用户补绑说明（重要）
 
 本站账号体系是「用户名 + 自动补 `@nav.local` 假邮箱」，**老用户默认没有真实邮箱**，因此：
 
@@ -134,7 +148,7 @@ curl -X POST http://localhost:8888/.netlify/functions/password-reset \
 
 ---
 
-## 六、手机短信通道（当前：部署中）
+## 七、手机短信通道（当前：部署中）
 
 前端手机 Tab 已做灰化 + 「🚧 正在部署中」提示，后端对 `contactType=phone` 直接返回 503。
 
