@@ -108,7 +108,7 @@ const TABLE_SELECT_CORE = `
   created_at, updated_at, user_id,
   profiles ( username, avatar_url )
 `;
-const TABLE_SELECT_FULL = `${TABLE_SELECT_CORE}, video_url`;
+const TABLE_SELECT_FULL = `${TABLE_SELECT_CORE}, video_url, download_url`;
 // Issue #39 P1：创作标签体系/媒体直链（依赖迁移 20260808_add_discovery.sql）
 const TABLE_SELECT_META = `
   tags, styles, tools, creative_type, completion,
@@ -140,6 +140,19 @@ export const isVideoUrlSupported = async () => {
   return _videoUrlSupported;
 };
 
+// 运行时探测 works.download_url 列是否存在（结果缓存，避免每次请求都探测）
+let _downloadUrlSupported = null;
+export const isDownloadUrlSupported = async () => {
+  if (_downloadUrlSupported !== null) return _downloadUrlSupported;
+  try {
+    const { error } = await supabase.from('works').select('download_url').limit(1);
+    _downloadUrlSupported = !error;
+  } catch {
+    _downloadUrlSupported = false;
+  }
+  return _downloadUrlSupported;
+};
+
 // 运行时探测 Issue #39 新增列是否存在（迁移未执行时自动降级）
 let _metaSupported = null;
 export const isMetaSupported = async () => {
@@ -157,6 +170,7 @@ export const isMetaSupported = async () => {
 const getTableSelect = async () => {
   const parts = [TABLE_SELECT_CORE];
   if (await isVideoUrlSupported()) parts.push('video_url');
+  if (await isDownloadUrlSupported()) parts.push('download_url');
   if (await isMetaSupported()) parts.push(TABLE_SELECT_META);
   return parts.join(',\n  ');
 };
@@ -171,6 +185,7 @@ const mapWork = (item) => {
     image_url: item.image_url || null,
     cover_url: item.cover_url || null,
     video_url: item.video_url || null,
+    download_url: item.download_url || null,
     work_type: item.work_type || 'website',
     featured: !!item.featured,
     status: item.status || null,
@@ -265,6 +280,7 @@ export const createWork = async (payload, userId) => {
     image_url = null,
     cover_url = null,
     video_url = null,
+    download_url = null,
     work_type = 'website',
     status = null,
     visibility = 'public',
@@ -300,6 +316,7 @@ export const createWork = async (payload, userId) => {
     user_id: userId,
   };
   if (await isVideoUrlSupported()) insertRow.video_url = video_url?.trim() || null;
+  if (await isDownloadUrlSupported()) insertRow.download_url = download_url?.trim() || null;
   if (await isMetaSupported()) Object.assign(insertRow, normalizeWorkMeta(payload));
   const { data, error } = await supabase
     .from('works')
@@ -452,7 +469,7 @@ export const getWorkById = async (id, currentUserId = null) => {
   if (!data) return null;
 
   const work = mapWork(data);
-  // 视图不含 video_url，列存在时单独补查（探测结果有缓存，无额外开销）
+  // 视图不含 video_url/download_url，列存在时单独补查（探测结果有缓存，无额外开销）
   if (await isVideoUrlSupported()) {
     const { data: v } = await supabase
       .from('works')
@@ -460,6 +477,14 @@ export const getWorkById = async (id, currentUserId = null) => {
       .eq('id', id)
       .maybeSingle();
     work.video_url = v?.video_url || null;
+  }
+  if (await isDownloadUrlSupported()) {
+    const { data: d } = await supabase
+      .from('works')
+      .select('download_url')
+      .eq('id', id)
+      .maybeSingle();
+    work.download_url = d?.download_url || null;
   }
   if (currentUserId) {
     work.liked_by_user = await hasLikedWork(id, currentUserId);
@@ -507,6 +532,7 @@ export const updateWork = async (id, data) => {
     image_url,
     cover_url,
     video_url,
+    download_url,
     work_type,
     status,
     visibility,
@@ -546,6 +572,7 @@ export const updateWork = async (id, data) => {
   if (image_url !== undefined) patch.image_url = image_url || null;
   if (cover_url !== undefined) patch.cover_url = cover_url || null;
   if (video_url !== undefined && (await isVideoUrlSupported())) patch.video_url = video_url?.trim() || null;
+  if (download_url !== undefined && (await isDownloadUrlSupported())) patch.download_url = download_url?.trim() || null;
   if (status !== undefined) patch.status = status || null;
   if (group_id !== undefined) patch.group_id = group_id || null;
   if (featured !== undefined) patch.featured = !!featured;

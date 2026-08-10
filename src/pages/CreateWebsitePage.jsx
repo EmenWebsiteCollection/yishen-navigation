@@ -37,6 +37,7 @@ export function CreateWebsitePage() {
   const [workType, setWorkType] = useState('website');
   const [url, setUrl] = useState('');
 const [videoUrl, setVideoUrl] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('');
@@ -150,6 +151,14 @@ const [videoUrl, setVideoUrl] = useState('');
         return;
       }
     }
+    if (downloadUrl.trim()) {
+      try {
+        new URL(downloadUrl.trim());
+      } catch (_) {
+        setMessage({ type: 'error', text: '软件下载链接无效（需包含协议，如 https://）。' });
+        return;
+      }
+    }
 
     setLoading(true);
     let finalImageUrl = null;
@@ -187,6 +196,7 @@ const [videoUrl, setVideoUrl] = useState('');
           description: description.trim(),
           image_url: finalImageUrl,
           video_url: videoUrl.trim() || null,
+          download_url: downloadUrl.trim() || null,
           work_type: workType,
           status: status || null,
           visibility,
@@ -227,6 +237,7 @@ const [videoUrl, setVideoUrl] = useState('');
       setMessage({ type: 'success', text: '✅ 作品提交成功！' });
       setUrl('');
       setVideoUrl('');
+      setDownloadUrl('');
       setTitle('');
       setDescription('');
       setStatus('');
@@ -348,6 +359,22 @@ const [videoUrl, setVideoUrl] = useState('');
           />
           <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--ym-text-muted)' }}>
             填写后详情页展示「观看演示视频」入口，点击跳转到视频网站观看
+          </div>
+        </div>
+
+        {/* 软件下载链接（可选） */}
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '16px', '--ym-stagger-index': 3 }}>
+          <label htmlFor="create-download-url" style={labelStyle}>软件下载链接（可选）</label>
+          <input
+            id="create-download-url"
+            type="url"
+            value={downloadUrl}
+            onChange={(e) => setDownloadUrl(e.target.value)}
+            placeholder="https://...（安装包或下载页）"
+            style={inputStyle}
+          />
+          <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--ym-text-muted)' }}>
+            填写后详情页展示「⬇ 下载软件」入口，支持软件/游戏等可下载作品
           </div>
         </div>
 
@@ -636,6 +663,7 @@ const [videoUrl, setVideoUrl] = useState('');
             <p>不上传大图时，提交网站会自动截取首页作为封面。</p>
             <p>私密作品只有自己可见，公开作品会展示在首页。</p>
             <p>演示视频链接留空则不在详情页展示。</p>
+            <p>软件下载链接留空则不在详情页展示。</p>
           </div>
         </div>
       </aside>

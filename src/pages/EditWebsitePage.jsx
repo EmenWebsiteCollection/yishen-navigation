@@ -38,6 +38,7 @@ export function EditWebsitePage() {
   const { user, loading: authLoading } = useAuth();
   const [url, setUrl] = useState('');
 const [videoUrl, setVideoUrl] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
 
   // Issue #13：在线部署（可选）
   const deployInputRef = useRef(null);
@@ -104,6 +105,7 @@ const [videoUrl, setVideoUrl] = useState('');
         }
         setUrl(data.url || '');
         setVideoUrl(data.video_url || '');
+        setDownloadUrl(data.download_url || '');
         setDeployUrl(data.deploy_url || '');
         setTitle(data.title);
         setDescription(data.description || '');
@@ -262,6 +264,14 @@ const [videoUrl, setVideoUrl] = useState('');
         return;
       }
     }
+    if (downloadUrl.trim()) {
+      try {
+        new URL(downloadUrl.trim());
+      } catch (_) {
+        setError('软件下载链接无效（需包含协议，如 https://）。');
+        return;
+      }
+    }
 
     setSaving(true);
     try {
@@ -282,6 +292,7 @@ const [videoUrl, setVideoUrl] = useState('');
         description: description.trim() || '',
         image_url: finalImageUrl,
         video_url: videoUrl.trim() || null,
+        download_url: downloadUrl.trim() || null,
         work_type: workType,
         status: status || null,
         visibility,
@@ -414,6 +425,22 @@ const [videoUrl, setVideoUrl] = useState('');
           />
           <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--ym-text-muted)' }}>
             填写后详情页展示「观看演示视频」入口，点击跳转到视频网站观看；留空则移除
+          </div>
+        </div>
+
+        {/* 软件下载链接（可选） */}
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="edit-download-url" style={labelStyle}>软件下载链接（可选）</label>
+          <input
+            id="edit-download-url"
+            type="url"
+            value={downloadUrl}
+            onChange={(e) => setDownloadUrl(e.target.value)}
+            placeholder="https://...（安装包或下载页）"
+            style={inputStyle}
+          />
+          <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--ym-text-muted)' }}>
+            填写后详情页展示「⬇ 下载软件」入口，支持软件/游戏等可下载作品；留空则移除
           </div>
         </div>
 

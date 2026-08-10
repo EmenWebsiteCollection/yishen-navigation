@@ -1206,27 +1206,55 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
           <span style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>详情</span>
         </div>
 
-        {website.url && (
-        <button
-          onClick={() => window.open(website.url, '_blank')}
-          style={{
-            padding: '8px 20px',
-            backgroundColor: 'var(--ym-accent)',
-            color: 'var(--ym-accent-text-on)',
-            border: 'none',
-            borderRadius: 'var(--ym-radius-sm)',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'background-color var(--ym-transition)',
-            whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent)')}
-        >
-          🔗 访问网站
-        </button>
-        )}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {website.url && (
+          <button
+            onClick={() => window.open(website.url, '_blank')}
+            style={{
+              padding: '8px 20px',
+              backgroundColor: 'var(--ym-accent)',
+              color: 'var(--ym-accent-text-on)',
+              border: 'none',
+              borderRadius: 'var(--ym-radius-sm)',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'background-color var(--ym-transition)',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent)')}
+          >
+            🔗 访问网站
+          </button>
+          )}
+
+          <button
+            onClick={() => {
+              if (website.download_url) {
+                window.open(website.download_url, '_blank');
+              } else {
+                alert('作者还没发布哟');
+              }
+            }}
+            style={{
+              padding: '8px 20px',
+              backgroundColor: website.download_url ? 'var(--ym-success)' : 'var(--ym-bg-subtle)',
+              color: website.download_url ? '#fff' : 'var(--ym-text-secondary)',
+              border: '1px solid var(--ym-border)',
+              borderRadius: 'var(--ym-radius-sm)',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all var(--ym-transition)',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => { if (website.download_url) e.currentTarget.style.opacity = '0.85'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+          >
+            ⬇ 下载软件
+          </button>
+        </div>
       </div>
 
       {/* ---------- 标题 ---------- */}
