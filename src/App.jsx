@@ -1,73 +1,73 @@
 // src/App.jsx
-import React, { lazy, Suspense } from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth.js";
 // 首屏页面保持同步加载，其余页面按需懒加载（路由级 code-split）
 import { HomePage } from "./pages/HomePage.jsx";
+import { lazyWithRetry } from "./lib/lazyRetry.js";
 
-const CreateWebsitePage = lazy(() =>
-  import("./pages/CreateWebsitePage.jsx").then((m) => ({
-    default: m.CreateWebsitePage,
-  })),
+const CreateWebsitePage = lazyWithRetry(
+  () => import("./pages/CreateWebsitePage.jsx"),
+  { exportName: "CreateWebsitePage", sourcePath: "src/pages/CreateWebsitePage.jsx" },
 );
-const WebsiteDetailPage = lazy(() =>
-  import("./pages/WebsiteDetailPage.jsx").then((m) => ({
-    default: m.WebsiteDetailPage,
-  })),
+const WebsiteDetailPage = lazyWithRetry(
+  () => import("./pages/WebsiteDetailPage.jsx"),
+  { exportName: "WebsiteDetailPage", sourcePath: "src/pages/WebsiteDetailPage.jsx" },
 );
-const EditWebsitePage = lazy(() =>
-  import("./pages/EditWebsitePage.jsx").then((m) => ({
-    default: m.EditWebsitePage,
-  })),
+const EditWebsitePage = lazyWithRetry(
+  () => import("./pages/EditWebsitePage.jsx"),
+  { exportName: "EditWebsitePage", sourcePath: "src/pages/EditWebsitePage.jsx" },
 );
-const ForgotPasswordPage = lazy(() =>
-  import("./pages/ForgotPasswordPage.jsx").then((m) => ({
-    default: m.ForgotPasswordPage,
-  })),
+const ForgotPasswordPage = lazyWithRetry(
+  () => import("./pages/ForgotPasswordPage.jsx"),
+  { exportName: "ForgotPasswordPage", sourcePath: "src/pages/ForgotPasswordPage.jsx" },
 );
-const ProfilePage = lazy(() =>
-  import("./pages/ProfilePage.jsx").then((m) => ({ default: m.ProfilePage })),
+const ProfilePage = lazyWithRetry(
+  () => import("./pages/ProfilePage.jsx"),
+  { exportName: "ProfilePage", sourcePath: "src/pages/ProfilePage.jsx" },
 );
-const CreatorProfilePage = lazy(() =>
-  import("./pages/CreatorProfilePage.jsx").then((m) => ({
-    default: m.CreatorProfilePage,
-  })),
+const CreatorProfilePage = lazyWithRetry(
+  () => import("./pages/CreatorProfilePage.jsx"),
+  { exportName: "CreatorProfilePage", sourcePath: "src/pages/CreatorProfilePage.jsx" },
 );
-const AboutPage = lazy(() =>
-  import("./pages/AboutPage.jsx").then((m) => ({ default: m.AboutPage })),
+const AboutPage = lazyWithRetry(
+  () => import("./pages/AboutPage.jsx"),
+  { exportName: "AboutPage", sourcePath: "src/pages/AboutPage.jsx" },
 );
-const ChangelogPage = lazy(() =>
-  import("./pages/ChangelogPage.jsx").then((m) => ({
-    default: m.ChangelogPage,
-  })),
+const ChangelogPage = lazyWithRetry(
+  () => import("./pages/ChangelogPage.jsx"),
+  { exportName: "ChangelogPage", sourcePath: "src/pages/ChangelogPage.jsx" },
 );
-const ContactPage = lazy(() =>
-  import("./pages/ContactPage.jsx").then((m) => ({ default: m.ContactPage })),
+const ContactPage = lazyWithRetry(
+  () => import("./pages/ContactPage.jsx"),
+  { exportName: "ContactPage", sourcePath: "src/pages/ContactPage.jsx" },
 );
-const IdeaListPage = lazy(() =>
-  import("./pages/IdeaListPage.jsx").then((m) => ({ default: m.IdeaListPage })),
+const IdeaListPage = lazyWithRetry(
+  () => import("./pages/IdeaListPage.jsx"),
+  { exportName: "IdeaListPage", sourcePath: "src/pages/IdeaListPage.jsx" },
 );
-const IdeaCreatePage = lazy(() =>
-  import("./pages/IdeaCreatePage.jsx").then((m) => ({
-    default: m.IdeaCreatePage,
-  })),
+const IdeaCreatePage = lazyWithRetry(
+  () => import("./pages/IdeaCreatePage.jsx"),
+  { exportName: "IdeaCreatePage", sourcePath: "src/pages/IdeaCreatePage.jsx" },
 );
-const IdeaDetailPage = lazy(() =>
-  import("./pages/IdeaDetailPage.jsx").then((m) => ({
-    default: m.IdeaDetailPage,
-  })),
+const IdeaDetailPage = lazyWithRetry(
+  () => import("./pages/IdeaDetailPage.jsx"),
+  { exportName: "IdeaDetailPage", sourcePath: "src/pages/IdeaDetailPage.jsx" },
 );
-const DiscoverPage = lazy(() =>
-  import("./pages/DiscoverPage.jsx").then((m) => ({ default: m.DiscoverPage })),
+const DiscoverPage = lazyWithRetry(
+  () => import("./pages/DiscoverPage.jsx"),
+  { exportName: "DiscoverPage", sourcePath: "src/pages/DiscoverPage.jsx" },
 );
-const WorkMapPage = lazy(() =>
-  import("./pages/WorkMapPage.jsx").then((m) => ({ default: m.WorkMapPage })),
+const WorkMapPage = lazyWithRetry(
+  () => import("./pages/WorkMapPage.jsx"),
+  { exportName: "WorkMapPage", sourcePath: "src/pages/WorkMapPage.jsx" },
 );
 
 import { ThemeSwitcher } from "./components/ThemeSwitcher.jsx";
 import { ScrollToTop } from "./components/ScrollToTop.jsx";
 import { BackToTop } from "./components/BackToTop.jsx";
 import { RouteFallback, RouteErrorBoundary } from "./components/RouteBoundary.jsx";
+import { ChunkPrefetch } from "./components/ChunkPrefetch.jsx";
 import { useDevice } from "./hooks/useDevice.js";
 import { AppShell } from "./components/AppShell.jsx";
 import { YiliMascot } from "./components/YiliMascot.jsx";
@@ -87,6 +87,7 @@ function App() {
       <ThemeSwitcher />
       <BackToTop />
       <YiliMascot />
+      <ChunkPrefetch />
       <AppShell>
         <AnimatedRoutes />
       </AppShell>
