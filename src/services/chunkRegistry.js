@@ -1,8 +1,10 @@
 // src/services/chunkRegistry.js
-// 通过 Vite 构建产物 .vite/manifest.json 解析懒加载页面的真实 chunk URL，
+// 通过 Vite 构建产物 manifest.json 解析懒加载页面的真实 chunk URL，
 // 供路由预加载与弱网下的缓存穿透重试使用。manifest 拿不到时优雅降级。
+// 注：Vite 默认输出在 .vite/ 点目录，Netlify 不提供该目录下的文件，
+// 因此构建脚本会复制到 dist/manifest.json（见 scripts/copy-chunk-manifest.mjs）。
 const BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
-const MANIFEST_URL = `${BASE}/.vite/manifest.json`;
+const MANIFEST_URL = `${BASE}/manifest.json`;
 
 const assetUrl = (file) =>
   file && (file.startsWith("/") || /^[a-z][a-z0-9+.-]*:/i.test(file))
