@@ -12,9 +12,10 @@ const BUCKET = 'work_deploys';
 const MAX_ZIP_MB = 50;
 const MAX_SINGLE_FILE_MB = 10;
 
-// 允许的扩展名（与存储桶 MIME 白名单对齐）
+// 允许的扩展名（与存储桶 MIME 白名单严格对齐：桶白名单无 text/plain/markdown，
+// 故 txt/md 不放行——zip 内 README 等文档会被静默跳过）
 const ALLOWED_EXT = new Set([
-  'html', 'htm', 'css', 'js', 'mjs', 'json', 'txt', 'md',
+  'html', 'htm', 'css', 'js', 'mjs', 'json',
   'png', 'jpg', 'jpeg', 'svg', 'webp', 'gif', 'ico',
   'woff', 'woff2', 'ttf', 'mp4', 'webm', 'mp3', 'ogg',
 ]);
@@ -34,7 +35,6 @@ const EXT_MIME = {
   css: 'text/css',
   js: 'text/javascript', mjs: 'application/javascript',
   json: 'application/json',
-  txt: 'text/plain', md: 'text/markdown',
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
   svg: 'image/svg+xml', webp: 'image/webp', gif: 'image/gif', ico: 'image/x-icon',
   woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf',
