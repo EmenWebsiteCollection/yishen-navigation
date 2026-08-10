@@ -461,16 +461,6 @@ export function IdeaDetailPage() {
   };
 
   // ---------- 渲染 ----------
-  if (error) {
-    return (
-      <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
-        <div style={{ maxWidth: '560px', margin: '60px auto', padding: '32px 28px', backgroundColor: 'var(--ym-bg-card)', borderRadius: 'var(--ym-radius-lg)', border: '1px solid var(--ym-border)', textAlign: 'center' }}>
-          <p style={{ color: 'var(--ym-danger)' }}>{error}</p>
-          <Link to="/ideas" style={{ color: 'var(--ym-accent)', fontSize: '14px', textDecoration: 'none' }}>← 返回灵感</Link>
-        </div>
-      </div>
-    );
-  }
   if (notFound) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--ym-bg-page)' }}>
