@@ -8,6 +8,8 @@ import {
   rankSimilarIdeas,
   ideaCategoryLabel,
   ideaStatusLabel,
+  validateIdeaLinkable,
+  shouldMarkImplemented,
 } from './idea-logic.js';
 
 let passed = 0;
@@ -126,6 +128,31 @@ ok('label: 分类/状态映射', () => {
   assert.strictEqual(ideaCategoryLabel('website'), '网站');
   assert.strictEqual(ideaStatusLabel('done'), '已实现');
   assert.strictEqual(ideaCategoryLabel('不存在'), '不存在');
+});
+
+// ---------- 孵化闭环判定（T3b） ----------
+ok('linkable: 未绑定想法允许关联', () => {
+  assert.deepStrictEqual(validateIdeaLinkable({ related_work_id: null, status: 'developing' }), []);
+});
+ok('linkable: 已绑定 related_work_id 拒绝（防重复）', () => {
+  const errs = validateIdeaLinkable({ related_work_id: 'work-123', status: 'developing' });
+  assert.ok(errs.length > 0 && errs[0].includes('已实现'));
+});
+ok('linkable: 已关闭想法拒绝关联', () => {
+  const errs = validateIdeaLinkable({ related_work_id: null, status: 'closed' });
+  assert.ok(errs.some((e) => e.includes('已关闭')));
+});
+ok('linkable: 空参数不抛错（容错）', () => {
+  assert.deepStrictEqual(validateIdeaLinkable(), []);
+});
+ok('shouldMarkImplemented: 公开作品且未 done → 点亮', () => {
+  assert.strictEqual(shouldMarkImplemented('developing', 'public'), true);
+});
+ok('shouldMarkImplemented: 私密作品不点亮（保留关联）', () => {
+  assert.strictEqual(shouldMarkImplemented('developing', 'private'), false);
+});
+ok('shouldMarkImplemented: 已 done 不重复点亮', () => {
+  assert.strictEqual(shouldMarkImplemented('done', 'public'), false);
 });
 
 console.log(`\n全部通过：${passed} 组断言`);

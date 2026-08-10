@@ -69,9 +69,10 @@ const [videoUrl, setVideoUrl] = useState('');
   const [deployFile, setDeployFile] = useState(null);
   const [deployMsg, setDeployMsg] = useState('');
 
-  // 从想法详情页「去实现」跳转过来时，携带 source_idea_id 自动关联
+  // 从想法详情页「去实现」跳转过来时，携带 idea_id 自动关联
+  // 兼容两种参数名：idea_id（任务卡约定）与 source_idea_id（早期实现沿用）
   const [searchParams] = useSearchParams();
-  const sourceIdeaId = searchParams.get('source_idea_id');
+  const sourceIdeaId = searchParams.get('source_idea_id') || searchParams.get('idea_id');
   const [sourceIdea, setSourceIdea] = useState(null);
 
   useEffect(() => {
