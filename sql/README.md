@@ -6,7 +6,24 @@
 |------|------|
 | `000_diagnose.sql` | 可选。迁移前/后运行，输出结构供核对 |
 | `001_works_generalization.sql` | 必执行。works 泛化 + 创作者档案 + 收藏/分组 + 存储桶 |
-| `002_partitions.sql` | 推荐执行。首页可动态添加的分区表 |
+| `002_discovery.sql` | 发现系统：follows / work_relations / works_discovery 视图 + 发现 rail/随机/精选 RPC |
+| `002_partitions.sql` | 首页可动态添加的分区表（仅管理员维护） |
+| `002_password_reset.sql` | 找回密码：profiles.email/phone + 验证码表 + bind_contact() |
+| `003_feedback_annotations.sql` | 结构化评论（8 类型）+ 局部批注 + work_media 存储桶 |
+| `004_comment_quality_revisions.sql` | 评论质量评价 + 评论者声誉 + 作品成长档案（版本快照） |
+| `005_featured_admin_only.sql` | 编辑精选仅管理员可设（触发器方案） |
+| `006_is_admin_function.sql` | `is_admin()` 判定函数（供 RPC/策略复用） |
+| `007_prevent_self_promote.sql` | 防自提权：is_admin 变更触发器 |
+| `007_yili_ai_v3.sql` | 依力 AI 3.0：pgvector + yili_corpus 语料库 + user_memories 记忆 |
+| `008_feedback_status.sql` | 反馈状态字段（审核/处理状态） |
+| `009_work_deploys.sql` | 拖拽文件一键部署：work_deploys 公开桶 + deploy_url |
+| `010_idea_github_issue.sql` | 想法一键导出 GitHub Issue（管理员） |
+| `011_cleanup_redundant_objects.sql` | 冗余对象清理（双触发器/重复策略，幂等） |
+| `fix_bind_contact.sql` | 修复旧版 bind_contact（执行 002 报错时补跑） |
+| `work_media_bucket.sql` | ⚠️ 早期脚本，已被 003 正式迁移取代，仅作参考不要单独执行 |
+
+> 提示：同名编号（002×3、007×2）为历史遗留，各脚本相互独立、幂等可重复执行；
+> 另有 `supabase/migrations/` 目录为同一批迁移的日期命名副本（供 Supabase CLI 用），内容一致。
 
 ## 执行 001 之后
 
