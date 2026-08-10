@@ -12,7 +12,8 @@ export const THEMES = [
   { id: 'tokyonight', name: 'Tokyo Night', accent: '#7AA2F7', bg: '#16161E' },
   { id: 'onedark', name: 'One Dark', accent: '#61AFEF', bg: '#21252B' },
   { id: 'dracula', name: 'Dracula', accent: '#BD93F9', bg: '#21222C' },
-  { id: 'macos', name: 'macOS', accent: '#0A84FF', bg: '#F5F5F7' },
+  { id: 'macos', name: 'Mac OS', accent: '#0A84FF', bg: '#F5F5F7' },
+  { id: 'macosdark', name: 'Mac OS 暗色', accent: '#0A84FF', bg: '#1C1C1E' },
   { id: CUSTOM_THEME_ID, name: '自定义', accent: '#9C6B2E', bg: '#F3EAD8' },
 ];
 

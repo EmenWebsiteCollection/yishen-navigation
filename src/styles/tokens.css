@@ -186,7 +186,7 @@
 }
 
 /* ========================================================= */
-/* 主题：macOS（浅色系统风）                                 */
+/* 主题：Mac OS（浅色系统风）                                 */
 /* ========================================================= */
 [data-theme="macos"] {
   --ym-bg-page: #EEF5FB;
@@ -228,4 +228,51 @@
   --ym-glass-blur-control: 10px;
   --ym-glass-shadow-panel: 0 24px 60px rgba(54, 86, 122, 0.12), 0 3px 12px rgba(54, 86, 122, 0.05);
   --ym-glass-shadow-card: 0 14px 34px rgba(54, 86, 122, 0.09), 0 2px 8px rgba(54, 86, 122, 0.04);
+}
+
+/* ========================================================= */
+/* 主题：Mac OS 暗色（深色系统风）                            */
+/* ========================================================= */
+[data-theme="macosdark"] {
+  --ym-bg-page: #1C1C1E;
+  --ym-bg-card: #2C2C2E;
+  --ym-bg-subtle: #3A3A3C;
+
+  --ym-accent: #0A84FF;
+  --ym-accent-hover: #2E95FF;
+  --ym-accent-text-on: #FFFFFF;
+
+  --ym-danger: #FF453A;
+  --ym-danger-hover: #FF6961;
+  --ym-danger-bg: #3A2725;
+  --ym-danger-text-on: #FFFFFF;
+
+  --ym-success: #32D74B;
+  --ym-success-bg: #1F3326;
+  --ym-success-text-on: #FFFFFF;
+
+  --ym-text-primary: #F2F2F7;
+  --ym-text-secondary: #A8A8AE;
+  --ym-text-muted: #6E6E74;
+
+  --ym-border: #3A3A3C;
+  --ym-border-strong: #0A84FF;
+
+  --ym-focus-ring: rgba(10, 132, 255, 0.28);
+
+  /* Liquid Glass 材质层级（暗色玻璃） */
+  --ym-glass-surface-0: rgba(24, 24, 27, 0.55);
+  --ym-glass-surface-1: rgba(34, 34, 38, 0.7);
+  --ym-glass-surface-2: rgba(44, 44, 48, 0.84);
+  --ym-glass-surface-interactive: rgba(40, 40, 45, 0.78);
+  --ym-glass-edge: rgba(255, 255, 255, 0.14);
+  --ym-glass-edge-muted: rgba(120, 160, 210, 0.2);
+  --ym-glass-edge-soft: rgba(255, 255, 255, 0.1);
+  --ym-glass-blur-nav: 22px;
+  --ym-glass-blur-surface: 16px;
+  --ym-glass-blur-control: 10px;
+  --ym-glass-shadow-panel: 0 24px 60px rgba(0, 0, 0, 0.5), 0 3px 12px rgba(0, 0, 0, 0.28);
+  --ym-glass-shadow-card: 0 14px 34px rgba(0, 0, 0, 0.42), 0 2px 8px rgba(0, 0, 0, 0.24);
+
+  color-scheme: dark;
 }

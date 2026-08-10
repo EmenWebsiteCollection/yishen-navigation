@@ -1,5 +1,5 @@
-﻿/* macOS-inspired Liquid Glass design system */
-[data-theme="macos"] {
+﻿/* Mac OS-inspired Liquid Glass design system */
+[data-theme="macos"] , [data-theme="macosdark"] {
 
 
   --ym-glass-rgb: 255, 255, 255;
@@ -30,7 +30,7 @@
 
 
 }
-[data-theme="macos"] {
+[data-theme="macos"] , [data-theme="macosdark"] {
 
 
   min-width: 320px;
@@ -39,7 +39,7 @@
 
 
 }
-[data-theme="macos"] body {
+[data-theme="macos"] body , [data-theme="macosdark"] body {
 
 
   min-width: 320px;
@@ -54,7 +54,7 @@
 
 
 }
-[data-theme="macos"] body::before {
+[data-theme="macos"] body::before , [data-theme="macosdark"] body::before {
 
 
   content: '';
@@ -68,15 +68,15 @@
 
 
 }
-[data-theme="macos"] #root,
-[data-theme="macos"] .ym-page-shell {
+[data-theme="macos"] #root, [data-theme="macosdark"] #root,
+[data-theme="macos"] .ym-page-shell , [data-theme="macosdark"] .ym-page-shell {
 
 
   min-height: 100vh;
 
 
 }
-[data-theme="macos"] .ym-page-shell {
+[data-theme="macos"] .ym-page-shell , [data-theme="macosdark"] .ym-page-shell {
 
 
   position: relative;
@@ -85,8 +85,8 @@
 
 
 }
-[data-theme="macos"] .ym-page-shell::before,
-[data-theme="macos"] .ym-page-shell::after {
+[data-theme="macos"] .ym-page-shell::before, [data-theme="macosdark"] .ym-page-shell::before,
+[data-theme="macos"] .ym-page-shell::after , [data-theme="macosdark"] .ym-page-shell::after {
 
 
   content: '';
@@ -99,7 +99,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-shell::before {
+[data-theme="macos"] .ym-page-shell::before , [data-theme="macosdark"] .ym-page-shell::before {
 
 
   width: 320px;
@@ -110,7 +110,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-shell::after {
+[data-theme="macos"] .ym-page-shell::after , [data-theme="macosdark"] .ym-page-shell::after {
 
 
   width: 360px;
@@ -121,7 +121,7 @@
 
 
 }
-[data-theme="macos"] .ym-main {
+[data-theme="macos"] .ym-main , [data-theme="macosdark"] .ym-main {
 
 
   position: relative;
@@ -131,7 +131,7 @@
 
 
 }
-[data-theme="macos"] .ym-main > div[style*="min-height: 100vh"] {
+[data-theme="macos"] .ym-main > div[style*="min-height: 100vh"] , [data-theme="macosdark"] .ym-main > div[style*="min-height: 100vh"] {
 
 
   min-height: auto !important;
@@ -139,15 +139,15 @@
 
 
 }
-[data-theme="macos"] .ym-content-page,
-[data-theme="macos"] .ym-home-page {
+[data-theme="macos"] .ym-content-page, [data-theme="macosdark"] .ym-content-page,
+[data-theme="macos"] .ym-home-page , [data-theme="macosdark"] .ym-home-page {
 
 
   width: 100%;
 
 
 }
-[data-theme="macos"] .ym-page-container {
+[data-theme="macos"] .ym-page-container , [data-theme="macosdark"] .ym-page-container {
 
 
   width: min(100%, 900px);
@@ -155,7 +155,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-container-wide {
+[data-theme="macos"] .ym-page-container-wide , [data-theme="macosdark"] .ym-page-container-wide {
 
 
   width: min(100%, 1120px);
@@ -163,7 +163,7 @@
 
 }
 /* Floating navigation */
-[data-theme="macos"] .ym-site-header {
+[data-theme="macos"] .ym-site-header , [data-theme="macosdark"] .ym-site-header {
 
 
   position: sticky;
@@ -183,7 +183,7 @@
 
 
 }
-[data-theme="macos"] .ym-site-header.is-scrolled {
+[data-theme="macos"] .ym-site-header.is-scrolled , [data-theme="macosdark"] .ym-site-header.is-scrolled {
 
 
   background:
@@ -192,7 +192,7 @@
 
 
 }
-[data-theme="macos"] .ym-header-inner {
+[data-theme="macos"] .ym-header-inner , [data-theme="macosdark"] .ym-header-inner {
 
 
   max-width: none;
@@ -202,14 +202,14 @@
 
 
 }
-[data-theme="macos"] .ym-header-left {
+[data-theme="macos"] .ym-header-left , [data-theme="macosdark"] .ym-header-left {
 
 
   gap: 18px;
 
 
 }
-[data-theme="macos"] .ym-brand-link {
+[data-theme="macos"] .ym-brand-link , [data-theme="macosdark"] .ym-brand-link {
 
 
   display: flex;
@@ -218,7 +218,7 @@
 
 
 }
-[data-theme="macos"] .ym-logo {
+[data-theme="macos"] .ym-logo , [data-theme="macosdark"] .ym-logo {
 
 
   display: flex;
@@ -227,7 +227,7 @@
 
 
 }
-[data-theme="macos"] .ym-logo-mark {
+[data-theme="macos"] .ym-logo-mark , [data-theme="macosdark"] .ym-logo-mark {
 
 
   display: block;
@@ -241,7 +241,7 @@
 
 
 }
-[data-theme="macos"] .ym-logo-name {
+[data-theme="macos"] .ym-logo-name , [data-theme="macosdark"] .ym-logo-name {
 
 
   max-width: 150px;
@@ -256,7 +256,7 @@
 
 
 }
-[data-theme="macos"] .ym-header-links {
+[data-theme="macos"] .ym-header-links , [data-theme="macosdark"] .ym-header-links {
 
 
   position: relative;
@@ -269,7 +269,7 @@
 
 
 }
-[data-theme="macos"] .ym-nav-indicator {
+[data-theme="macos"] .ym-nav-indicator , [data-theme="macosdark"] .ym-nav-indicator {
 
 
   position: absolute;
@@ -286,14 +286,14 @@
 
 
 }
-[data-theme="macos"] .ym-nav-indicator.is-visible {
+[data-theme="macos"] .ym-nav-indicator.is-visible , [data-theme="macosdark"] .ym-nav-indicator.is-visible {
 
 
   opacity: 1;
 
 
 }
-[data-theme="macos"] .ym-header-link {
+[data-theme="macos"] .ym-header-link , [data-theme="macosdark"] .ym-header-link {
 
 
   position: relative;
@@ -307,8 +307,8 @@
 
 
 }
-[data-theme="macos"] .ym-header-link:hover,
-[data-theme="macos"] .ym-header-link.active {
+[data-theme="macos"] .ym-header-link:hover, [data-theme="macosdark"] .ym-header-link:hover,
+[data-theme="macos"] .ym-header-link.active , [data-theme="macosdark"] .ym-header-link.active {
 
 
   color: var(--ym-accent);
@@ -316,7 +316,7 @@
 
 
 }
-[data-theme="macos"] .ym-header-center {
+[data-theme="macos"] .ym-header-center , [data-theme="macosdark"] .ym-header-center {
 
 
   max-width: 340px;
@@ -324,30 +324,30 @@
 
 
 }
-[data-theme="macos"] .ym-header-actions {
+[data-theme="macos"] .ym-header-actions , [data-theme="macosdark"] .ym-header-actions {
 
 
   gap: 8px;
 
 
 }
-[data-theme="macos"] .ym-desktop-actions {
+[data-theme="macos"] .ym-desktop-actions , [data-theme="macosdark"] .ym-desktop-actions {
 
 
   display: flex;
 
 
 }
-[data-theme="macos"] .ym-mobile-actions,
-[data-theme="macos"] .ym-mobile-search-panel,
-[data-theme="macos"] .ym-mobile-drawer {
+[data-theme="macos"] .ym-mobile-actions, [data-theme="macosdark"] .ym-mobile-actions,
+[data-theme="macos"] .ym-mobile-search-panel, [data-theme="macosdark"] .ym-mobile-search-panel,
+[data-theme="macos"] .ym-mobile-drawer , [data-theme="macosdark"] .ym-mobile-drawer {
 
 
   display: none;
 
 
 }
-[data-theme="macos"] .ym-profile-trigger {
+[data-theme="macos"] .ym-profile-trigger , [data-theme="macosdark"] .ym-profile-trigger {
 
 
   display: inline-flex;
@@ -363,7 +363,7 @@
 
 
 }
-[data-theme="macos"] .ym-profile-trigger:hover {
+[data-theme="macos"] .ym-profile-trigger:hover , [data-theme="macosdark"] .ym-profile-trigger:hover {
 
 
   border-color: var(--ym-glass-edge-soft);
@@ -371,7 +371,7 @@
 
 
 }
-[data-theme="macos"] .ym-profile-name {
+[data-theme="macos"] .ym-profile-name , [data-theme="macosdark"] .ym-profile-name {
 
 
   max-width: 92px;
@@ -382,7 +382,7 @@
 
 
 }
-[data-theme="macos"] .ym-profile-menu {
+[data-theme="macos"] .ym-profile-menu , [data-theme="macosdark"] .ym-profile-menu {
 
 
   position: absolute;
@@ -401,8 +401,8 @@
 
 
 }
-[data-theme="macos"] .ym-profile-menu a,
-[data-theme="macos"] .ym-profile-menu button {
+[data-theme="macos"] .ym-profile-menu a, [data-theme="macosdark"] .ym-profile-menu a,
+[data-theme="macos"] .ym-profile-menu button , [data-theme="macosdark"] .ym-profile-menu button {
 
 
   display: flex;
@@ -420,8 +420,8 @@
 
 
 }
-[data-theme="macos"] .ym-profile-menu a:hover,
-[data-theme="macos"] .ym-profile-menu button:hover {
+[data-theme="macos"] .ym-profile-menu a:hover, [data-theme="macosdark"] .ym-profile-menu a:hover,
+[data-theme="macos"] .ym-profile-menu button:hover , [data-theme="macosdark"] .ym-profile-menu button:hover {
 
 
   background: rgba(var(--ym-glass-rgb), 0.72);
@@ -429,7 +429,7 @@
 
 
 }
-[data-theme="macos"] .ym-profile-menu .ym-profile-danger {
+[data-theme="macos"] .ym-profile-menu .ym-profile-danger , [data-theme="macosdark"] .ym-profile-menu .ym-profile-danger {
 
 
   color: var(--ym-danger);
@@ -437,14 +437,14 @@
 
 }
 /* Glass surfaces and controls */
-[data-theme="macos"] .ym-glass-panel,
-[data-theme="macos"] .ym-section-block,
-[data-theme="macos"] .ym-card,
-[data-theme="macos"] .ym-idea-card,
-[data-theme="macos"] .ym-work-card,
-[data-theme="macos"] .ym-modal-card,
-[data-theme="macos"] .ym-empty,
-[data-theme="macos"] .ym-stat {
+[data-theme="macos"] .ym-glass-panel, [data-theme="macosdark"] .ym-glass-panel,
+[data-theme="macos"] .ym-section-block, [data-theme="macosdark"] .ym-section-block,
+[data-theme="macos"] .ym-card, [data-theme="macosdark"] .ym-card,
+[data-theme="macos"] .ym-idea-card, [data-theme="macosdark"] .ym-idea-card,
+[data-theme="macos"] .ym-work-card, [data-theme="macosdark"] .ym-work-card,
+[data-theme="macos"] .ym-modal-card, [data-theme="macosdark"] .ym-modal-card,
+[data-theme="macos"] .ym-empty, [data-theme="macosdark"] .ym-empty,
+[data-theme="macos"] .ym-stat , [data-theme="macosdark"] .ym-stat {
 
 
   border: 1px solid var(--ym-glass-edge-muted);
@@ -455,21 +455,21 @@
 
 
 }
-[data-theme="macos"] .ym-section-block,
-[data-theme="macos"] .ym-glass-panel,
-[data-theme="macos"] .ym-modal-card {
+[data-theme="macos"] .ym-section-block, [data-theme="macosdark"] .ym-section-block,
+[data-theme="macos"] .ym-glass-panel, [data-theme="macosdark"] .ym-glass-panel,
+[data-theme="macos"] .ym-modal-card , [data-theme="macosdark"] .ym-modal-card {
 
 
   border-radius: var(--ym-radius-panel);
 
 
 }
-[data-theme="macos"] .ym-btn,
-[data-theme="macos"] .ym-chip,
-[data-theme="macos"] .ym-tab,
-[data-theme="macos"] .ym-chip-button,
-[data-theme="macos"] .ym-page-button,
-[data-theme="macos"] .ym-page-confirm {
+[data-theme="macos"] .ym-btn, [data-theme="macosdark"] .ym-btn,
+[data-theme="macos"] .ym-chip, [data-theme="macosdark"] .ym-chip,
+[data-theme="macos"] .ym-tab, [data-theme="macosdark"] .ym-tab,
+[data-theme="macos"] .ym-chip-button, [data-theme="macosdark"] .ym-chip-button,
+[data-theme="macos"] .ym-page-button, [data-theme="macosdark"] .ym-page-button,
+[data-theme="macos"] .ym-page-confirm , [data-theme="macosdark"] .ym-page-confirm {
 
 
   min-height: 38px;
@@ -486,20 +486,20 @@
 
 
 }
-[data-theme="macos"] .ym-chip,
-[data-theme="macos"] .ym-tab,
-[data-theme="macos"] .ym-chip-button {
+[data-theme="macos"] .ym-chip, [data-theme="macosdark"] .ym-chip,
+[data-theme="macos"] .ym-tab, [data-theme="macosdark"] .ym-tab,
+[data-theme="macos"] .ym-chip-button , [data-theme="macosdark"] .ym-chip-button {
   border-radius: var(--ym-radius-pill);
 }
-[data-theme="macos"] .ym-page-button {
+[data-theme="macos"] .ym-page-button , [data-theme="macosdark"] .ym-page-button {
   border-radius: 11px;
 }
-[data-theme="macos"] .ym-btn:hover:not(:disabled),
-[data-theme="macos"] .ym-chip:hover:not(:disabled),
-[data-theme="macos"] .ym-tab:hover:not(:disabled),
-[data-theme="macos"] .ym-chip-button:hover:not(:disabled),
-[data-theme="macos"] .ym-page-button:hover:not(:disabled),
-[data-theme="macos"] .ym-page-confirm:hover:not(:disabled) {
+[data-theme="macos"] .ym-btn:hover:not(:disabled), [data-theme="macosdark"] .ym-btn:hover:not(:disabled),
+[data-theme="macos"] .ym-chip:hover:not(:disabled), [data-theme="macosdark"] .ym-chip:hover:not(:disabled),
+[data-theme="macos"] .ym-tab:hover:not(:disabled), [data-theme="macosdark"] .ym-tab:hover:not(:disabled),
+[data-theme="macos"] .ym-chip-button:hover:not(:disabled), [data-theme="macosdark"] .ym-chip-button:hover:not(:disabled),
+[data-theme="macos"] .ym-page-button:hover:not(:disabled), [data-theme="macosdark"] .ym-page-button:hover:not(:disabled),
+[data-theme="macos"] .ym-page-confirm:hover:not(:disabled) , [data-theme="macosdark"] .ym-page-confirm:hover:not(:disabled) {
 
 
   opacity: 1;
@@ -510,22 +510,22 @@
 
 
 }
-[data-theme="macos"] .ym-btn:active:not(:disabled),
-[data-theme="macos"] .ym-chip:active:not(:disabled),
-[data-theme="macos"] .ym-tab:active:not(:disabled),
-[data-theme="macos"] .ym-chip-button:active:not(:disabled),
-[data-theme="macos"] .ym-page-button:active:not(:disabled),
-[data-theme="macos"] .ym-page-confirm:active:not(:disabled) {
+[data-theme="macos"] .ym-btn:active:not(:disabled), [data-theme="macosdark"] .ym-btn:active:not(:disabled),
+[data-theme="macos"] .ym-chip:active:not(:disabled), [data-theme="macosdark"] .ym-chip:active:not(:disabled),
+[data-theme="macos"] .ym-tab:active:not(:disabled), [data-theme="macosdark"] .ym-tab:active:not(:disabled),
+[data-theme="macos"] .ym-chip-button:active:not(:disabled), [data-theme="macosdark"] .ym-chip-button:active:not(:disabled),
+[data-theme="macos"] .ym-page-button:active:not(:disabled), [data-theme="macosdark"] .ym-page-button:active:not(:disabled),
+[data-theme="macos"] .ym-page-confirm:active:not(:disabled) , [data-theme="macosdark"] .ym-page-confirm:active:not(:disabled) {
 
 
   transform: translateY(1px) scale(0.985);
 
 
 }
-[data-theme="macos"] .ym-btn-primary,
-[data-theme="macos"] .ym-chip-active,
-[data-theme="macos"] .ym-chip-button.is-active,
-[data-theme="macos"] .ym-page-button.is-active {
+[data-theme="macos"] .ym-btn-primary, [data-theme="macosdark"] .ym-btn-primary,
+[data-theme="macos"] .ym-chip-active, [data-theme="macosdark"] .ym-chip-active,
+[data-theme="macos"] .ym-chip-button.is-active, [data-theme="macosdark"] .ym-chip-button.is-active,
+[data-theme="macos"] .ym-page-button.is-active , [data-theme="macosdark"] .ym-page-button.is-active {
 
 
   border-color: rgba(255, 255, 255, 0.38);
@@ -535,7 +535,7 @@
 
 
 }
-[data-theme="macos"] .ym-btn-primary:hover:not(:disabled) {
+[data-theme="macos"] .ym-btn-primary:hover:not(:disabled) , [data-theme="macosdark"] .ym-btn-primary:hover:not(:disabled) {
 
 
   background: linear-gradient(145deg, #3b9af0, var(--ym-accent-hover));
@@ -543,7 +543,7 @@
 
 
 }
-[data-theme="macos"] .ym-btn-sm {
+[data-theme="macos"] .ym-btn-sm , [data-theme="macosdark"] .ym-btn-sm {
 
 
   min-height: 36px;
@@ -552,7 +552,7 @@
 
 
 }
-[data-theme="macos"] .ym-btn-lg {
+[data-theme="macos"] .ym-btn-lg , [data-theme="macosdark"] .ym-btn-lg {
 
 
   min-height: 46px;
@@ -560,7 +560,7 @@
 
 
 }
-[data-theme="macos"] .ym-chip-button {
+[data-theme="macos"] .ym-chip-button , [data-theme="macosdark"] .ym-chip-button {
 
 
   padding: 7px 15px;
@@ -570,8 +570,8 @@
 
 
 }
-[data-theme="macos"] .ym-tabs,
-[data-theme="macos"] .ym-filter-rail {
+[data-theme="macos"] .ym-tabs, [data-theme="macosdark"] .ym-tabs,
+[data-theme="macos"] .ym-filter-rail , [data-theme="macosdark"] .ym-filter-rail {
 
 
   display: flex;
@@ -584,15 +584,15 @@
 
 
 }
-[data-theme="macos"] .ym-tabs::-webkit-scrollbar,
-[data-theme="macos"] .ym-filter-rail::-webkit-scrollbar {
+[data-theme="macos"] .ym-tabs::-webkit-scrollbar, [data-theme="macosdark"] .ym-tabs::-webkit-scrollbar,
+[data-theme="macos"] .ym-filter-rail::-webkit-scrollbar , [data-theme="macosdark"] .ym-filter-rail::-webkit-scrollbar {
 
 
   display: none;
 
 
 }
-[data-theme="macos"] .ym-tab {
+[data-theme="macos"] .ym-tab , [data-theme="macosdark"] .ym-tab {
 
 
   flex: 0 0 auto;
@@ -601,7 +601,7 @@
 
 
 }
-[data-theme="macos"] .ym-tab.active {
+[data-theme="macos"] .ym-tab.active , [data-theme="macosdark"] .ym-tab.active {
 
 
   border-color: rgba(255, 255, 255, 0.38);
@@ -611,12 +611,12 @@
 
 
 }
-[data-theme="macos"] .ym-input,
-[data-theme="macos"] .ym-textarea,
-[data-theme="macos"] .ym-select,
-[data-theme="macos"] input:not([type='checkbox']):not([type='radio']),
-[data-theme="macos"] textarea,
-[data-theme="macos"] select {
+[data-theme="macos"] .ym-input, [data-theme="macosdark"] .ym-input,
+[data-theme="macos"] .ym-textarea, [data-theme="macosdark"] .ym-textarea,
+[data-theme="macos"] .ym-select, [data-theme="macosdark"] .ym-select,
+[data-theme="macos"] input:not([type='checkbox']):not([type='radio']), [data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']),
+[data-theme="macos"] textarea, [data-theme="macosdark"] textarea,
+[data-theme="macos"] select , [data-theme="macosdark"] select {
 
 
   border-color: var(--ym-glass-edge-muted);
@@ -631,7 +631,7 @@
 
 }
 
-[data-theme="macos"] .ym-theme-select {
+[data-theme="macos"] .ym-theme-select , [data-theme="macosdark"] .ym-theme-select {
   --ym-select-bg: var(--ym-glass-surface-2);
   --ym-select-hover: var(--ym-glass-surface-interactive);
   --ym-select-active: color-mix(in srgb, var(--ym-glass-surface-2) 84%, var(--ym-accent));
@@ -639,18 +639,18 @@
   --ym-select-shadow: var(--ym-glass-shadow-card);
 }
 
-[data-theme="macos"] .ym-theme-select__trigger,
-[data-theme="macos"] .ym-theme-select__menu {
+[data-theme="macos"] .ym-theme-select__trigger, [data-theme="macosdark"] .ym-theme-select__trigger,
+[data-theme="macos"] .ym-theme-select__menu , [data-theme="macosdark"] .ym-theme-select__menu {
   box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft), var(--ym-select-shadow);
   -webkit-backdrop-filter: blur(var(--ym-glass-blur-control)) saturate(132%);
   backdrop-filter: blur(var(--ym-glass-blur-control)) saturate(132%);
 }
-[data-theme="macos"] .ym-input:focus,
-[data-theme="macos"] .ym-textarea:focus,
-[data-theme="macos"] .ym-select:focus,
-[data-theme="macos"] input:not([type='checkbox']):not([type='radio']):focus,
-[data-theme="macos"] textarea:focus,
-[data-theme="macos"] select:focus {
+[data-theme="macos"] .ym-input:focus, [data-theme="macosdark"] .ym-input:focus,
+[data-theme="macos"] .ym-textarea:focus, [data-theme="macosdark"] .ym-textarea:focus,
+[data-theme="macos"] .ym-select:focus, [data-theme="macosdark"] .ym-select:focus,
+[data-theme="macos"] input:not([type='checkbox']):not([type='radio']):focus, [data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']):focus,
+[data-theme="macos"] textarea:focus, [data-theme="macosdark"] textarea:focus,
+[data-theme="macos"] select:focus , [data-theme="macosdark"] select:focus {
 
 
   border-color: rgba(8, 123, 232, 0.52);
@@ -661,7 +661,7 @@
 
 }
 /* Page headings and layout rhythm */
-[data-theme="macos"] .ym-page-hero {
+[data-theme="macos"] .ym-page-hero , [data-theme="macosdark"] .ym-page-hero {
 
 
   padding: 18px 0 10px;
@@ -669,7 +669,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-hero-title-row {
+[data-theme="macos"] .ym-page-hero-title-row , [data-theme="macosdark"] .ym-page-hero-title-row {
 
 
   display: flex;
@@ -678,7 +678,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-hero-icon {
+[data-theme="macos"] .ym-page-hero-icon , [data-theme="macosdark"] .ym-page-hero-icon {
 
 
   display: grid;
@@ -693,7 +693,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-hero h1 {
+[data-theme="macos"] .ym-page-hero h1 , [data-theme="macosdark"] .ym-page-hero h1 {
 
 
   margin: 0;
@@ -705,7 +705,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-hero p {
+[data-theme="macos"] .ym-page-hero p , [data-theme="macosdark"] .ym-page-hero p {
 
 
   max-width: 720px;
@@ -716,7 +716,7 @@
 
 
 }
-[data-theme="macos"] .ym-section-title {
+[data-theme="macos"] .ym-section-title , [data-theme="macosdark"] .ym-section-title {
 
 
   margin: 34px 0 16px;
@@ -726,7 +726,7 @@
 
 
 }
-[data-theme="macos"] .ym-section-title::before {
+[data-theme="macos"] .ym-section-title::before , [data-theme="macosdark"] .ym-section-title::before {
 
 
   width: 5px;
@@ -737,7 +737,7 @@
 
 
 }
-[data-theme="macos"] .ym-home-feature-grid {
+[data-theme="macos"] .ym-home-feature-grid , [data-theme="macosdark"] .ym-home-feature-grid {
 
 
   display: grid;
@@ -747,7 +747,7 @@
 
 
 }
-[data-theme="macos"] .ym-home-feature {
+[data-theme="macos"] .ym-home-feature , [data-theme="macosdark"] .ym-home-feature {
 
 
   display: flex;
@@ -762,7 +762,7 @@
 
 
 }
-[data-theme="macos"] .ym-home-feature:hover {
+[data-theme="macos"] .ym-home-feature:hover , [data-theme="macosdark"] .ym-home-feature:hover {
 
 
   box-shadow: inset 0 1px 0 var(--ym-glass-edge), var(--ym-shadow-card-hover);
@@ -770,7 +770,7 @@
 
 
 }
-[data-theme="macos"] .ym-home-feature strong {
+[data-theme="macos"] .ym-home-feature strong , [data-theme="macosdark"] .ym-home-feature strong {
 
 
   display: block;
@@ -780,7 +780,7 @@
 
 
 }
-[data-theme="macos"] .ym-home-feature p {
+[data-theme="macos"] .ym-home-feature p , [data-theme="macosdark"] .ym-home-feature p {
 
 
   margin: 0;
@@ -790,7 +790,7 @@
 
 
 }
-[data-theme="macos"] .ym-list-anchor {
+[data-theme="macos"] .ym-list-anchor , [data-theme="macosdark"] .ym-list-anchor {
 
 
   scroll-margin-top: 112px;
@@ -798,7 +798,7 @@
 
 }
 /* Cards */
-[data-theme="macos"] .ym-grid {
+[data-theme="macos"] .ym-grid , [data-theme="macosdark"] .ym-grid {
 
 
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* auto-fill 保留空轨道，单作品不全屏（#62） */
@@ -806,35 +806,35 @@
 
 
 }
-[data-theme="macos"] .ym-grid-wide {
+[data-theme="macos"] .ym-grid-wide , [data-theme="macosdark"] .ym-grid-wide {
 
 
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* auto-fill 保留空轨道，单作品不全屏（#62） */
 
 
 }
-[data-theme="macos"] .ym-btn:focus-visible,
-[data-theme="macos"] .ym-chip:focus-visible,
-[data-theme="macos"] .ym-tab:focus-visible,
-[data-theme="macos"] .ym-chip-button:focus-visible,
-[data-theme="macos"] .ym-page-button:focus-visible,
-[data-theme="macos"] .ym-page-confirm:focus-visible,
-[data-theme="macos"] .ym-mobile-icon-button:focus-visible {
+[data-theme="macos"] .ym-btn:focus-visible, [data-theme="macosdark"] .ym-btn:focus-visible,
+[data-theme="macos"] .ym-chip:focus-visible, [data-theme="macosdark"] .ym-chip:focus-visible,
+[data-theme="macos"] .ym-tab:focus-visible, [data-theme="macosdark"] .ym-tab:focus-visible,
+[data-theme="macos"] .ym-chip-button:focus-visible, [data-theme="macosdark"] .ym-chip-button:focus-visible,
+[data-theme="macos"] .ym-page-button:focus-visible, [data-theme="macosdark"] .ym-page-button:focus-visible,
+[data-theme="macos"] .ym-page-confirm:focus-visible, [data-theme="macosdark"] .ym-page-confirm:focus-visible,
+[data-theme="macos"] .ym-mobile-icon-button:focus-visible , [data-theme="macosdark"] .ym-mobile-icon-button:focus-visible {
   outline: none;
   box-shadow: inset 0 1px 0 var(--ym-glass-edge), 0 0 0 4px var(--ym-focus-ring), var(--ym-shadow-control);
 }
-[data-theme="macos"] .ym-btn:disabled,
-[data-theme="macos"] .ym-chip:disabled,
-[data-theme="macos"] .ym-tab:disabled,
-[data-theme="macos"] .ym-chip-button:disabled,
-[data-theme="macos"] .ym-page-button:disabled,
-[data-theme="macos"] .ym-page-confirm:disabled {
+[data-theme="macos"] .ym-btn:disabled, [data-theme="macosdark"] .ym-btn:disabled,
+[data-theme="macos"] .ym-chip:disabled, [data-theme="macosdark"] .ym-chip:disabled,
+[data-theme="macos"] .ym-tab:disabled, [data-theme="macosdark"] .ym-tab:disabled,
+[data-theme="macos"] .ym-chip-button:disabled, [data-theme="macosdark"] .ym-chip-button:disabled,
+[data-theme="macos"] .ym-page-button:disabled, [data-theme="macosdark"] .ym-page-button:disabled,
+[data-theme="macos"] .ym-page-confirm:disabled , [data-theme="macosdark"] .ym-page-confirm:disabled {
   opacity: 0.46;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
   cursor: not-allowed;
   filter: saturate(0.7);
 }
-[data-theme="macos"] .ym-grid:has(> :only-child) {
+[data-theme="macos"] .ym-grid:has(> :only-child) , [data-theme="macosdark"] .ym-grid:has(> :only-child) {
 
 
   grid-template-columns: minmax(0, 340px);
@@ -842,8 +842,8 @@
 
 
 }
-[data-theme="macos"] .ym-card,
-[data-theme="macos"] .ym-work-card {
+[data-theme="macos"] .ym-card, [data-theme="macosdark"] .ym-card,
+[data-theme="macos"] .ym-work-card , [data-theme="macosdark"] .ym-work-card {
 
 
   position: relative;
@@ -854,9 +854,9 @@
 
 
 }
-[data-theme="macos"] .ym-card::before,
-[data-theme="macos"] .ym-work-card::before,
-[data-theme="macos"] .ym-idea-card::before {
+[data-theme="macos"] .ym-card::before, [data-theme="macosdark"] .ym-card::before,
+[data-theme="macos"] .ym-work-card::before, [data-theme="macosdark"] .ym-work-card::before,
+[data-theme="macos"] .ym-idea-card::before , [data-theme="macosdark"] .ym-idea-card::before {
 
 
   content: '';
@@ -869,9 +869,9 @@
 
 
 }
-[data-theme="macos"] .ym-card:hover,
-[data-theme="macos"] .ym-work-card:hover,
-[data-theme="macos"] .ym-idea-card:hover {
+[data-theme="macos"] .ym-card:hover, [data-theme="macosdark"] .ym-card:hover,
+[data-theme="macos"] .ym-work-card:hover, [data-theme="macosdark"] .ym-work-card:hover,
+[data-theme="macos"] .ym-idea-card:hover , [data-theme="macosdark"] .ym-idea-card:hover {
 
 
   border-color: rgba(116, 160, 205, 0.38);
@@ -880,8 +880,8 @@
 
 
 }
-[data-theme="macos"] .ym-card-media,
-[data-theme="macos"] .ym-work-card-media {
+[data-theme="macos"] .ym-card-media, [data-theme="macosdark"] .ym-card-media,
+[data-theme="macos"] .ym-work-card-media , [data-theme="macosdark"] .ym-work-card-media {
 
 
   position: relative;
@@ -892,8 +892,8 @@
 
 
 }
-[data-theme="macos"] .ym-card-media > img,
-[data-theme="macos"] .ym-work-card-media > img {
+[data-theme="macos"] .ym-card-media > img, [data-theme="macosdark"] .ym-card-media > img,
+[data-theme="macos"] .ym-work-card-media > img , [data-theme="macosdark"] .ym-work-card-media > img {
 
 
   position: relative;
@@ -905,8 +905,8 @@
 
 
 }
-[data-theme="macos"] .ym-card:hover .ym-card-media > img,
-[data-theme="macos"] .ym-work-card:hover .ym-work-card-media > img {
+[data-theme="macos"] .ym-card:hover .ym-card-media > img, [data-theme="macosdark"] .ym-card:hover .ym-card-media > img,
+[data-theme="macos"] .ym-work-card:hover .ym-work-card-media > img , [data-theme="macosdark"] .ym-work-card:hover .ym-work-card-media > img {
 
 
   transform: scale(1.015);
@@ -914,7 +914,7 @@
 
 
 }
-[data-theme="macos"] .ym-card-badge {
+[data-theme="macos"] .ym-card-badge , [data-theme="macosdark"] .ym-card-badge {
 
 
   left: 10px;
@@ -928,16 +928,16 @@
 
 
 }
-[data-theme="macos"] .ym-card-body,
-[data-theme="macos"] .ym-work-card-body {
+[data-theme="macos"] .ym-card-body, [data-theme="macosdark"] .ym-card-body,
+[data-theme="macos"] .ym-work-card-body , [data-theme="macosdark"] .ym-work-card-body {
 
 
   padding: 15px 16px 16px;
 
 
 }
-[data-theme="macos"] .ym-card-title,
-[data-theme="macos"] .ym-work-card-title {
+[data-theme="macos"] .ym-card-title, [data-theme="macosdark"] .ym-card-title,
+[data-theme="macos"] .ym-work-card-title , [data-theme="macosdark"] .ym-work-card-title {
 
 
   color: var(--ym-text-primary);
@@ -947,8 +947,8 @@
 
 
 }
-[data-theme="macos"] .ym-card-meta,
-[data-theme="macos"] .ym-work-card-meta {
+[data-theme="macos"] .ym-card-meta, [data-theme="macosdark"] .ym-card-meta,
+[data-theme="macos"] .ym-work-card-meta , [data-theme="macosdark"] .ym-work-card-meta {
 
 
   margin-top: 11px;
@@ -956,7 +956,7 @@
 
 
 }
-[data-theme="macos"] .ym-like-button {
+[data-theme="macos"] .ym-like-button , [data-theme="macosdark"] .ym-like-button {
 
 
   min-height: 30px;
@@ -969,8 +969,8 @@
 
 
 }
-[data-theme="macos"] .ym-like-button:hover,
-[data-theme="macos"] .ym-like-button.is-liked {
+[data-theme="macos"] .ym-like-button:hover, [data-theme="macosdark"] .ym-like-button:hover,
+[data-theme="macos"] .ym-like-button.is-liked , [data-theme="macosdark"] .ym-like-button.is-liked {
 
 
   background: rgba(0, 122, 255, 0.08);
@@ -978,7 +978,7 @@
 
 
 }
-[data-theme="macos"] .ym-work-card {
+[data-theme="macos"] .ym-work-card , [data-theme="macosdark"] .ym-work-card {
 
 
   display: block;
@@ -987,14 +987,14 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-media {
+[data-theme="macos"] .ym-work-card-media , [data-theme="macosdark"] .ym-work-card-media {
 
 
   aspect-ratio: 16 / 9;
 
 
 }
-[data-theme="macos"] .ym-work-card-fallback {
+[data-theme="macos"] .ym-work-card-fallback , [data-theme="macosdark"] .ym-work-card-fallback {
 
 
   position: absolute;
@@ -1010,9 +1010,9 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-heading,
-[data-theme="macos"] .ym-work-card-author,
-[data-theme="macos"] .ym-work-card-stats {
+[data-theme="macos"] .ym-work-card-heading, [data-theme="macosdark"] .ym-work-card-heading,
+[data-theme="macos"] .ym-work-card-author, [data-theme="macosdark"] .ym-work-card-author,
+[data-theme="macos"] .ym-work-card-stats , [data-theme="macosdark"] .ym-work-card-stats {
 
 
   display: flex;
@@ -1020,7 +1020,7 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-heading {
+[data-theme="macos"] .ym-work-card-heading , [data-theme="macosdark"] .ym-work-card-heading {
 
 
   gap: 7px;
@@ -1029,7 +1029,7 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-author {
+[data-theme="macos"] .ym-work-card-author , [data-theme="macosdark"] .ym-work-card-author {
 
 
   gap: 6px;
@@ -1037,7 +1037,7 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-submeta {
+[data-theme="macos"] .ym-work-card-submeta , [data-theme="macosdark"] .ym-work-card-submeta {
 
 
   display: flex;
@@ -1049,7 +1049,7 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-tags {
+[data-theme="macos"] .ym-work-card-tags , [data-theme="macosdark"] .ym-work-card-tags {
 
 
   display: flex;
@@ -1059,8 +1059,8 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-tags span,
-[data-theme="macos"] .ym-work-badge {
+[data-theme="macos"] .ym-work-card-tags span, [data-theme="macosdark"] .ym-work-card-tags span,
+[data-theme="macos"] .ym-work-badge , [data-theme="macosdark"] .ym-work-badge {
 
 
   padding: 3px 8px;
@@ -1072,7 +1072,7 @@
 
 
 }
-[data-theme="macos"] .ym-work-card-stats {
+[data-theme="macos"] .ym-work-card-stats , [data-theme="macosdark"] .ym-work-card-stats {
 
 
   justify-content: space-between;
@@ -1082,7 +1082,7 @@
 
 
 }
-[data-theme="macos"] .ym-idea-card {
+[data-theme="macos"] .ym-idea-card , [data-theme="macosdark"] .ym-idea-card {
 
 
   position: relative;
@@ -1094,7 +1094,7 @@
 
 
 }
-[data-theme="macos"] .ym-idea-list {
+[data-theme="macos"] .ym-idea-list , [data-theme="macosdark"] .ym-idea-list {
 
 
   display: grid;
@@ -1102,14 +1102,14 @@
 
 
 }
-[data-theme="macos"] .ym-idea-list .ym-idea-card {
+[data-theme="macos"] .ym-idea-list .ym-idea-card , [data-theme="macosdark"] .ym-idea-list .ym-idea-card {
 
 
   margin-bottom: 0;
 
 
 }
-[data-theme="macos"] .ym-state-message {
+[data-theme="macos"] .ym-state-message , [data-theme="macosdark"] .ym-state-message {
 
 
   padding: 64px 0;
@@ -1118,7 +1118,7 @@
 
 
 }
-[data-theme="macos"] .ym-empty {
+[data-theme="macos"] .ym-empty , [data-theme="macosdark"] .ym-empty {
 
 
   padding: 44px 24px;
@@ -1127,7 +1127,7 @@
 
 
 }
-[data-theme="macos"] .ym-empty h3 {
+[data-theme="macos"] .ym-empty h3 , [data-theme="macosdark"] .ym-empty h3 {
 
 
   margin: 0 0 8px;
@@ -1135,7 +1135,7 @@
 
 
 }
-[data-theme="macos"] .ym-empty p {
+[data-theme="macos"] .ym-empty p , [data-theme="macosdark"] .ym-empty p {
 
 
   margin: 0 0 18px;
@@ -1143,7 +1143,7 @@
 
 
 }
-[data-theme="macos"] .ym-idea-card-main {
+[data-theme="macos"] .ym-idea-card-main , [data-theme="macosdark"] .ym-idea-card-main {
 
 
   display: block;
@@ -1152,8 +1152,8 @@
 
 
 }
-[data-theme="macos"] .ym-idea-card-tags,
-[data-theme="macos"] .ym-idea-card-meta {
+[data-theme="macos"] .ym-idea-card-tags, [data-theme="macosdark"] .ym-idea-card-tags,
+[data-theme="macos"] .ym-idea-card-meta , [data-theme="macosdark"] .ym-idea-card-meta {
 
 
   display: flex;
@@ -1163,14 +1163,14 @@
 
 
 }
-[data-theme="macos"] .ym-idea-card-tags {
+[data-theme="macos"] .ym-idea-card-tags , [data-theme="macosdark"] .ym-idea-card-tags {
 
 
   margin-bottom: 10px;
 
 
 }
-[data-theme="macos"] .ym-idea-card-tags > span:not(.ym-work-badge) {
+[data-theme="macos"] .ym-idea-card-tags > span:not(.ym-work-badge) , [data-theme="macosdark"] .ym-idea-card-tags > span:not(.ym-work-badge) {
 
 
   color: var(--ym-text-muted);
@@ -1178,7 +1178,7 @@
 
 
 }
-[data-theme="macos"] .ym-idea-card-title {
+[data-theme="macos"] .ym-idea-card-title , [data-theme="macosdark"] .ym-idea-card-title {
 
 
   margin: 0 0 7px;
@@ -1190,7 +1190,7 @@
 
 
 }
-[data-theme="macos"] .ym-idea-card-description {
+[data-theme="macos"] .ym-idea-card-description , [data-theme="macosdark"] .ym-idea-card-description {
 
 
   display: -webkit-box;
@@ -1204,7 +1204,7 @@
 
 
 }
-[data-theme="macos"] .ym-idea-card-meta {
+[data-theme="macos"] .ym-idea-card-meta , [data-theme="macosdark"] .ym-idea-card-meta {
 
 
   color: var(--ym-text-muted);
@@ -1213,7 +1213,7 @@
 
 }
 /* Discovery and idea controls */
-[data-theme="macos"] .ym-discovery-random {
+[data-theme="macos"] .ym-discovery-random , [data-theme="macosdark"] .ym-discovery-random {
 
 
   padding: 22px;
@@ -1221,8 +1221,8 @@
 
 
 }
-[data-theme="macos"] .ym-discovery-random-head,
-[data-theme="macos"] .ym-idea-toolbar {
+[data-theme="macos"] .ym-discovery-random-head, [data-theme="macosdark"] .ym-discovery-random-head,
+[data-theme="macos"] .ym-idea-toolbar , [data-theme="macosdark"] .ym-idea-toolbar {
 
 
   display: flex;
@@ -1233,7 +1233,7 @@
 
 
 }
-[data-theme="macos"] .ym-discovery-random-title {
+[data-theme="macos"] .ym-discovery-random-title , [data-theme="macosdark"] .ym-discovery-random-title {
 
 
   margin-bottom: 5px;
@@ -1243,7 +1243,7 @@
 
 
 }
-[data-theme="macos"] .ym-discovery-random-copy {
+[data-theme="macos"] .ym-discovery-random-copy , [data-theme="macosdark"] .ym-discovery-random-copy {
 
 
   color: var(--ym-text-muted);
@@ -1252,7 +1252,7 @@
 
 
 }
-[data-theme="macos"] .ym-random-result {
+[data-theme="macos"] .ym-random-result , [data-theme="macosdark"] .ym-random-result {
 
 
   width: min(100%, 360px);
@@ -1260,8 +1260,8 @@
 
 
 }
-[data-theme="macos"] .ym-random-result p,
-[data-theme="macos"] .ym-random-hint {
+[data-theme="macos"] .ym-random-result p, [data-theme="macosdark"] .ym-random-result p,
+[data-theme="macos"] .ym-random-hint , [data-theme="macosdark"] .ym-random-hint {
 
 
   margin: 10px 0 0;
@@ -1271,7 +1271,7 @@
 
 
 }
-[data-theme="macos"] .ym-active-filter {
+[data-theme="macos"] .ym-active-filter , [data-theme="macosdark"] .ym-active-filter {
 
 
   display: flex;
@@ -1284,7 +1284,7 @@
 
 
 }
-[data-theme="macos"] .ym-load-more {
+[data-theme="macos"] .ym-load-more , [data-theme="macosdark"] .ym-load-more {
 
 
   margin-top: 28px;
@@ -1292,14 +1292,14 @@
 
 
 }
-[data-theme="macos"] .ym-idea-toolbar {
+[data-theme="macos"] .ym-idea-toolbar , [data-theme="macosdark"] .ym-idea-toolbar {
 
 
   margin-bottom: 18px;
 
 
 }
-[data-theme="macos"] .ym-idea-search {
+[data-theme="macos"] .ym-idea-search , [data-theme="macosdark"] .ym-idea-search {
 
 
   display: flex;
@@ -1309,7 +1309,7 @@
 
 
 }
-[data-theme="macos"] .ym-idea-search input {
+[data-theme="macos"] .ym-idea-search input , [data-theme="macosdark"] .ym-idea-search input {
 
 
   flex: 1;
@@ -1318,8 +1318,8 @@
 
 
 }
-[data-theme="macos"] .ym-idea-actions,
-[data-theme="macos"] .ym-chip-row {
+[data-theme="macos"] .ym-idea-actions, [data-theme="macosdark"] .ym-idea-actions,
+[data-theme="macos"] .ym-chip-row , [data-theme="macosdark"] .ym-chip-row {
 
 
   display: flex;
@@ -1328,7 +1328,7 @@
 
 
 }
-[data-theme="macos"] .ym-chip-row {
+[data-theme="macos"] .ym-chip-row , [data-theme="macosdark"] .ym-chip-row {
 
 
   margin-bottom: 12px;
@@ -1338,7 +1338,7 @@
 
 
 }
-[data-theme="macos"] .ym-chip-row::-webkit-scrollbar {
+[data-theme="macos"] .ym-chip-row::-webkit-scrollbar , [data-theme="macosdark"] .ym-chip-row::-webkit-scrollbar {
 
 
   display: none;
@@ -1346,14 +1346,14 @@
 
 }
 /* Pagination */
-[data-theme="macos"] .ym-pagination-block {
+[data-theme="macos"] .ym-pagination-block , [data-theme="macosdark"] .ym-pagination-block {
 
 
   margin-top: 34px;
 
 
 }
-[data-theme="macos"] .ym-pagination {
+[data-theme="macos"] .ym-pagination , [data-theme="macosdark"] .ym-pagination {
 
 
   display: flex;
@@ -1364,7 +1364,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-numbers {
+[data-theme="macos"] .ym-page-numbers , [data-theme="macosdark"] .ym-page-numbers {
 
 
   display: flex;
@@ -1373,7 +1373,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-button {
+[data-theme="macos"] .ym-page-button , [data-theme="macosdark"] .ym-page-button {
 
 
   display: inline-grid;
@@ -1385,14 +1385,14 @@
 
 
 }
-[data-theme="macos"] .ym-page-number {
+[data-theme="macos"] .ym-page-number , [data-theme="macosdark"] .ym-page-number {
 
 
   padding-inline: 10px;
 
 
 }
-[data-theme="macos"] .ym-page-ellipsis {
+[data-theme="macos"] .ym-page-ellipsis , [data-theme="macosdark"] .ym-page-ellipsis {
 
 
   display: inline-grid;
@@ -1403,7 +1403,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-jump {
+[data-theme="macos"] .ym-page-jump , [data-theme="macosdark"] .ym-page-jump {
 
 
   position: relative;
@@ -1424,7 +1424,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-jump input {
+[data-theme="macos"] .ym-page-jump input , [data-theme="macosdark"] .ym-page-jump input {
 
 
   width: 54px;
@@ -1435,7 +1435,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-confirm {
+[data-theme="macos"] .ym-page-confirm , [data-theme="macosdark"] .ym-page-confirm {
 
 
   min-height: 32px;
@@ -1446,7 +1446,7 @@
 
 
 }
-[data-theme="macos"] .ym-page-jump-error {
+[data-theme="macos"] .ym-page-jump-error , [data-theme="macosdark"] .ym-page-jump-error {
 
 
   position: absolute;
@@ -1462,14 +1462,14 @@
 
 
 }
-[data-theme="macos"] .ym-pagination-summary {
+[data-theme="macos"] .ym-pagination-summary , [data-theme="macosdark"] .ym-pagination-summary {
   margin: 14px 0 0;
   color: var(--ym-text-muted);
   font-size: 13px;
   text-align: center;
 }
 
-[data-theme="macos"] .ym-pagination-size {
+[data-theme="macos"] .ym-pagination-size , [data-theme="macosdark"] .ym-pagination-size {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1477,7 +1477,7 @@
   font-size: 13px;
 }
 
-[data-theme="macos"] .ym-pagination-size select {
+[data-theme="macos"] .ym-pagination-size select , [data-theme="macosdark"] .ym-pagination-size select {
   padding: 3px 8px;
   border-radius: 10px;
   border: 1px solid var(--ym-glass-edge-soft);
@@ -1487,13 +1487,13 @@
   cursor: pointer;
 }
 
-[data-theme="macos"] .ym-pagination-custom-size {
+[data-theme="macos"] .ym-pagination-custom-size , [data-theme="macosdark"] .ym-pagination-custom-size {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-[data-theme="macos"] .ym-pagination-custom-size input {
+[data-theme="macos"] .ym-pagination-custom-size input , [data-theme="macosdark"] .ym-pagination-custom-size input {
   width: 54px;
   padding: 3px 8px;
   border-radius: 10px;
@@ -1504,7 +1504,7 @@
   text-align: center;
 }
 /* Footer and floating controls */
-[data-theme="macos"] .ym-site-footer {
+[data-theme="macos"] .ym-site-footer , [data-theme="macosdark"] .ym-site-footer {
 
 
   width: min(calc(100% - 24px), 1380px);
@@ -1519,7 +1519,7 @@
 
 
 }
-[data-theme="macos"] .ym-footer-inner {
+[data-theme="macos"] .ym-footer-inner , [data-theme="macosdark"] .ym-footer-inner {
 
 
   max-width: 1320px;
@@ -1527,7 +1527,7 @@
 
 
 }
-[data-theme="macos"] .ym-fab {
+[data-theme="macos"] .ym-fab , [data-theme="macosdark"] .ym-fab {
 
 
   border: 1px solid var(--ym-glass-edge) !important;
@@ -1539,29 +1539,29 @@
 
 }
 /* Route transitions */
-[data-theme="macos"] .ym-route-stage {
+[data-theme="macos"] .ym-route-stage , [data-theme="macosdark"] .ym-route-stage {
 
 
   min-height: 1px;
 
 
 }
-[data-theme="macos"] .ym-route-stage.is-entering,
-[data-theme="macos"] .ym-route-stage.is-exiting {
+[data-theme="macos"] .ym-route-stage.is-entering, [data-theme="macosdark"] .ym-route-stage.is-entering,
+[data-theme="macos"] .ym-route-stage.is-exiting , [data-theme="macosdark"] .ym-route-stage.is-exiting {
 
 
   will-change: opacity, transform;
 
 
 }
-[data-theme="macos"] .ym-route-stage.is-entering {
+[data-theme="macos"] .ym-route-stage.is-entering , [data-theme="macosdark"] .ym-route-stage.is-entering {
 
 
   animation: ym-route-enter 280ms var(--ym-motion-spring) both;
 
 
 }
-[data-theme="macos"] .ym-route-stage.is-exiting {
+[data-theme="macos"] .ym-route-stage.is-exiting , [data-theme="macosdark"] .ym-route-stage.is-exiting {
 
 
   animation: ym-route-exit 120ms ease-in both;
@@ -1611,7 +1611,7 @@
 
 }
 /* Responsive */
-[data-theme="macos"] .ym-search-input {
+[data-theme="macos"] .ym-search-input , [data-theme="macosdark"] .ym-search-input {
   min-height: 42px;
   padding: 10px 58px 10px 16px;
   border: 1px solid var(--ym-glass-edge-muted);
@@ -1623,14 +1623,14 @@
   backdrop-filter: blur(var(--ym-glass-blur-control)) saturate(132%);
 }
 
-[data-theme="macos"] .ym-search-clear {
+[data-theme="macos"] .ym-search-clear , [data-theme="macosdark"] .ym-search-clear {
   min-width: 42px;
   height: 30px;
   border-radius: var(--ym-radius-pill);
   font-size: 11px;
 }
 
-[data-theme="macos"] .ym-search-dropdown {
+[data-theme="macos"] .ym-search-dropdown , [data-theme="macosdark"] .ym-search-dropdown {
   background: rgba(251, 254, 255, 0.9);
   border: 1px solid var(--ym-glass-edge-muted);
   border-radius: 18px;
@@ -1640,53 +1640,53 @@
 }
 
 /* 投稿页：只增强表单层级与错峰呈现，不改变业务行为。 */
-[data-theme="macos"] .ym-create-page {
+[data-theme="macos"] .ym-create-page , [data-theme="macosdark"] .ym-create-page {
   align-items: start;
 }
 
-[data-theme="macos"] .ym-create-panel {
+[data-theme="macos"] .ym-create-panel , [data-theme="macosdark"] .ym-create-panel {
   padding: 30px !important;
   background: linear-gradient(145deg, rgba(253, 254, 255, 0.86), rgba(244, 250, 255, 0.7));
 }
 
-[data-theme="macos"] .ym-create-title {
+[data-theme="macos"] .ym-create-title , [data-theme="macosdark"] .ym-create-title {
   margin: 0 0 24px !important;
   font-size: clamp(23px, 2.2vw, 28px) !important;
   font-weight: 660 !important;
   letter-spacing: -0.025em !important;
 }
 
-[data-theme="macos"] .ym-create-source {
+[data-theme="macos"] .ym-create-source , [data-theme="macosdark"] .ym-create-source {
   border: 1px solid rgba(52, 199, 89, 0.18);
   background: rgba(235, 249, 240, 0.76) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-[data-theme="macos"] .ym-create-form {
+[data-theme="macos"] .ym-create-form , [data-theme="macosdark"] .ym-create-form {
   display: grid;
 }
 
-[data-theme="macos"] .ym-create-type-options button {
+[data-theme="macos"] .ym-create-type-options button , [data-theme="macosdark"] .ym-create-type-options button {
   min-height: 36px;
   border-color: var(--ym-glass-edge-muted) !important;
   border-radius: var(--ym-radius-pill) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54), var(--ym-shadow-control);
 }
 
-[data-theme="macos"] .ym-create-type-options button:focus-visible,
-[data-theme="macos"] .ym-create-submit:focus-visible {
+[data-theme="macos"] .ym-create-type-options button:focus-visible, [data-theme="macosdark"] .ym-create-type-options button:focus-visible,
+[data-theme="macos"] .ym-create-submit:focus-visible , [data-theme="macosdark"] .ym-create-submit:focus-visible {
   outline: none;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 4px var(--ym-focus-ring), var(--ym-shadow-control);
 }
 
-[data-theme="macos"] .ym-create-media-preview {
+[data-theme="macos"] .ym-create-media-preview , [data-theme="macosdark"] .ym-create-media-preview {
   border: 1px dashed rgba(84, 137, 190, 0.46) !important;
   border-radius: 13px !important;
   background: rgba(231, 241, 250, 0.78) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64);
 }
 
-[data-theme="macos"] .ym-create-meta {
+[data-theme="macos"] .ym-create-meta , [data-theme="macosdark"] .ym-create-meta {
   padding: 18px;
   border: 1px solid var(--ym-glass-edge-muted);
   border-radius: 16px;
@@ -1694,12 +1694,12 @@
   box-shadow: inset 0 1px 0 var(--ym-glass-edge-soft);
 }
 
-[data-theme="macos"] .ym-create-message {
+[data-theme="macos"] .ym-create-message , [data-theme="macosdark"] .ym-create-message {
   border-radius: 12px !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54);
 }
 
-[data-theme="macos"] .ym-create-submit {
+[data-theme="macos"] .ym-create-submit , [data-theme="macosdark"] .ym-create-submit {
   min-height: 46px;
   border: 1px solid rgba(255, 255, 255, 0.34) !important;
   border-radius: 13px !important;
@@ -1707,44 +1707,44 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 9px 20px rgba(8, 123, 232, 0.18);
 }
 
-[data-theme="macos"] .ym-create-submit:active:not(:disabled) {
+[data-theme="macos"] .ym-create-submit:active:not(:disabled) , [data-theme="macosdark"] .ym-create-submit:active:not(:disabled) {
   transform: translateY(1px) scale(0.992);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  [data-theme="macos"] .ym-create-submit:hover:not(:disabled) {
+  [data-theme="macos"] .ym-create-submit:hover:not(:disabled) ,   [data-theme="macosdark"] .ym-create-submit:hover:not(:disabled) {
     filter: brightness(1.035);
     transform: translateY(-1px);
   }
 }
 
-[data-theme="macos"] .ym-create-return a:focus-visible,
-[data-theme="macos"] .ym-create-return a:hover {
+[data-theme="macos"] .ym-create-return a:focus-visible, [data-theme="macosdark"] .ym-create-return a:focus-visible,
+[data-theme="macos"] .ym-create-return a:hover , [data-theme="macosdark"] .ym-create-return a:hover {
   color: var(--ym-accent) !important;
 }
 
-[data-theme="macos"] .ym-create-aside .ym-section-block {
+[data-theme="macos"] .ym-create-aside .ym-section-block , [data-theme="macosdark"] .ym-create-aside .ym-section-block {
   position: sticky;
   top: 112px;
   background: linear-gradient(145deg, rgba(250, 253, 255, 0.8), rgba(241, 248, 254, 0.66));
 }
 
 @media (max-width: 1180px) {
-[data-theme="macos"] .ym-header-links {
+[data-theme="macos"] .ym-header-links , [data-theme="macosdark"] .ym-header-links {
 
 
     gap: 0;
   
 
 }
-[data-theme="macos"] .ym-header-link {
+[data-theme="macos"] .ym-header-link , [data-theme="macosdark"] .ym-header-link {
 
 
     padding-inline: 8px;
   
 
 }
-[data-theme="macos"] .ym-header-center {
+[data-theme="macos"] .ym-header-center , [data-theme="macosdark"] .ym-header-center {
 
 
     max-width: 280px;
@@ -1753,7 +1753,7 @@
 }
 }
 @media (max-width: 1080px) {
-[data-theme="macos"] .ym-header-inner {
+[data-theme="macos"] .ym-header-inner , [data-theme="macosdark"] .ym-header-inner {
 
 
     height: 72px;
@@ -1763,7 +1763,7 @@
   
 
 }
-[data-theme="macos"] .ym-header-left {
+[data-theme="macos"] .ym-header-left , [data-theme="macosdark"] .ym-header-left {
 
 
     width: auto;
@@ -1771,23 +1771,23 @@
   
 
 }
-[data-theme="macos"] .ym-header-links,
-[data-theme="macos"] .ym-header-center,
-[data-theme="macos"] .ym-desktop-actions {
+[data-theme="macos"] .ym-header-links, [data-theme="macosdark"] .ym-header-links,
+[data-theme="macos"] .ym-header-center, [data-theme="macosdark"] .ym-header-center,
+[data-theme="macos"] .ym-desktop-actions , [data-theme="macosdark"] .ym-desktop-actions {
 
 
     display: none;
   
 
 }
-[data-theme="macos"] .ym-header-left {
+[data-theme="macos"] .ym-header-left , [data-theme="macosdark"] .ym-header-left {
 
 
     min-width: 0;
   
 
 }
-[data-theme="macos"] .ym-mobile-actions {
+[data-theme="macos"] .ym-mobile-actions , [data-theme="macosdark"] .ym-mobile-actions {
 
 
     display: flex;
@@ -1797,14 +1797,14 @@
   
 
 }
-[data-theme="macos"] .ym-header-actions {
+[data-theme="macos"] .ym-header-actions , [data-theme="macosdark"] .ym-header-actions {
 
 
     margin-left: auto;
   
 
 }
-[data-theme="macos"] .ym-mobile-icon-button {
+[data-theme="macos"] .ym-mobile-icon-button , [data-theme="macosdark"] .ym-mobile-icon-button {
 
 
     display: inline-grid;
@@ -1815,8 +1815,8 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-search-panel,
-[data-theme="macos"] .ym-mobile-drawer {
+[data-theme="macos"] .ym-mobile-search-panel, [data-theme="macosdark"] .ym-mobile-search-panel,
+[data-theme="macos"] .ym-mobile-drawer , [data-theme="macosdark"] .ym-mobile-drawer {
 
 
     position: absolute;
@@ -1833,7 +1833,7 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-search-panel.is-open {
+[data-theme="macos"] .ym-mobile-search-panel.is-open , [data-theme="macosdark"] .ym-mobile-search-panel.is-open {
 
 
     display: block;
@@ -1842,7 +1842,7 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-drawer.is-open {
+[data-theme="macos"] .ym-mobile-drawer.is-open , [data-theme="macosdark"] .ym-mobile-drawer.is-open {
 
 
     display: block;
@@ -1853,7 +1853,7 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-nav {
+[data-theme="macos"] .ym-mobile-nav , [data-theme="macosdark"] .ym-mobile-nav {
 
 
     display: grid;
@@ -1861,7 +1861,7 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-nav-link {
+[data-theme="macos"] .ym-mobile-nav-link , [data-theme="macosdark"] .ym-mobile-nav-link {
 
 
     display: flex;
@@ -1876,8 +1876,8 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-nav-link:hover,
-[data-theme="macos"] .ym-mobile-nav-link.active {
+[data-theme="macos"] .ym-mobile-nav-link:hover, [data-theme="macosdark"] .ym-mobile-nav-link:hover,
+[data-theme="macos"] .ym-mobile-nav-link.active , [data-theme="macosdark"] .ym-mobile-nav-link.active {
 
 
     border-color: rgba(255, 255, 255, 0.54);
@@ -1887,7 +1887,7 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-drawer-footer {
+[data-theme="macos"] .ym-mobile-drawer-footer , [data-theme="macosdark"] .ym-mobile-drawer-footer {
 
 
     display: grid;
@@ -1898,7 +1898,7 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-drawer-footer .ym-btn {
+[data-theme="macos"] .ym-mobile-drawer-footer .ym-btn , [data-theme="macosdark"] .ym-mobile-drawer-footer .ym-btn {
 
 
     width: 100%;
@@ -1908,8 +1908,8 @@
 }
 }
 @media (min-width: 820px) and (max-width: 1180px) {
-[data-theme="macos"] .ym-grid,
-[data-theme="macos"] .ym-grid-wide {
+[data-theme="macos"] .ym-grid, [data-theme="macosdark"] .ym-grid,
+[data-theme="macos"] .ym-grid-wide , [data-theme="macosdark"] .ym-grid-wide {
 
 
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1918,22 +1918,22 @@
 }
 }
 @media (max-width: 768px) {
-[data-theme="macos"] .ym-main {
+[data-theme="macos"] .ym-main , [data-theme="macosdark"] .ym-main {
 
 
     padding: 28px 18px 58px;
   
 
 }
-[data-theme="macos"] .ym-page-container,
-[data-theme="macos"] .ym-page-container-wide {
+[data-theme="macos"] .ym-page-container, [data-theme="macosdark"] .ym-page-container,
+[data-theme="macos"] .ym-page-container-wide , [data-theme="macosdark"] .ym-page-container-wide {
 
 
     width: 100%;
   
 
 }
-[data-theme="macos"] .ym-page-hero {
+[data-theme="macos"] .ym-page-hero , [data-theme="macosdark"] .ym-page-hero {
 
 
     padding-top: 10px;
@@ -1941,22 +1941,22 @@
   
 
 }
-[data-theme="macos"] .ym-page-hero h1 {
+[data-theme="macos"] .ym-page-hero h1 , [data-theme="macosdark"] .ym-page-hero h1 {
 
 
     font-size: 28px;
   
 
 }
-[data-theme="macos"] .ym-page-hero p {
+[data-theme="macos"] .ym-page-hero p , [data-theme="macosdark"] .ym-page-hero p {
 
 
     margin-left: 0;
   
 
 }
-[data-theme="macos"] .ym-grid,
-[data-theme="macos"] .ym-grid-wide {
+[data-theme="macos"] .ym-grid, [data-theme="macosdark"] .ym-grid,
+[data-theme="macos"] .ym-grid-wide , [data-theme="macosdark"] .ym-grid-wide {
 
 
     grid-template-columns: 1fr;
@@ -1964,30 +1964,30 @@
   
 
 }
-[data-theme="macos"] .ym-chip-button,
-[data-theme="macos"] .ym-page-button,
-[data-theme="macos"] .ym-page-confirm {
+[data-theme="macos"] .ym-chip-button, [data-theme="macosdark"] .ym-chip-button,
+[data-theme="macos"] .ym-page-button, [data-theme="macosdark"] .ym-page-button,
+[data-theme="macos"] .ym-page-confirm , [data-theme="macosdark"] .ym-page-confirm {
 
 
     min-height: 44px;
   
 
 }
-[data-theme="macos"] .ym-home-feature-grid {
+[data-theme="macos"] .ym-home-feature-grid , [data-theme="macosdark"] .ym-home-feature-grid {
 
 
     grid-template-columns: 1fr;
   
 
 }
-[data-theme="macos"] .ym-idea-toolbar {
+[data-theme="macos"] .ym-idea-toolbar , [data-theme="macosdark"] .ym-idea-toolbar {
 
 
     align-items: stretch;
   
 
 }
-[data-theme="macos"] .ym-idea-search {
+[data-theme="macos"] .ym-idea-search , [data-theme="macosdark"] .ym-idea-search {
 
 
     flex-basis: 100%;
@@ -1995,7 +1995,7 @@
   
 
 }
-[data-theme="macos"] .ym-idea-actions {
+[data-theme="macos"] .ym-idea-actions , [data-theme="macosdark"] .ym-idea-actions {
 
 
     width: 100%;
@@ -2004,14 +2004,14 @@
   
 
 }
-[data-theme="macos"] .ym-pagination {
+[data-theme="macos"] .ym-pagination , [data-theme="macosdark"] .ym-pagination {
 
 
     gap: 7px;
   
 
 }
-[data-theme="macos"] .ym-page-jump {
+[data-theme="macos"] .ym-page-jump , [data-theme="macosdark"] .ym-page-jump {
 
 
     width: min(100%, 280px);
@@ -2022,7 +2022,7 @@
 }
 }
 @media (max-width: 520px) {
-[data-theme="macos"] .ym-site-header {
+[data-theme="macos"] .ym-site-header , [data-theme="macosdark"] .ym-site-header {
 
 
     top: 8px;
@@ -2032,7 +2032,7 @@
   
 
 }
-[data-theme="macos"] .ym-header-inner {
+[data-theme="macos"] .ym-header-inner , [data-theme="macosdark"] .ym-header-inner {
 
 
     height: 64px;
@@ -2042,14 +2042,14 @@
   
 
 }
-[data-theme="macos"] .ym-logo {
+[data-theme="macos"] .ym-logo , [data-theme="macosdark"] .ym-logo {
 
 
     gap: 8px;
   
 
 }
-[data-theme="macos"] .ym-logo-mark {
+[data-theme="macos"] .ym-logo-mark , [data-theme="macosdark"] .ym-logo-mark {
 
 
     width: 36px;
@@ -2059,7 +2059,7 @@
   
 
 }
-[data-theme="macos"] .ym-logo-name {
+[data-theme="macos"] .ym-logo-name , [data-theme="macosdark"] .ym-logo-name {
 
 
     max-width: 92px;
@@ -2067,14 +2067,14 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-actions {
+[data-theme="macos"] .ym-mobile-actions , [data-theme="macosdark"] .ym-mobile-actions {
 
 
     gap: 6px;
   
 
 }
-[data-theme="macos"] .ym-mobile-actions .ym-btn-primary {
+[data-theme="macos"] .ym-mobile-actions .ym-btn-primary , [data-theme="macosdark"] .ym-mobile-actions .ym-btn-primary {
 
 
     min-height: 42px;
@@ -2082,7 +2082,7 @@
   
 
 }
-[data-theme="macos"] .ym-mobile-icon-button {
+[data-theme="macos"] .ym-mobile-icon-button , [data-theme="macosdark"] .ym-mobile-icon-button {
 
 
     width: 42px;
@@ -2090,78 +2090,78 @@
   
 
 }
-[data-theme="macos"] .ym-main {
+[data-theme="macos"] .ym-main , [data-theme="macosdark"] .ym-main {
 
 
     padding: 24px 12px 48px;
   
 
 }
-[data-theme="macos"] .ym-card,
-[data-theme="macos"] .ym-work-card,
-[data-theme="macos"] .ym-idea-card {
+[data-theme="macos"] .ym-card, [data-theme="macosdark"] .ym-card,
+[data-theme="macos"] .ym-work-card, [data-theme="macosdark"] .ym-work-card,
+[data-theme="macos"] .ym-idea-card , [data-theme="macosdark"] .ym-idea-card {
 
 
     border-radius: 18px;
   
 
 }
-[data-theme="macos"] .ym-card-media,
-[data-theme="macos"] .ym-work-card-media {
+[data-theme="macos"] .ym-card-media, [data-theme="macosdark"] .ym-card-media,
+[data-theme="macos"] .ym-work-card-media , [data-theme="macosdark"] .ym-work-card-media {
 
 
     border-radius: 13px;
   
 
 }
-[data-theme="macos"] .ym-card:hover,
-[data-theme="macos"] .ym-work-card:hover,
-[data-theme="macos"] .ym-idea-card:hover {
+[data-theme="macos"] .ym-card:hover, [data-theme="macosdark"] .ym-card:hover,
+[data-theme="macos"] .ym-work-card:hover, [data-theme="macosdark"] .ym-work-card:hover,
+[data-theme="macos"] .ym-idea-card:hover , [data-theme="macosdark"] .ym-idea-card:hover {
 
 
     transform: none;
   
 
 }
-[data-theme="macos"] .ym-card:active,
-[data-theme="macos"] .ym-work-card:active,
-[data-theme="macos"] .ym-idea-card:active {
+[data-theme="macos"] .ym-card:active, [data-theme="macosdark"] .ym-card:active,
+[data-theme="macos"] .ym-work-card:active, [data-theme="macosdark"] .ym-work-card:active,
+[data-theme="macos"] .ym-idea-card:active , [data-theme="macosdark"] .ym-idea-card:active {
 
 
     transform: scale(0.988);
   
 
 }
-[data-theme="macos"] .ym-discovery-random,
-[data-theme="macos"] .ym-idea-card {
+[data-theme="macos"] .ym-discovery-random, [data-theme="macosdark"] .ym-discovery-random,
+[data-theme="macos"] .ym-idea-card , [data-theme="macosdark"] .ym-idea-card {
 
 
     padding: 18px;
   
 
 }
-[data-theme="macos"] .ym-discovery-random-head {
+[data-theme="macos"] .ym-discovery-random-head , [data-theme="macosdark"] .ym-discovery-random-head {
 
 
     align-items: stretch;
   
 
 }
-[data-theme="macos"] .ym-discovery-random-head .ym-btn {
+[data-theme="macos"] .ym-discovery-random-head .ym-btn , [data-theme="macosdark"] .ym-discovery-random-head .ym-btn {
 
 
     width: 100%;
   
 
 }
-[data-theme="macos"] .ym-page-direction {
+[data-theme="macos"] .ym-page-direction , [data-theme="macosdark"] .ym-page-direction {
 
 
     padding-inline: 12px;
   
 
 }
-[data-theme="macos"] .ym-page-numbers {
+[data-theme="macos"] .ym-page-numbers , [data-theme="macosdark"] .ym-page-numbers {
 
 
     order: 3;
@@ -2170,14 +2170,14 @@
   
 
 }
-[data-theme="macos"] .ym-page-jump {
+[data-theme="macos"] .ym-page-jump , [data-theme="macosdark"] .ym-page-jump {
 
 
     order: 4;
   
 
 }
-[data-theme="macos"] .ym-footer-inner {
+[data-theme="macos"] .ym-footer-inner , [data-theme="macosdark"] .ym-footer-inner {
 
 
     padding: 18px;
@@ -2186,7 +2186,7 @@
 }
 }
 @media (max-width: 640px) {
-[data-theme="macos"] {
+[data-theme="macos"] , [data-theme="macosdark"] {
 
 
     --ym-glass-blur-nav: 14px;
@@ -2196,15 +2196,15 @@
 
 
 }
-[data-theme="macos"] body {
+[data-theme="macos"] body , [data-theme="macosdark"] body {
 
 
     background-attachment: scroll;
 
 
 }
-[data-theme="macos"] .ym-page-shell::before,
-[data-theme="macos"] .ym-page-shell::after {
+[data-theme="macos"] .ym-page-shell::before, [data-theme="macosdark"] .ym-page-shell::before,
+[data-theme="macos"] .ym-page-shell::after , [data-theme="macosdark"] .ym-page-shell::after {
 
 
     filter: blur(44px);
@@ -2212,9 +2212,9 @@
 
 
 }
-[data-theme="macos"] .ym-site-header,
-[data-theme="macos"] .ym-mobile-search-panel,
-[data-theme="macos"] .ym-mobile-drawer {
+[data-theme="macos"] .ym-site-header, [data-theme="macosdark"] .ym-site-header,
+[data-theme="macos"] .ym-mobile-search-panel, [data-theme="macosdark"] .ym-mobile-search-panel,
+[data-theme="macos"] .ym-mobile-drawer , [data-theme="macosdark"] .ym-mobile-drawer {
 
 
     -webkit-backdrop-filter: blur(var(--ym-glass-blur-nav)) saturate(140%);
@@ -2222,9 +2222,9 @@
 
 
 }
-[data-theme="macos"] .ym-card,
-[data-theme="macos"] .ym-work-card,
-[data-theme="macos"] .ym-idea-card {
+[data-theme="macos"] .ym-card, [data-theme="macosdark"] .ym-card,
+[data-theme="macos"] .ym-work-card, [data-theme="macosdark"] .ym-work-card,
+[data-theme="macos"] .ym-idea-card , [data-theme="macosdark"] .ym-idea-card {
 
 
     background: linear-gradient(145deg, rgba(var(--ym-glass-rgb), 0.92), rgba(var(--ym-glass-rgb), 0.86));
@@ -2233,12 +2233,12 @@
 
 
 }
-[data-theme="macos"] .ym-btn,
-[data-theme="macos"] .ym-chip,
-[data-theme="macos"] .ym-tab,
-[data-theme="macos"] .ym-chip-button,
-[data-theme="macos"] .ym-page-button,
-[data-theme="macos"] .ym-page-confirm {
+[data-theme="macos"] .ym-btn, [data-theme="macosdark"] .ym-btn,
+[data-theme="macos"] .ym-chip, [data-theme="macosdark"] .ym-chip,
+[data-theme="macos"] .ym-tab, [data-theme="macosdark"] .ym-tab,
+[data-theme="macos"] .ym-chip-button, [data-theme="macosdark"] .ym-chip-button,
+[data-theme="macos"] .ym-page-button, [data-theme="macosdark"] .ym-page-button,
+[data-theme="macos"] .ym-page-confirm , [data-theme="macosdark"] .ym-page-confirm {
 
 
     -webkit-backdrop-filter: blur(var(--ym-glass-blur-control)) saturate(125%);
@@ -2246,9 +2246,9 @@
 
 
 }
-[data-theme="macos"] .ym-card:hover,
-[data-theme="macos"] .ym-work-card:hover,
-[data-theme="macos"] .ym-idea-card:hover {
+[data-theme="macos"] .ym-card:hover, [data-theme="macosdark"] .ym-card:hover,
+[data-theme="macos"] .ym-work-card:hover, [data-theme="macosdark"] .ym-work-card:hover,
+[data-theme="macos"] .ym-idea-card:hover , [data-theme="macosdark"] .ym-idea-card:hover {
 
 
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), var(--ym-shadow-card);
@@ -2256,8 +2256,8 @@
 
 
 }
-[data-theme="macos"] .ym-card:hover .ym-card-media > img,
-[data-theme="macos"] .ym-work-card:hover .ym-work-card-media > img {
+[data-theme="macos"] .ym-card:hover .ym-card-media > img, [data-theme="macosdark"] .ym-card:hover .ym-card-media > img,
+[data-theme="macos"] .ym-work-card:hover .ym-work-card-media > img , [data-theme="macosdark"] .ym-work-card:hover .ym-work-card-media > img {
 
 
     transform: none;
@@ -2269,14 +2269,14 @@
 
 /* 移动端性能路径：仅导航与已打开的浮层保留实时模糊。 */
 @media (max-width: 768px) {
-  [data-theme="macos"] {
+  [data-theme="macos"] ,   [data-theme="macosdark"] {
     --ym-glass-blur-nav: 14px;
     --ym-glass-blur-surface: 0px;
     --ym-glass-blur-control: 0px;
     --ym-shadow-card: 0 9px 24px rgba(54, 86, 122, 0.075), 0 1px 4px rgba(54, 86, 122, 0.035);
   }
 
-  [data-theme="macos"] body {
+  [data-theme="macos"] body ,   [data-theme="macosdark"] body {
     background:
       radial-gradient(38rem 24rem at -18% -4%, rgba(76, 158, 240, 0.17), transparent 66%),
       radial-gradient(34rem 22rem at 112% 18%, rgba(91, 207, 231, 0.12), transparent 68%),
@@ -2284,154 +2284,154 @@
     background-attachment: scroll;
   }
 
-  [data-theme="macos"] body::before,
-  [data-theme="macos"] .ym-page-shell::before,
-  [data-theme="macos"] .ym-page-shell::after {
+  [data-theme="macos"] body::before,   [data-theme="macosdark"] body::before,
+  [data-theme="macos"] .ym-page-shell::before,   [data-theme="macosdark"] .ym-page-shell::before,
+  [data-theme="macos"] .ym-page-shell::after ,   [data-theme="macosdark"] .ym-page-shell::after {
     display: none;
   }
 
-  [data-theme="macos"] .ym-site-header {
+  [data-theme="macos"] .ym-site-header ,   [data-theme="macosdark"] .ym-site-header {
     background: linear-gradient(145deg, rgba(252, 254, 255, 0.9), rgba(239, 247, 253, 0.82));
     -webkit-backdrop-filter: blur(var(--ym-glass-blur-nav)) saturate(136%);
     backdrop-filter: blur(var(--ym-glass-blur-nav)) saturate(136%);
   }
 
-  [data-theme="macos"] .ym-mobile-search-panel,
-  [data-theme="macos"] .ym-mobile-drawer {
+  [data-theme="macos"] .ym-mobile-search-panel,   [data-theme="macosdark"] .ym-mobile-search-panel,
+  [data-theme="macos"] .ym-mobile-drawer ,   [data-theme="macosdark"] .ym-mobile-drawer {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
-  [data-theme="macos"] .ym-mobile-search-panel.is-open,
-  [data-theme="macos"] .ym-mobile-drawer.is-open {
+  [data-theme="macos"] .ym-mobile-search-panel.is-open,   [data-theme="macosdark"] .ym-mobile-search-panel.is-open,
+  [data-theme="macos"] .ym-mobile-drawer.is-open ,   [data-theme="macosdark"] .ym-mobile-drawer.is-open {
     -webkit-backdrop-filter: blur(12px) saturate(132%);
     backdrop-filter: blur(12px) saturate(132%);
   }
 
-  [data-theme="macos"] .ym-theme-select__trigger,
-  [data-theme="macos"] .ym-theme-select__menu {
+  [data-theme="macos"] .ym-theme-select__trigger,   [data-theme="macosdark"] .ym-theme-select__trigger,
+  [data-theme="macos"] .ym-theme-select__menu ,   [data-theme="macosdark"] .ym-theme-select__menu {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 
-  [data-theme="macos"] .ym-glass-panel,
-  [data-theme="macos"] .ym-section-block,
-  [data-theme="macos"] .ym-card,
-  [data-theme="macos"] .ym-idea-card,
-  [data-theme="macos"] .ym-work-card,
-  [data-theme="macos"] .ym-modal-card,
-  [data-theme="macos"] .ym-empty,
-  [data-theme="macos"] .ym-stat,
-  [data-theme="macos"] .ym-btn,
-  [data-theme="macos"] .ym-chip,
-  [data-theme="macos"] .ym-tab,
-  [data-theme="macos"] .ym-chip-button,
-  [data-theme="macos"] .ym-page-button,
-  [data-theme="macos"] .ym-page-confirm,
-  [data-theme="macos"] .ym-input,
-  [data-theme="macos"] .ym-textarea,
-  [data-theme="macos"] .ym-select,
-  [data-theme="macos"] input:not([type='checkbox']):not([type='radio']),
-  [data-theme="macos"] textarea,
-  [data-theme="macos"] select,
-  [data-theme="macos"] .ym-search-input,
-  [data-theme="macos"] .ym-page-jump,
-  [data-theme="macos"] .ym-site-footer,
-  [data-theme="macos"] .ym-fab,
-  [data-theme="macos"] .ym-card-badge {
+  [data-theme="macos"] .ym-glass-panel,   [data-theme="macosdark"] .ym-glass-panel,
+  [data-theme="macos"] .ym-section-block,   [data-theme="macosdark"] .ym-section-block,
+  [data-theme="macos"] .ym-card,   [data-theme="macosdark"] .ym-card,
+  [data-theme="macos"] .ym-idea-card,   [data-theme="macosdark"] .ym-idea-card,
+  [data-theme="macos"] .ym-work-card,   [data-theme="macosdark"] .ym-work-card,
+  [data-theme="macos"] .ym-modal-card,   [data-theme="macosdark"] .ym-modal-card,
+  [data-theme="macos"] .ym-empty,   [data-theme="macosdark"] .ym-empty,
+  [data-theme="macos"] .ym-stat,   [data-theme="macosdark"] .ym-stat,
+  [data-theme="macos"] .ym-btn,   [data-theme="macosdark"] .ym-btn,
+  [data-theme="macos"] .ym-chip,   [data-theme="macosdark"] .ym-chip,
+  [data-theme="macos"] .ym-tab,   [data-theme="macosdark"] .ym-tab,
+  [data-theme="macos"] .ym-chip-button,   [data-theme="macosdark"] .ym-chip-button,
+  [data-theme="macos"] .ym-page-button,   [data-theme="macosdark"] .ym-page-button,
+  [data-theme="macos"] .ym-page-confirm,   [data-theme="macosdark"] .ym-page-confirm,
+  [data-theme="macos"] .ym-input,   [data-theme="macosdark"] .ym-input,
+  [data-theme="macos"] .ym-textarea,   [data-theme="macosdark"] .ym-textarea,
+  [data-theme="macos"] .ym-select,   [data-theme="macosdark"] .ym-select,
+  [data-theme="macos"] input:not([type='checkbox']):not([type='radio']),   [data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']),
+  [data-theme="macos"] textarea,   [data-theme="macosdark"] textarea,
+  [data-theme="macos"] select,   [data-theme="macosdark"] select,
+  [data-theme="macos"] .ym-search-input,   [data-theme="macosdark"] .ym-search-input,
+  [data-theme="macos"] .ym-page-jump,   [data-theme="macosdark"] .ym-page-jump,
+  [data-theme="macos"] .ym-site-footer,   [data-theme="macosdark"] .ym-site-footer,
+  [data-theme="macos"] .ym-fab,   [data-theme="macosdark"] .ym-fab,
+  [data-theme="macos"] .ym-card-badge ,   [data-theme="macosdark"] .ym-card-badge {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 
-  [data-theme="macos"] .ym-glass-panel,
-  [data-theme="macos"] .ym-section-block,
-  [data-theme="macos"] .ym-modal-card,
-  [data-theme="macos"] .ym-empty,
-  [data-theme="macos"] .ym-stat {
+  [data-theme="macos"] .ym-glass-panel,   [data-theme="macosdark"] .ym-glass-panel,
+  [data-theme="macos"] .ym-section-block,   [data-theme="macosdark"] .ym-section-block,
+  [data-theme="macos"] .ym-modal-card,   [data-theme="macosdark"] .ym-modal-card,
+  [data-theme="macos"] .ym-empty,   [data-theme="macosdark"] .ym-empty,
+  [data-theme="macos"] .ym-stat ,   [data-theme="macosdark"] .ym-stat {
     background: linear-gradient(145deg, rgba(253, 254, 255, 0.94), rgba(239, 247, 253, 0.9));
   }
 
-  [data-theme="macos"] .ym-card,
-  [data-theme="macos"] .ym-work-card,
-  [data-theme="macos"] .ym-idea-card {
+  [data-theme="macos"] .ym-card,   [data-theme="macosdark"] .ym-card,
+  [data-theme="macos"] .ym-work-card,   [data-theme="macosdark"] .ym-work-card,
+  [data-theme="macos"] .ym-idea-card ,   [data-theme="macosdark"] .ym-idea-card {
     background: linear-gradient(145deg, rgba(253, 254, 255, 0.96), rgba(237, 246, 253, 0.92));
   }
 
-  [data-theme="macos"] .ym-btn,
-  [data-theme="macos"] .ym-chip,
-  [data-theme="macos"] .ym-tab,
-  [data-theme="macos"] .ym-chip-button,
-  [data-theme="macos"] .ym-page-button,
-  [data-theme="macos"] .ym-page-confirm,
-  [data-theme="macos"] .ym-search-input,
-  [data-theme="macos"] .ym-page-jump,
-  [data-theme="macos"] input:not([type='checkbox']):not([type='radio']),
-  [data-theme="macos"] textarea,
-  [data-theme="macos"] select {
+  [data-theme="macos"] .ym-btn,   [data-theme="macosdark"] .ym-btn,
+  [data-theme="macos"] .ym-chip,   [data-theme="macosdark"] .ym-chip,
+  [data-theme="macos"] .ym-tab,   [data-theme="macosdark"] .ym-tab,
+  [data-theme="macos"] .ym-chip-button,   [data-theme="macosdark"] .ym-chip-button,
+  [data-theme="macos"] .ym-page-button,   [data-theme="macosdark"] .ym-page-button,
+  [data-theme="macos"] .ym-page-confirm,   [data-theme="macosdark"] .ym-page-confirm,
+  [data-theme="macos"] .ym-search-input,   [data-theme="macosdark"] .ym-search-input,
+  [data-theme="macos"] .ym-page-jump,   [data-theme="macosdark"] .ym-page-jump,
+  [data-theme="macos"] input:not([type='checkbox']):not([type='radio']),   [data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']),
+  [data-theme="macos"] textarea,   [data-theme="macosdark"] textarea,
+  [data-theme="macos"] select ,   [data-theme="macosdark"] select {
     background-color: rgba(250, 253, 255, 0.94);
   }
 
-  [data-theme="macos"] .ym-btn-primary,
-  [data-theme="macos"] .ym-chip-active,
-  [data-theme="macos"] .ym-chip-button.is-active,
-  [data-theme="macos"] .ym-page-button.is-active,
-  [data-theme="macos"] .ym-create-submit {
+  [data-theme="macos"] .ym-btn-primary,   [data-theme="macosdark"] .ym-btn-primary,
+  [data-theme="macos"] .ym-chip-active,   [data-theme="macosdark"] .ym-chip-active,
+  [data-theme="macos"] .ym-chip-button.is-active,   [data-theme="macosdark"] .ym-chip-button.is-active,
+  [data-theme="macos"] .ym-page-button.is-active,   [data-theme="macosdark"] .ym-page-button.is-active,
+  [data-theme="macos"] .ym-create-submit ,   [data-theme="macosdark"] .ym-create-submit {
     background: linear-gradient(145deg, #2991ee, var(--ym-accent) 70%, #056ecf) !important;
   }
 
-  [data-theme="macos"] .ym-site-footer,
-  [data-theme="macos"] .ym-fab {
+  [data-theme="macos"] .ym-site-footer,   [data-theme="macosdark"] .ym-site-footer,
+  [data-theme="macos"] .ym-fab ,   [data-theme="macosdark"] .ym-fab {
     background: rgba(246, 251, 255, 0.94) !important;
   }
 
-  [data-theme="macos"] .ym-create-panel {
+  [data-theme="macos"] .ym-create-panel ,   [data-theme="macosdark"] .ym-create-panel {
     padding: 22px !important;
   }
 
-  [data-theme="macos"] .ym-create-meta {
+  [data-theme="macos"] .ym-create-meta ,   [data-theme="macosdark"] .ym-create-meta {
     padding: 15px;
     background: rgba(237, 246, 253, 0.78);
   }
 
-  [data-theme="macos"] .ym-create-aside .ym-section-block {
+  [data-theme="macos"] .ym-create-aside .ym-section-block ,   [data-theme="macosdark"] .ym-create-aside .ym-section-block {
     position: static;
   }
 }
 
 @media (hover: none), (pointer: coarse) {
-  [data-theme="macos"] .ym-card:hover,
-  [data-theme="macos"] .ym-work-card:hover,
-  [data-theme="macos"] .ym-idea-card:hover,
-  [data-theme="macos"] .ym-home-feature:hover,
-  [data-theme="macos"] .ym-btn:hover,
-  [data-theme="macos"] .ym-chip:hover,
-  [data-theme="macos"] .ym-tab:hover,
-  [data-theme="macos"] .ym-chip-button:hover,
-  [data-theme="macos"] .ym-page-button:hover,
-  [data-theme="macos"] .ym-page-confirm:hover {
+  [data-theme="macos"] .ym-card:hover,   [data-theme="macosdark"] .ym-card:hover,
+  [data-theme="macos"] .ym-work-card:hover,   [data-theme="macosdark"] .ym-work-card:hover,
+  [data-theme="macos"] .ym-idea-card:hover,   [data-theme="macosdark"] .ym-idea-card:hover,
+  [data-theme="macos"] .ym-home-feature:hover,   [data-theme="macosdark"] .ym-home-feature:hover,
+  [data-theme="macos"] .ym-btn:hover,   [data-theme="macosdark"] .ym-btn:hover,
+  [data-theme="macos"] .ym-chip:hover,   [data-theme="macosdark"] .ym-chip:hover,
+  [data-theme="macos"] .ym-tab:hover,   [data-theme="macosdark"] .ym-tab:hover,
+  [data-theme="macos"] .ym-chip-button:hover,   [data-theme="macosdark"] .ym-chip-button:hover,
+  [data-theme="macos"] .ym-page-button:hover,   [data-theme="macosdark"] .ym-page-button:hover,
+  [data-theme="macos"] .ym-page-confirm:hover ,   [data-theme="macosdark"] .ym-page-confirm:hover {
     border-color: var(--ym-glass-edge-muted);
     box-shadow: inset 0 1px 0 var(--ym-glass-edge), var(--ym-shadow-card);
     transform: none;
   }
 
-  [data-theme="macos"] .ym-card:hover .ym-card-media > img,
-  [data-theme="macos"] .ym-work-card:hover .ym-work-card-media > img {
+  [data-theme="macos"] .ym-card:hover .ym-card-media > img,   [data-theme="macosdark"] .ym-card:hover .ym-card-media > img,
+  [data-theme="macos"] .ym-work-card:hover .ym-work-card-media > img ,   [data-theme="macosdark"] .ym-work-card:hover .ym-work-card-media > img {
     filter: none;
     transform: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-[data-theme="macos"] {
+[data-theme="macos"] , [data-theme="macosdark"] {
 
 
     scroll-behavior: auto;
   
 
 }
-[data-theme="macos"] *,
-[data-theme="macos"] *::before,
-[data-theme="macos"] *::after {
+[data-theme="macos"] *, [data-theme="macosdark"] *,
+[data-theme="macos"] *::before, [data-theme="macosdark"] *::before,
+[data-theme="macos"] *::after , [data-theme="macosdark"] *::after {
 
 
     animation-duration: 0.01ms !important;
@@ -2441,17 +2441,223 @@
   
 
 }
-[data-theme="macos"] .ym-card:hover,
-[data-theme="macos"] .ym-work-card:hover,
-[data-theme="macos"] .ym-idea-card:hover,
-[data-theme="macos"] .ym-btn:hover,
-[data-theme="macos"] .ym-chip-button:hover,
-[data-theme="macos"] .ym-page-button:hover {
+[data-theme="macos"] .ym-card:hover, [data-theme="macosdark"] .ym-card:hover,
+[data-theme="macos"] .ym-work-card:hover, [data-theme="macosdark"] .ym-work-card:hover,
+[data-theme="macos"] .ym-idea-card:hover, [data-theme="macosdark"] .ym-idea-card:hover,
+[data-theme="macos"] .ym-btn:hover, [data-theme="macosdark"] .ym-btn:hover,
+[data-theme="macos"] .ym-chip-button:hover, [data-theme="macosdark"] .ym-chip-button:hover,
+[data-theme="macos"] .ym-page-button:hover , [data-theme="macosdark"] .ym-page-button:hover {
 
 
     transform: none !important;
   
 
 }
+}
+
+/* ========================================================= */
+/* Mac OS 暗色主题（macosdark）：覆盖液态玻璃中的浅色硬编码     */
+/* ========================================================= */
+[data-theme="macosdark"] {
+  --ym-glass-rgb: 30, 30, 34;
+}
+
+[data-theme="macosdark"] body {
+  background:
+    radial-gradient(72rem 46rem at -10% -10%, rgba(10, 132, 255, 0.14), transparent 64%),
+    radial-gradient(64rem 42rem at 108% 14%, rgba(94, 92, 230, 0.1), transparent 66%),
+    radial-gradient(48rem 34rem at 52% 108%, rgba(50, 215, 75, 0.05), transparent 70%),
+    linear-gradient(152deg, #17171A 0%, #1C1C1E 45%, #1A1A1E 100%);
+  background-attachment: fixed;
+}
+
+[data-theme="macosdark"] body::before {
+  background:
+    linear-gradient(116deg, rgba(255, 255, 255, 0.05), transparent 35%),
+    radial-gradient(38rem 20rem at 72% 0%, rgba(255, 255, 255, 0.06), transparent 72%);
+}
+
+[data-theme="macosdark"] .ym-page-shell::before {
+  background: rgba(10, 132, 255, 0.14);
+}
+
+[data-theme="macosdark"] .ym-page-shell::after {
+  background: rgba(64, 156, 255, 0.1);
+}
+
+[data-theme="macosdark"] .ym-site-header.is-scrolled {
+  background:
+    linear-gradient(135deg, rgba(38, 38, 42, 0.9), rgba(30, 30, 33, 0.78));
+  box-shadow: inset 0 1px 0 var(--ym-glass-edge), 0 20px 48px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="macosdark"] .ym-nav-indicator {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(120, 160, 210, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 5px 14px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="macosdark"] .ym-btn:hover:not(:disabled),
+[data-theme="macosdark"] .ym-chip:hover:not(:disabled),
+[data-theme="macosdark"] .ym-tab:hover:not(:disabled),
+[data-theme="macosdark"] .ym-chip-button:hover:not(:disabled),
+[data-theme="macosdark"] .ym-page-button:hover:not(:disabled),
+[data-theme="macosdark"] .ym-page-confirm:hover:not(:disabled) {
+  border-color: rgba(120, 160, 210, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="macosdark"] .ym-input:focus,
+[data-theme="macosdark"] .ym-textarea:focus,
+[data-theme="macosdark"] .ym-select:focus,
+[data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']):focus,
+[data-theme="macosdark"] textarea:focus,
+[data-theme="macosdark"] select:focus {
+  border-color: rgba(10, 132, 255, 0.6);
+  background: rgba(48, 48, 53, 0.96);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px var(--ym-focus-ring),
+    0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="macosdark"] .ym-btn:disabled,
+[data-theme="macosdark"] .ym-chip:disabled,
+[data-theme="macosdark"] .ym-tab:disabled,
+[data-theme="macosdark"] .ym-chip-button:disabled,
+[data-theme="macosdark"] .ym-page-button:disabled,
+[data-theme="macosdark"] .ym-page-confirm:disabled {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="macosdark"] .ym-card::before,
+[data-theme="macosdark"] .ym-work-card::before,
+[data-theme="macosdark"] .ym-idea-card::before {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="macosdark"] .ym-card:hover,
+[data-theme="macosdark"] .ym-work-card:hover,
+[data-theme="macosdark"] .ym-idea-card:hover {
+  border-color: rgba(120, 160, 210, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), var(--ym-shadow-card-hover);
+}
+
+[data-theme="macosdark"] .ym-work-card-fallback {
+  background:
+    radial-gradient(circle at 70% 20%, rgba(10, 132, 255, 0.18), transparent 42%),
+    linear-gradient(135deg, rgba(40, 40, 45, 0.9), rgba(30, 30, 34, 0.74));
+}
+
+[data-theme="macosdark"] .ym-work-card-tags span,
+[data-theme="macosdark"] .ym-work-badge {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="macosdark"] .ym-search-dropdown {
+  background: rgba(40, 40, 45, 0.9);
+}
+
+[data-theme="macosdark"] .ym-create-panel {
+  background: linear-gradient(145deg, rgba(44, 44, 49, 0.86), rgba(34, 34, 38, 0.7));
+}
+
+[data-theme="macosdark"] .ym-create-source {
+  border: 1px solid rgba(50, 215, 75, 0.22);
+  background: rgba(31, 51, 38, 0.76) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="macosdark"] .ym-create-type-options button {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), var(--ym-shadow-control);
+}
+
+[data-theme="macosdark"] .ym-create-type-options button:focus-visible,
+[data-theme="macosdark"] .ym-create-submit:focus-visible {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px var(--ym-focus-ring), var(--ym-shadow-control);
+}
+
+[data-theme="macosdark"] .ym-create-media-preview {
+  border: 1px dashed rgba(120, 160, 210, 0.4) !important;
+  background: rgba(30, 30, 34, 0.78) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="macosdark"] .ym-create-message {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="macosdark"] .ym-create-aside .ym-section-block {
+  background: linear-gradient(145deg, rgba(40, 40, 45, 0.8), rgba(30, 30, 34, 0.66));
+}
+
+[data-theme="macosdark"] .ym-theme-select__trigger:focus,
+[data-theme="macosdark"] .ym-theme-select__trigger:focus-visible {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px var(--ym-focus-ring), var(--ym-select-shadow);
+}
+
+/* 移动端：macosdark 静态表面 */
+@media (max-width: 768px) {
+  [data-theme="macosdark"] {
+    --ym-glass-blur-nav: 14px;
+    --ym-glass-blur-surface: 0px;
+    --ym-glass-blur-control: 0px;
+    --ym-shadow-card: 0 9px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  [data-theme="macosdark"] body {
+    background:
+      radial-gradient(38rem 24rem at -18% -4%, rgba(10, 132, 255, 0.13), transparent 66%),
+      radial-gradient(34rem 22rem at 112% 18%, rgba(94, 92, 230, 0.1), transparent 68%),
+      linear-gradient(155deg, #17171A 0%, #1C1C1E 48%, #1A1A1E 100%);
+    background-attachment: scroll;
+  }
+
+  [data-theme="macosdark"] .ym-site-header {
+    background: linear-gradient(145deg, rgba(40, 40, 44, 0.9), rgba(30, 30, 34, 0.84));
+  }
+
+  [data-theme="macosdark"] .ym-glass-panel,
+  [data-theme="macosdark"] .ym-section-block,
+  [data-theme="macosdark"] .ym-modal-card,
+  [data-theme="macosdark"] .ym-empty,
+  [data-theme="macosdark"] .ym-stat {
+    background: linear-gradient(145deg, rgba(44, 44, 49, 0.94), rgba(30, 30, 34, 0.9));
+  }
+
+  [data-theme="macosdark"] .ym-card,
+  [data-theme="macosdark"] .ym-work-card,
+  [data-theme="macosdark"] .ym-idea-card {
+    background: linear-gradient(145deg, rgba(46, 46, 51, 0.96), rgba(28, 28, 32, 0.92));
+  }
+
+  [data-theme="macosdark"] .ym-btn,
+  [data-theme="macosdark"] .ym-chip,
+  [data-theme="macosdark"] .ym-tab,
+  [data-theme="macosdark"] .ym-chip-button,
+  [data-theme="macosdark"] .ym-page-button,
+  [data-theme="macosdark"] .ym-page-confirm,
+  [data-theme="macosdark"] .ym-search-input,
+  [data-theme="macosdark"] .ym-page-jump,
+  [data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']),
+  [data-theme="macosdark"] textarea,
+  [data-theme="macosdark"] select {
+    background-color: rgba(44, 44, 49, 0.94);
+  }
+
+  [data-theme="macosdark"] .ym-btn-primary,
+  [data-theme="macosdark"] .ym-chip-active,
+  [data-theme="macosdark"] .ym-chip-button.is-active,
+  [data-theme="macosdark"] .ym-page-button.is-active,
+  [data-theme="macosdark"] .ym-create-submit {
+    background: linear-gradient(145deg, #2991ee, var(--ym-accent) 70%, #056ecf) !important;
+  }
+
+  [data-theme="macosdark"] .ym-site-footer,
+  [data-theme="macosdark"] .ym-fab {
+    background: rgba(34, 34, 38, 0.94) !important;
+  }
+
+  [data-theme="macosdark"] .ym-create-meta {
+    background: rgba(30, 30, 34, 0.78);
+  }
 }
 
