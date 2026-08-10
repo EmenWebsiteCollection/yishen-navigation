@@ -83,7 +83,7 @@ export const getIdeas = async ({
 
   if (category) q = q.eq('category', category);
   if (status) q = q.eq('status', status);
-  else q = q.neq('status', 'closed'); // 默认不显示已关闭的想法
+  else q = q.not('status', 'in', '("done","closed")'); // 默认不显示已实现/已关闭的想法
   if (userId) q = q.eq('user_id', userId);
   if (query) {
     const like = `"%${escapeLike(normalizeQuery(query))}%"`;
