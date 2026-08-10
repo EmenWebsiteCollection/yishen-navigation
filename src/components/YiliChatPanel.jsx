@@ -5,7 +5,7 @@
 //   1. 登录用户把 idToken/userId 随消息传给代理函数 → 读写 user_memories（RLS 仅本人）
 //   2. 记忆开关：关闭后不再传 idToken（即不读写记忆），状态存 localStorage
 //   3. actions 渲染结构化卡片（work_card / idea_card / guide_card），复用站点视觉
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRuleReply } from '../services/agentFallback.js';
 import { subscribeMascotPos } from '../services/mascotPos.js';
@@ -19,6 +19,12 @@ const AI_TIMEOUT_MS = 10000;
 const MEMORY_KEY = 'yili-memory-enabled';
 
 const GREETING = '你好，我是依力～想看点什么？可以直接问我，比如「有什么好玩的网站」。';
+
+// 未登录（含匿名）时显示在面板顶部的引导条文案与按钮
+const GUEST_BANNER_TEXT = '您还未登录，登录以使用完整对话功能';
+const GUEST_BTN_TEXT = '去登录';
+// 全局事件：通知 AppShell 弹出登录框（AppShell 中已监听）
+const OPEN_AUTH_EVENT = 'yili-open-auth';
 
 function isMemoryEnabled() {
   return localStorage.getItem(MEMORY_KEY) !== 'off';
@@ -82,7 +88,29 @@ export function YiliChatPanel({ open, onClose }) {
   const [thinking, setThinking] = useState(false);
   const [memoryEnabled, setMemoryEnabled] = useState(isMemoryEnabled);
   const [mascotPos, setMascotPosState] = useState(null);
+  // null=检测中, true=未登录/匿名, false=已登录
+  const [guest, setGuest] = useState(null);
   const bodyRef = useRef(null);
+
+  // 登录态检测：未登录/匿名用户强制规则对话，不调用 AI 代理函数（零 token 消耗）
+  const checkAuth = useCallback(async () => {
+    const ctx = await getAuthContext();
+    setGuest(!ctx);
+  }, []);
+
+  // 挂载时检测一次，并监听登录/登出变化实时刷新
+  useEffect(() => {
+    checkAuth();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') checkAuth();
+    });
+    return () => sub?.subscription?.unsubscribe?.();
+  }, [checkAuth]);
+
+  // 每次打开面板时也刷新一次登录态（避免登录后未重开面板导致状态滞后）
+  useEffect(() => {
+    if (open) checkAuth();
+  }, [open, checkAuth]);
 
   useEffect(() => subscribeMascotPos(setMascotPosState), []);
 
@@ -116,6 +144,11 @@ export function YiliChatPanel({ open, onClose }) {
     else localStorage.setItem(MEMORY_KEY, 'off');
   };
 
+  // 未登录时“去登录”：通知 AppShell 弹出登录框
+  const handleGoLogin = () => {
+    window.dispatchEvent(new CustomEvent(OPEN_AUTH_EVENT));
+  };
+
   const send = async () => {
     const text = input.trim();
     if (!text || thinking) return;
@@ -125,7 +158,21 @@ export function YiliChatPanel({ open, onClose }) {
     setThinking(true);
     try {
       const authCtx = await getAuthContext();
-      const data = await fetchReply(history, authCtx);
+      let data;
+      if (!authCtx) {
+        // 未登录/匿名：不请求代理函数（避免消耗 LLM token），直接走本地规则版
+        const rule = await getRuleReply(text);
+        const actions = [];
+        for (const w of (rule.works || []).slice(0, 4)) {
+          actions.push({ type: 'work_card', workId: w.id, title: w.title, url: w.url || '', workType: w.work_type || '', to: `/website/${w.id}` });
+        }
+        for (const l of (rule.links || []).slice(0, 3)) {
+          actions.push({ type: 'guide_card', label: l.label, to: l.to });
+        }
+        data = { reply: rule.text || '唔…依力现在有点状况，稍后再试试？', actions, offline: true, guest: true };
+      } else {
+        data = await fetchReply(history, authCtx);
+      }
       setMessages((m) => [
         ...m,
         {
@@ -133,6 +180,7 @@ export function YiliChatPanel({ open, onClose }) {
           content: data.reply,
           actions: data.actions || [],
           offline: !!data.offline,
+          guest: !!data.guest,
         },
       ]);
     } catch (err) {
@@ -154,7 +202,7 @@ export function YiliChatPanel({ open, onClose }) {
       <header className="ym-chat-header">
         <span className={'ym-chat-status' + (thinking ? ' thinking' : '')} aria-hidden="true" />
         <span className="ym-chat-title">依力</span>
-        <span className="ym-chat-hint">AI 接入中</span>
+        <span className="ym-chat-hint">{guest ? '未登录 · 规则模式' : 'AI 接入中'}</span>
         <button
           type="button"
           className="ym-chat-memory-toggle"
@@ -168,14 +216,26 @@ export function YiliChatPanel({ open, onClose }) {
         </button>
       </header>
 
+      {guest && (
+        <div className="ym-chat-guest-banner" role="status">
+          <span className="ym-chat-guest-text">{GUEST_BANNER_TEXT}</span>
+          <button type="button" className="ym-chat-guest-btn" onClick={handleGoLogin}>
+            {GUEST_BTN_TEXT}
+          </button>
+        </div>
+      )}
+
       <div className="ym-chat-body" ref={bodyRef}>
         {messages.map((m, i) => (
           <div key={i} className={'ym-chat-msg-wrap' + (m.role === 'user' ? ' user' : ' yili')}>
             <div className={'ym-chat-msg ' + (m.role === 'user' ? 'user' : 'yili')}>
               {m.content}
               {m.offline && (
-                <span className="ym-chat-offline-tag" title="AI 服务不可用，当前为规则版回答">
-                  离线模式
+                <span
+                  className="ym-chat-offline-tag"
+                  title={m.guest ? '未登录，当前为规则版回答（登录后启用完整 AI 对话）' : 'AI 服务不可用，当前为规则版回答'}
+                >
+                  {m.guest ? '未登录 · 规则对话' : '离线模式'}
                 </span>
               )}
             </div>
