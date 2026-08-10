@@ -2459,42 +2459,79 @@
 /* Mac OS 暗色主题（macosdark）：覆盖液态玻璃中的浅色硬编码     */
 /* ========================================================= */
 [data-theme="macosdark"] {
-  --ym-glass-rgb: 30, 30, 34;
+  --ym-glass-rgb: 40, 49, 73;
+  --ym-shadow-card-hover: 0 22px 54px rgba(5, 8, 20, 0.38),
+    0 8px 26px rgba(137, 168, 236, 0.1), 0 0 36px rgba(199, 182, 238, 0.07);
+  --ym-shadow-control: 0 7px 20px rgba(5, 8, 20, 0.24), 0 0 18px rgba(159, 190, 248, 0.045);
 }
 
 [data-theme="macosdark"] body {
   background:
-    radial-gradient(72rem 46rem at -10% -10%, rgba(10, 132, 255, 0.14), transparent 64%),
-    radial-gradient(64rem 42rem at 108% 14%, rgba(94, 92, 230, 0.1), transparent 66%),
-    radial-gradient(48rem 34rem at 52% 108%, rgba(50, 215, 75, 0.05), transparent 70%),
-    linear-gradient(152deg, #17171A 0%, #1C1C1E 45%, #1A1A1E 100%);
+    radial-gradient(ellipse 82rem 58rem at 108% -8%, rgba(154, 188, 246, 0.16) 0%, rgba(155, 177, 239, 0.07) 36%, transparent 70%),
+    radial-gradient(ellipse 74rem 54rem at -16% 78%, rgba(196, 180, 238, 0.085) 0%, rgba(114, 145, 212, 0.04) 38%, transparent 72%),
+    radial-gradient(ellipse 58rem 38rem at 48% 44%, rgba(106, 145, 211, 0.045), transparent 72%),
+    linear-gradient(148deg, #101522 0%, #151A2B 48%, #191827 100%);
   background-attachment: fixed;
 }
 
 [data-theme="macosdark"] body::before {
   background:
-    linear-gradient(116deg, rgba(255, 255, 255, 0.05), transparent 35%),
-    radial-gradient(38rem 20rem at 72% 0%, rgba(255, 255, 255, 0.06), transparent 72%);
+    linear-gradient(118deg, rgba(206, 222, 255, 0.035), transparent 38%),
+    radial-gradient(ellipse 62rem 30rem at 76% -10%, rgba(222, 226, 255, 0.055), transparent 74%);
 }
 
-[data-theme="macosdark"] .ym-page-shell::before {
-  background: rgba(10, 132, 255, 0.14);
-}
-
+[data-theme="macosdark"] .ym-page-shell::before,
 [data-theme="macosdark"] .ym-page-shell::after {
-  background: rgba(64, 156, 255, 0.1);
+  display: none;
 }
 
+[data-theme="macosdark"] .ym-site-header,
 [data-theme="macosdark"] .ym-site-header.is-scrolled {
   background:
-    linear-gradient(135deg, rgba(38, 38, 42, 0.9), rgba(30, 30, 33, 0.78));
-  box-shadow: inset 0 1px 0 var(--ym-glass-edge), 0 20px 48px rgba(0, 0, 0, 0.35);
+    linear-gradient(135deg, rgba(47, 57, 83, 0.86), rgba(25, 31, 49, 0.74));
+  box-shadow: inset 0 1px 0 rgba(237, 242, 255, 0.16), var(--ym-glass-shadow-panel);
 }
 
 [data-theme="macosdark"] .ym-nav-indicator {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(120, 160, 210, 0.08));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 5px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(213, 225, 255, 0.17);
+  background: linear-gradient(135deg, rgba(167, 196, 248, 0.16), rgba(198, 182, 239, 0.1));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 7px 20px rgba(5, 8, 20, 0.26),
+    0 0 20px rgba(161, 188, 244, 0.07);
+}
+
+[data-theme="macosdark"] .ym-glass-panel,
+[data-theme="macosdark"] .ym-section-block,
+[data-theme="macosdark"] .ym-modal-card,
+[data-theme="macosdark"] .ym-empty,
+[data-theme="macosdark"] .ym-stat {
+  border-color: rgba(157, 184, 230, 0.24);
+  background: linear-gradient(145deg, rgba(42, 52, 77, 0.8), rgba(27, 34, 54, 0.64));
+  box-shadow: inset 0 1px 0 rgba(239, 244, 255, 0.14), var(--ym-glass-shadow-card);
+}
+
+[data-theme="macosdark"] .ym-card,
+[data-theme="macosdark"] .ym-work-card,
+[data-theme="macosdark"] .ym-idea-card {
+  border-color: rgba(164, 190, 232, 0.25);
+  background: linear-gradient(145deg, rgba(47, 57, 83, 0.84), rgba(29, 36, 57, 0.7));
+}
+
+[data-theme="macosdark"] .ym-card::before,
+[data-theme="macosdark"] .ym-work-card::before,
+[data-theme="macosdark"] .ym-idea-card::before {
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.065), transparent 28%, rgba(198, 182, 238, 0.025) 74%, transparent);
+  box-shadow: inset 0 1px 0 rgba(239, 244, 255, 0.14), inset 1px 0 0 rgba(217, 228, 255, 0.05);
+}
+
+[data-theme="macosdark"] .ym-btn,
+[data-theme="macosdark"] .ym-chip,
+[data-theme="macosdark"] .ym-tab,
+[data-theme="macosdark"] .ym-chip-button,
+[data-theme="macosdark"] .ym-page-button,
+[data-theme="macosdark"] .ym-page-confirm {
+  border-color: rgba(165, 188, 229, 0.26);
+  background: linear-gradient(145deg, rgba(56, 68, 98, 0.78), rgba(34, 42, 64, 0.74));
+  box-shadow: inset 0 1px 0 rgba(245, 248, 255, 0.13), var(--ym-shadow-control);
 }
 
 [data-theme="macosdark"] .ym-btn:hover:not(:disabled),
@@ -2503,8 +2540,46 @@
 [data-theme="macosdark"] .ym-chip-button:hover:not(:disabled),
 [data-theme="macosdark"] .ym-page-button:hover:not(:disabled),
 [data-theme="macosdark"] .ym-page-confirm:hover:not(:disabled) {
-  border-color: rgba(120, 160, 210, 0.35);
-  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(184, 205, 247, 0.42);
+  background: linear-gradient(145deg, rgba(72, 86, 120, 0.82), rgba(42, 51, 77, 0.78));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 9px 26px rgba(5, 8, 20, 0.28),
+    0 0 24px rgba(164, 190, 245, 0.08);
+}
+
+[data-theme="macosdark"] .ym-btn-primary,
+[data-theme="macosdark"] .ym-chip-active,
+[data-theme="macosdark"] .ym-chip-button.is-active,
+[data-theme="macosdark"] .ym-page-button.is-active,
+[data-theme="macosdark"] .ym-tab.active,
+[data-theme="macosdark"] .ym-create-submit {
+  border-color: rgba(245, 247, 255, 0.38) !important;
+  background: var(--ym-accent-gradient) !important;
+  color: var(--ym-accent-text-on) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46), 0 10px 30px rgba(142, 174, 238, 0.2),
+    0 4px 14px rgba(199, 182, 238, 0.14);
+}
+
+[data-theme="macosdark"] .ym-btn-primary:hover:not(:disabled),
+[data-theme="macosdark"] .ym-chip-active:hover:not(:disabled),
+[data-theme="macosdark"] .ym-chip-button.is-active:hover:not(:disabled),
+[data-theme="macosdark"] .ym-page-button.is-active:hover:not(:disabled),
+[data-theme="macosdark"] .ym-tab.active:hover:not(:disabled),
+[data-theme="macosdark"] .ym-create-submit:hover:not(:disabled) {
+  background: var(--ym-accent-gradient-hover) !important;
+  color: var(--ym-accent-text-on) !important;
+  filter: brightness(1.025);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.54), 0 12px 36px rgba(148, 181, 246, 0.26),
+    0 5px 18px rgba(201, 184, 241, 0.2);
+}
+
+[data-theme="macosdark"] .ym-btn-primary:active:not(:disabled),
+[data-theme="macosdark"] .ym-chip-active:active:not(:disabled),
+[data-theme="macosdark"] .ym-chip-button.is-active:active:not(:disabled),
+[data-theme="macosdark"] .ym-page-button.is-active:active:not(:disabled),
+[data-theme="macosdark"] .ym-tab.active:active:not(:disabled),
+[data-theme="macosdark"] .ym-create-submit:active:not(:disabled) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36), 0 5px 18px rgba(137, 168, 230, 0.16),
+    0 2px 8px rgba(196, 179, 235, 0.11);
 }
 
 [data-theme="macosdark"] .ym-input:focus,
@@ -2513,10 +2588,10 @@
 [data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']):focus,
 [data-theme="macosdark"] textarea:focus,
 [data-theme="macosdark"] select:focus {
-  border-color: rgba(10, 132, 255, 0.6);
-  background: rgba(48, 48, 53, 0.96);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px var(--ym-focus-ring),
-    0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(168, 199, 250, 0.66);
+  background: rgba(47, 57, 83, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 0 0 4px var(--ym-focus-ring),
+    0 8px 26px rgba(5, 8, 20, 0.28), 0 0 18px rgba(178, 194, 247, 0.07);
 }
 
 [data-theme="macosdark"] .ym-btn:disabled,
@@ -2525,73 +2600,82 @@
 [data-theme="macosdark"] .ym-chip-button:disabled,
 [data-theme="macosdark"] .ym-page-button:disabled,
 [data-theme="macosdark"] .ym-page-confirm:disabled {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="macosdark"] .ym-card::before,
-[data-theme="macosdark"] .ym-work-card::before,
-[data-theme="macosdark"] .ym-idea-card::before {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
 [data-theme="macosdark"] .ym-card:hover,
 [data-theme="macosdark"] .ym-work-card:hover,
 [data-theme="macosdark"] .ym-idea-card:hover {
-  border-color: rgba(120, 160, 210, 0.35);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), var(--ym-shadow-card-hover);
+  border-color: rgba(177, 201, 244, 0.4);
+  box-shadow: inset 0 1px 0 rgba(246, 249, 255, 0.17), var(--ym-shadow-card-hover);
 }
 
 [data-theme="macosdark"] .ym-work-card-fallback {
   background:
-    radial-gradient(circle at 70% 20%, rgba(10, 132, 255, 0.18), transparent 42%),
-    linear-gradient(135deg, rgba(40, 40, 45, 0.9), rgba(30, 30, 34, 0.74));
+    radial-gradient(ellipse at 70% 20%, rgba(168, 199, 250, 0.16), transparent 48%),
+    linear-gradient(135deg, rgba(48, 59, 86, 0.88), rgba(27, 34, 54, 0.72));
 }
 
 [data-theme="macosdark"] .ym-work-card-tags span,
 [data-theme="macosdark"] .ym-work-badge {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(220, 230, 255, 0.16);
 }
 
 [data-theme="macosdark"] .ym-search-dropdown {
-  background: rgba(40, 40, 45, 0.9);
+  background: rgba(35, 43, 65, 0.9);
 }
 
 [data-theme="macosdark"] .ym-create-panel {
-  background: linear-gradient(145deg, rgba(44, 44, 49, 0.86), rgba(34, 34, 38, 0.7));
+  background: linear-gradient(145deg, rgba(45, 55, 81, 0.84), rgba(28, 35, 55, 0.68));
 }
 
 [data-theme="macosdark"] .ym-create-source {
-  border: 1px solid rgba(50, 215, 75, 0.22);
-  background: rgba(31, 51, 38, 0.76) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(168, 220, 197, 0.24);
+  background: rgba(32, 53, 47, 0.78) !important;
+  box-shadow: inset 0 1px 0 rgba(234, 255, 245, 0.09);
 }
 
 [data-theme="macosdark"] .ym-create-type-options button {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), var(--ym-shadow-control);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11), var(--ym-shadow-control);
 }
 
 [data-theme="macosdark"] .ym-create-type-options button:focus-visible,
 [data-theme="macosdark"] .ym-create-submit:focus-visible {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px var(--ym-focus-ring), var(--ym-shadow-control);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36), 0 0 0 4px var(--ym-focus-ring),
+    0 10px 30px rgba(142, 174, 238, 0.2), 0 4px 14px rgba(199, 182, 238, 0.14);
 }
 
 [data-theme="macosdark"] .ym-create-media-preview {
-  border: 1px dashed rgba(120, 160, 210, 0.4) !important;
-  background: rgba(30, 30, 34, 0.78) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px dashed rgba(164, 190, 232, 0.42) !important;
+  background: rgba(29, 36, 56, 0.78) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
 [data-theme="macosdark"] .ym-create-message {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
 [data-theme="macosdark"] .ym-create-aside .ym-section-block {
-  background: linear-gradient(145deg, rgba(40, 40, 45, 0.8), rgba(30, 30, 34, 0.66));
+  background: linear-gradient(145deg, rgba(43, 53, 78, 0.78), rgba(27, 34, 53, 0.66));
 }
 
 [data-theme="macosdark"] .ym-theme-select__trigger:focus,
 [data-theme="macosdark"] .ym-theme-select__trigger:focus-visible {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 4px var(--ym-focus-ring), var(--ym-select-shadow);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11), 0 0 0 4px var(--ym-focus-ring), var(--ym-select-shadow);
+}
+
+/* 仅关键标题使用 Pastel 渐变，正文与普通标题保持正常浅色文字。 */
+[data-theme="macosdark"] .ym-page-hero h1,
+[data-theme="macosdark"] .ym-create-title {
+  background: var(--ym-accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+[data-theme="macosdark"] .ym-section-title::before {
+  background: var(--ym-accent-gradient);
+  box-shadow: 0 4px 12px rgba(159, 190, 248, 0.18), 0 0 16px rgba(199, 182, 238, 0.11);
 }
 
 /* 移动端：macosdark 静态表面 */
@@ -2600,19 +2684,19 @@
     --ym-glass-blur-nav: 14px;
     --ym-glass-blur-surface: 0px;
     --ym-glass-blur-control: 0px;
-    --ym-shadow-card: 0 9px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
+    --ym-shadow-card: 0 10px 28px rgba(5, 8, 20, 0.34), 0 1px 5px rgba(8, 12, 28, 0.2);
   }
 
   [data-theme="macosdark"] body {
     background:
-      radial-gradient(38rem 24rem at -18% -4%, rgba(10, 132, 255, 0.13), transparent 66%),
-      radial-gradient(34rem 22rem at 112% 18%, rgba(94, 92, 230, 0.1), transparent 68%),
-      linear-gradient(155deg, #17171A 0%, #1C1C1E 48%, #1A1A1E 100%);
+      radial-gradient(ellipse 44rem 30rem at 112% -4%, rgba(154, 188, 246, 0.14), transparent 70%),
+      radial-gradient(ellipse 38rem 28rem at -18% 72%, rgba(196, 180, 238, 0.07), transparent 72%),
+      linear-gradient(152deg, #101522 0%, #151A2B 50%, #191827 100%);
     background-attachment: scroll;
   }
 
   [data-theme="macosdark"] .ym-site-header {
-    background: linear-gradient(145deg, rgba(40, 40, 44, 0.9), rgba(30, 30, 34, 0.84));
+    background: linear-gradient(145deg, rgba(45, 55, 80, 0.92), rgba(26, 33, 51, 0.86));
   }
 
   [data-theme="macosdark"] .ym-glass-panel,
@@ -2620,13 +2704,13 @@
   [data-theme="macosdark"] .ym-modal-card,
   [data-theme="macosdark"] .ym-empty,
   [data-theme="macosdark"] .ym-stat {
-    background: linear-gradient(145deg, rgba(44, 44, 49, 0.94), rgba(30, 30, 34, 0.9));
+    background: linear-gradient(145deg, rgba(45, 55, 81, 0.94), rgba(27, 34, 54, 0.9));
   }
 
   [data-theme="macosdark"] .ym-card,
   [data-theme="macosdark"] .ym-work-card,
   [data-theme="macosdark"] .ym-idea-card {
-    background: linear-gradient(145deg, rgba(46, 46, 51, 0.96), rgba(28, 28, 32, 0.92));
+    background: linear-gradient(145deg, rgba(48, 59, 86, 0.96), rgba(27, 34, 54, 0.92));
   }
 
   [data-theme="macosdark"] .ym-btn,
@@ -2640,7 +2724,7 @@
   [data-theme="macosdark"] input:not([type='checkbox']):not([type='radio']),
   [data-theme="macosdark"] textarea,
   [data-theme="macosdark"] select {
-    background-color: rgba(44, 44, 49, 0.94);
+    background-color: rgba(45, 55, 81, 0.94);
   }
 
   [data-theme="macosdark"] .ym-btn-primary,
@@ -2648,16 +2732,16 @@
   [data-theme="macosdark"] .ym-chip-button.is-active,
   [data-theme="macosdark"] .ym-page-button.is-active,
   [data-theme="macosdark"] .ym-create-submit {
-    background: linear-gradient(145deg, #2991ee, var(--ym-accent) 70%, #056ecf) !important;
+    background: var(--ym-accent-gradient) !important;
   }
 
   [data-theme="macosdark"] .ym-site-footer,
   [data-theme="macosdark"] .ym-fab {
-    background: rgba(34, 34, 38, 0.94) !important;
+    background: rgba(32, 40, 61, 0.94) !important;
   }
 
   [data-theme="macosdark"] .ym-create-meta {
-    background: rgba(30, 30, 34, 0.78);
+    background: rgba(28, 35, 55, 0.8);
   }
 }
 
