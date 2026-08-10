@@ -9,10 +9,10 @@ function t(name, cond) {
 }
 
 const SITES = [
-  { id: 1, title: 'GitHub', url: 'https://github.com', description: '代码托管平台', like_count: 100 },
-  { id: 2, title: '问天AI', url: 'https://wentian.example.com', description: '人生咨询智慧引擎', like_count: 200 },
-  { id: 3, title: '码云 Gitee', url: 'https://gitee.com', description: '国内代码托管', like_count: 50 },
-  { id: 4, title: 'B站', url: 'https://bilibili.com', description: '视频弹幕网站', like_count: 300 },
+  { id: 1, title: 'GitHub', url: 'https://github.com', description: '代码托管平台', like_count: 100, username: 'octocat', tags: ['开发', '工具'] },
+  { id: 2, title: '问天AI', url: 'https://wentian.example.com', description: '人生咨询智慧引擎', like_count: 200, username: 'wentian', tags: ['AI', '问答'] },
+  { id: 3, title: '码云 Gitee', url: 'https://gitee.com', description: '国内代码托管', like_count: 50, username: '码云官方', tags: ['开发', '效率'] },
+  { id: 4, title: 'B站', url: 'https://bilibili.com', description: '视频弹幕网站', like_count: 300, username: 'bili', tags: ['视频', '娱乐'] },
 ];
 
 console.log('== normalizeQuery ==');
@@ -31,6 +31,15 @@ t('无命中返回空数组', rankWebsites(SITES, '不存在的东西').length =
 t('空查询返回空数组', rankWebsites(SITES, '').length === 0);
 t('同分按点赞数排序', rankWebsites([{ id: 9, title: 'Aa', like_count: 1 }, { id: 8, title: 'Aa', like_count: 9 }], 'aa')[0].id === 8);
 t('大小写不敏感', rankWebsites(SITES, 'GITHUB')[0].id === 1);
+
+console.log('== rankWebsites: username / tags（多字段扩展） ==');
+t('作者名命中（username 包含）', rankWebsites(SITES, 'octocat')[0].id === 1);
+t('作者名前缀命中优先于包含', rankWebsites([{ id: 1, title: 'X', username: 'github' }, { id: 2, title: 'Y', username: 'mygithub' }], 'github')[0].id === 1);
+t('标签命中（tags 任一元素包含）', rankWebsites(SITES, '效率')[0].id === 3);
+t('标签大小写不敏感', rankWebsites(SITES, 'AI')[0].id === 2);
+t('作者 + 标签综合：作者优先于标签', rankWebsites([{ id: 1, title: 'X', username: '效率王', tags: [] }, { id: 2, title: 'Y', username: 'zzz', tags: ['效率'] }], '效率')[0].id === 1);
+t('tags 字段缺失不报错', rankWebsites([{ id: 9, title: 'Aa', like_count: 1 }, { id: 8, title: 'Ab', like_count: 9 }], 'aa')[0].id === 9);
+t('username 字段缺失不报错', rankWebsites([{ id: 9, title: 'Aa', like_count: 1 }, { id: 8, title: 'Ab', like_count: 9 }], 'aa')[0].id === 9);
 
 console.log('== highlightHtml ==');
 t('命中包 mark', highlightHtml('GitHub 代码托管', 'github') === '<mark class="ym-search-hl">GitHub</mark> 代码托管');

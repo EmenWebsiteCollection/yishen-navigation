@@ -149,6 +149,35 @@
   font-size: 13px;
 }
 
+.ym-search-empty-title {
+  font-size: 14px;
+  color: var(--ym-text-primary);
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.ym-search-empty-hint {
+  font-size: 12px;
+  color: var(--ym-text-muted);
+  margin-bottom: 12px;
+}
+
+.ym-search-empty-cta {
+  padding: 7px 18px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ym-accent-text-on);
+  background: var(--ym-accent);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.ym-search-empty-cta:hover {
+  opacity: 0.85;
+}
+
 /* 移动端：搜索栏占满宽度 */
 @media (max-width: 640px) {
   .ym-search {
