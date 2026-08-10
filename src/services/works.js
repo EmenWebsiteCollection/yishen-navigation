@@ -599,7 +599,41 @@ export const updateWork = async (id, data) => {
 };
 
 // ========== 删除作品 ==========
+// 审计遗留 LOW：删作品时顺带清理 work_deploys 桶里的部署文件（孤儿文件级联清理）。
+// workDeploys 桶路径结构为 work_id/...，递归列出所有文件后一并删除；
+// 存储桶删除失败不阻断作品删除（数据库记录仍删，文件留待下次清理）。
+const DEPLOY_BUCKET = 'work_deploys';
+
+async function listDeployFiles(prefix) {
+  const { data, error } = await supabase.storage.from(DEPLOY_BUCKET).list(prefix, { limit: 500 });
+  if (error) throw error;
+  const paths = [];
+  for (const item of data || []) {
+    const full = `${prefix}/${item.name}`;
+    // Supabase Storage list 返回的目录项无 id（文件项有 id）
+    if (item.id) {
+      paths.push(full);
+    } else {
+      const nested = await listDeployFiles(full);
+      paths.push(...nested);
+    }
+  }
+  return paths;
+}
+
+async function removeWorkDeployFiles(workId) {
+  const paths = await listDeployFiles(String(workId));
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from(DEPLOY_BUCKET).remove(paths);
+  if (error) throw error;
+}
+
 export const deleteWork = async (id) => {
+  try {
+    await removeWorkDeployFiles(id);
+  } catch (e) {
+    console.warn(`清理部署文件失败（不影响作品删除）：${e.message}`);
+  }
   const { error } = await supabase.rpc('rpc_delete_website', { website_id: id });
   if (error) throw error;
 };
