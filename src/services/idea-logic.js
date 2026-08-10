@@ -95,3 +95,31 @@ export function rankSimilarIdeas(ideas, query) {
     .filter((i) => i._score > 0)
     .sort((a, b) => b._score - a._score || new Date(b.created_at) - new Date(a.created_at));
 }
+
+// ---------- 孵化闭环（想法 ↔ 作品）纯判定 ----------
+
+/**
+ * 校验想法是否可被关联为「已实现」作品（防重复 + 状态约束）。
+ * 返回错误数组；空数组 = 允许。related_work_id 已绑定 → 拒绝（服务端并发场景的防线，
+ * 不能只靠前端隐藏按钮）。
+ * @param {{related_work_id?: string|null, status?: string}} idea
+ * @returns {string[]} 错误信息数组（空 = 可关联）
+ */
+export function validateIdeaLinkable({ related_work_id = null, status = '' } = {}) {
+  const errors = [];
+  if (related_work_id) errors.push('该想法已实现为作品，请勿重复孵化');
+  if (status === 'closed') errors.push('已关闭的想法不能再关联作品');
+  return errors;
+}
+
+/**
+ * 关联作品后是否把想法标记为「已实现」（done）：
+ * 仅当想法尚未 done 且作品为公开可见时点亮（私密/草稿作品不点亮，关联保留）。
+ * @param {string} ideaStatus 想法当前状态
+ * @param {string} workVisibility 作品可见性（public 等）
+ * @returns {boolean}
+ */
+export function shouldMarkImplemented(ideaStatus, workVisibility) {
+  return ideaStatus !== 'done' && workVisibility === 'public';
+}
+

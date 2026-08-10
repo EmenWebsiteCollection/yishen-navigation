@@ -17,6 +17,8 @@ import {
   rankSimilarIdeas,
   ideaCategoryLabel,
   ideaStatusLabel,
+  validateIdeaLinkable,
+  shouldMarkImplemented,
 } from './idea-logic.js';
 
 export {
@@ -29,6 +31,8 @@ export {
   rankSimilarIdeas,
   ideaCategoryLabel,
   ideaStatusLabel,
+  validateIdeaLinkable,
+  shouldMarkImplemented,
 };
 // ========== 查询 ==========
 const IDEA_VIEW_SELECT = `
@@ -416,12 +420,16 @@ export const linkIdeaToWork = async (ideaId, workId, userId) => {
   if (!userId) throw new Error('请先登录');
   const { data: idea, error: ie } = await supabase
     .from('ideas')
-    .select('user_id, title, status')
+    .select('user_id, title, status, related_work_id')
     .eq('id', ideaId)
     .maybeSingle();
   if (ie) throw ie;
   if (!idea) throw new Error('想法不存在');
   if (!(await canManageIdea(idea, userId))) throw new Error('只有想法作者或管理员可以关联作品');
+
+  // 防重复（服务端判定，不能只靠前端）：related_work_id 已有值 / 已关闭 → 拒绝
+  const linkErrors = validateIdeaLinkable(idea);
+  if (linkErrors.length > 0) throw new Error(linkErrors[0]);
 
   const { data: work, error: we } = await supabase
     .from('works')
@@ -441,7 +449,7 @@ export const linkIdeaToWork = async (ideaId, workId, userId) => {
   }
 
   const patch = { related_work_id: workId };
-  const statusChanged = idea.status !== 'done' && work.visibility === 'public';
+  const statusChanged = shouldMarkImplemented(idea.status, work.visibility);
   if (statusChanged) patch.status = 'done';
   const { error: upErr } = await supabase
     .from('ideas')
