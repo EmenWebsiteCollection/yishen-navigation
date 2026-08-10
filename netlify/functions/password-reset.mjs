@@ -10,6 +10,10 @@
 //     （generic 另需 EMAIL_API_URL 指向你的转发接口）
 //   aliyun 用：ALIYUN_ACCESS_KEY_ID, ALIYUN_ACCESS_KEY_SECRET, EMAIL_FROM(发信地址)
 //     （可选）ALIYUN_REGION_ID，默认 cn-hangzhou
+//   （可选）EMAIL_FROM_NAME：发件人显示名，默认「依神网站汇总」
+//
+// 发信信誉要求：EMAIL_FROM 必须是发信服务已验证的地址，发信域名需完成 SPF/DKIM/DMARC
+// 校验；不要用免费邮箱或转发地址发送验证码，否则容易被 Outlook 等邮箱判为垃圾邮件。
 import { createClient } from '@supabase/supabase-js';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 
@@ -82,7 +86,10 @@ async function sendCodeEmail(email, code) {
   const provider = (process.env.EMAIL_PROVIDER || 'generic').toLowerCase();
   const apiKey = process.env.EMAIL_API_KEY;
   const from = process.env.EMAIL_FROM;
+  const fromName = process.env.EMAIL_FROM_NAME || '依神网站汇总';
   const subject = '依神网站汇总 - 找回密码验证码';
+  // 邮件内容刻意保持最小化：无外链、图片、附件与跟踪像素，避免触发垃圾邮件规则。
+  const text = `您好，您的验证码是：${code}\n\n该验证码 10 分钟内有效，请勿泄露给他人。`;
   const html = `<p>您好，您的验证码是：<b style="font-size:18px">${code}</b></p><p>该验证码 10 分钟内有效，请勿泄露给他人。</p>`;
 
   // 注意：aliyun 走 ALIYUN_ACCESS_KEY_ID/SECRET，不使用 EMAIL_API_KEY，
@@ -96,7 +103,7 @@ async function sendCodeEmail(email, code) {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: email, subject, html }),
+      body: JSON.stringify({ from: `${fromName} <${from}>`, to: email, subject, text, html }),
     });
     if (!res.ok) throw new Error(`邮件发送失败: ${res.status} ${await res.text()}`);
   } else if (provider === 'sendgrid') {
@@ -105,9 +112,12 @@ async function sendCodeEmail(email, code) {
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         personalizations: [{ to: [{ email }] }],
-        from: { email: from },
+        from: { email: from, name: fromName },
         subject,
-        content: [{ type: 'text/html', value: html }],
+        content: [
+          { type: 'text/plain', value: text },
+          { type: 'text/html', value: html },
+        ],
       }),
     });
     if (!res.ok) throw new Error(`邮件发送失败: ${res.status} ${await res.text()}`);
@@ -132,10 +142,11 @@ async function sendCodeEmail(email, code) {
       AccountName: accountName,
       ToAddress: email,
       Subject: subject,
+      TextBody: text,
       HtmlBody: html,
       AddressType: '1',
       ReplyToAddress: 'false',
-      FromAlias: '依神网站汇总',
+      FromAlias: fromName,
     };
     // 用 POST + form-urlencoded：避免 AccessKeyId/Signature 出现在 URL 与访问日志中
     const sortedKeys = Object.keys(params).sort();
@@ -173,13 +184,13 @@ async function sendCodeEmail(email, code) {
       );
     }
   } else {
-    // generic：POST 到你自己的转发接口（body: { to, subject, html, apiKey }）
+    // generic：POST 到你自己的转发接口（body: { to, subject, text, html, fromName, apiKey }）
     const url = process.env.EMAIL_API_URL;
     if (!url) throw new Error('EMAIL_PROVIDER=generic 时需要配置 EMAIL_API_URL');
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: email, subject, html, apiKey }),
+      body: JSON.stringify({ to: email, subject, text, html, fromName, apiKey }),
     });
     if (!res.ok) throw new Error(`邮件发送失败: ${res.status} ${await res.text()}`);
   }
