@@ -27,6 +27,22 @@ const BLOCKED_EXT = new Set([
 
 const extOf = (name) => (name.includes('.') ? name.split('.').pop().toLowerCase() : '');
 
+// 扩展名 → MIME 映射（与 work_deploys 桶 allowed_mime_types 白名单逐项对齐；
+// JSZip blob.type 恒为空，必须按扩展名显式指定，否则上传会被桶 MIME 白名单拒绝）
+const EXT_MIME = {
+  html: 'text/html', htm: 'text/html',
+  css: 'text/css',
+  js: 'text/javascript', mjs: 'application/javascript',
+  json: 'application/json',
+  txt: 'text/plain', md: 'text/markdown',
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+  svg: 'image/svg+xml', webp: 'image/webp', gif: 'image/gif', ico: 'image/x-icon',
+  woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf',
+  mp4: 'video/mp4', webm: 'video/webm',
+  mp3: 'audio/mpeg', ogg: 'audio/ogg',
+};
+const mimeOf = (name) => EXT_MIME[extOf(name)] || 'application/octet-stream';
+
 export const deployPreviewUrl = (workId, entry) => {
   if (!workId) return '';
   const e = entry && entry !== 'index.html' ? `/${entry}` : '';
@@ -100,7 +116,7 @@ export async function uploadWorkDeploy(workId, file, userId) {
     const path = `${workId}/${f.path}`;
     const { error } = await supabase.storage
       .from(BUCKET)
-      .upload(path, f.blob, { contentType: f.blob.type || 'application/octet-stream', upsert: true });
+      .upload(path, f.blob, { contentType: mimeOf(f.path), upsert: true });
     if (error) throw new Error(`上传失败：${f.path}（${error.message}）`);
   }
 

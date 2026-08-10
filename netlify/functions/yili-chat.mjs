@@ -639,6 +639,19 @@ export default async (req) => {
   if (!Array.isArray(messages)) {
     return json({ reply: '消息格式不对哦～' }, 400);
   }
+  // 限流保护：单次最多 20 条、单条 500 字、总长 4000 字（防匿名刷爆付费 LLM）
+  if (messages.length > 20) {
+    return json({ reply: '消息太多啦，请精简一下再问～' }, 400);
+  }
+  const totalLen = messages.reduce((s, m) => s + String(m.content || '').length, 0);
+  if (totalLen > 4000) {
+    return json({ reply: '内容太长啦，请分次提问～' }, 400);
+  }
+  for (const m of messages) {
+    if (String(m.content || '').length > 500) {
+      return json({ reply: '单条消息太长啦，请精简一下～' }, 400);
+    }
+  }
 
   try {
     const { reply, actions } = await runAgent(messages, { persona, userId, idToken });
