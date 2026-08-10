@@ -119,7 +119,17 @@ export function SearchBar({ placeholder = '搜索网站：标题 / URL / 描述'
           {error ? (
             <div className="ym-search-empty">{error}</div>
           ) : !loading && results.length === 0 ? (
-            <div className="ym-search-empty">未找到相关网站，换个关键词试试</div>
+            <div className="ym-search-empty">
+              <div className="ym-search-empty-title">未找到与「{query}」相关的网站</div>
+              <div className="ym-search-empty-hint">试试更短的关键词，或检查拼写</div>
+              <button
+                type="button"
+                className="ym-search-empty-cta"
+                onClick={() => navigate('/create')}
+              >
+                提交这个网站
+              </button>
+            </div>
           ) : (
             results.map((site, i) => (
               <div

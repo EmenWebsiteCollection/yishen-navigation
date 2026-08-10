@@ -13,7 +13,7 @@ export function normalizeQuery(q) {
 }
 
 /**
- * 客户端排序：按 标题 > URL > 描述 匹配打分，前缀命中加分，同分按点赞数。
+ * 客户端排序：按 标题 > URL > 描述 > 作者 > 标签 匹配打分，前缀命中加分，同分按点赞数。
  * @param {Array} websites 数据库返回的网站数组
  * @param {string} query 搜索词
  * @returns {Array} 仅包含有命中的网站，按分数降序
@@ -26,10 +26,14 @@ export function rankWebsites(websites, query) {
       const title = (site.title || '').toLowerCase();
       const url = (site.url || '').toLowerCase();
       const desc = (site.description || '').toLowerCase();
+      const username = (site.username || '').toLowerCase();
+      const tags = Array.isArray(site.tags) ? site.tags.map((t) => String(t).toLowerCase()) : [];
       let score = 0;
       if (title.includes(q)) score += title.startsWith(q) ? 6 : 4;
       if (url.includes(q)) score += url.startsWith(q) ? 4 : 2;
       if (desc.includes(q)) score += 1;
+      if (username.includes(q)) score += username.startsWith(q) ? 3 : 2;
+      if (tags.some((t) => t.includes(q))) score += 2;
       return { ...site, _score: score };
     })
     .filter((s) => s._score > 0)
@@ -73,6 +77,30 @@ export function escapeLike(s) {
   return s.replace(/[\\%_"]/g, (c) => '\\' + c);
 }
 
+// Postgres 数组字面量（双引号包裹元素）内的转义：仅需转义反斜杠与双引号
+function escapeArrayLiteral(s) {
+  return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+/**
+ * 构造服务端 or() 过滤串：标题/URL/描述/作者 ilike 模糊 + 标签数组 contains（精确标签词）。
+ * 注意：PostgREST 不支持列转换语法（tags.text.ilike 会 400），tags 模糊匹配只能靠
+ * 客户端 rankWebsites 打分；服务端用 cs（contains）做「精确标签词」召回，按空格分词逐词匹配。
+ * @param {string} like 转义后的 ilike 通配串（含 %）
+ * @param {string} q 已规范化的查询词
+ * @param {boolean} withUsername 是否加入 username 过滤（works_with_likes 视图可；降级查 works 表不支持嵌套路径）
+ * @returns {string} PostgREST or() 表达式
+ */
+function buildSearchOr(like, q, withUsername) {
+  const parts = [`title.ilike.${like}`, `url.ilike.${like}`, `description.ilike.${like}`];
+  if (withUsername) parts.push(`username.ilike.${like}`);
+  // 标签数组：按空格拆词，每个词一个 cs（contains），引号包裹防特殊字符破坏字面量
+  for (const tok of String(q).split(/\s+/).filter(Boolean)) {
+    parts.push(`tags.cs.{"${escapeArrayLiteral(tok)}"}`);
+  }
+  return parts.join(',');
+}
+
 /**
  * 搜索作品（服务端 ilike 过滤 + 客户端排序）。
  * 优先查 works_with_likes 视图；视图失败时降级查 works 表并手动统计点赞数。
@@ -87,7 +115,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
   // 动态 import：浏览器端由 Vite 正常打包，Node 测试不会加载 supabase 环境
   const { supabase } = await import('./supabase.js');
   const like = `"%${escapeLike(q)}%"`;
-  const or = `title.ilike.${like},url.ilike.${like},description.ilike.${like}`;
+  const or = buildSearchOr(like, q, true);
 
   const { data, error } = await supabase
     .from('works_with_likes')
@@ -97,6 +125,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
       url,
       title,
       description,
+      tags,
       work_type,
       image_url,
       created_at,
@@ -112,6 +141,9 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
 
   if (error) {
     console.warn('⚠️ 搜索：视图查询失败，使用降级方案:', error.message);
+    // 降级查 works 表：tags.cs 可用（works 表同列）；username 为嵌套 profiles 资源，
+    // or() 不支持嵌套路径过滤（PGRST100），降级场景下作者检索暂不覆盖（注释留档）
+    const orFallback = buildSearchOr(like, q, false);
     const { data: fallbackData, error: fallbackError } = await supabase
       .from('works')
       .select(
@@ -120,6 +152,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
         url,
         title,
         description,
+        tags,
         work_type,
         image_url,
         created_at,
@@ -128,7 +161,7 @@ export async function searchWebsites(query, { limit = 8 } = {}) {
         profiles ( username )
         `
       )
-      .or(or)
+      .or(orFallback)
       .limit(limit);
     if (fallbackError) throw fallbackError;
     const withLikes = await Promise.all(
