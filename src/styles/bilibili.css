@@ -1037,6 +1037,46 @@ body.ym-has-bg::before {
   border: 1px solid var(--ym-border);
 }
 
+/* 未登录引导条：提示 + 高亮「去登录」按钮 */
+.ym-chat-guest-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ym-border);
+  background: linear-gradient(90deg, rgba(255, 179, 64, 0.14), rgba(255, 107, 107, 0.1));
+}
+
+.ym-chat-guest-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ym-text-secondary);
+}
+
+.ym-chat-guest-btn {
+  flex-shrink: 0;
+  padding: 4px 14px;
+  border: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #ffb340, #ff6b6b);
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ym-chat-guest-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.45);
+}
+
+.ym-chat-guest-btn:active {
+  transform: translateY(0);
+}
+
 .ym-chat-msg-wrap {
   display: flex;
   flex-direction: column;
