@@ -48,6 +48,10 @@ async function collectFiles(zip) {
 
   for (const name of names) {
     const clean = name.replace(/\\/g, '/');
+    // 防 zip slip 路径穿越：拒绝 .. 与绝对路径
+    if (clean.includes('..') || clean.startsWith('/')) {
+      throw new Error(`包含非法文件路径：${name}`);
+    }
     const ext = extOf(clean);
     if (BLOCKED_EXT.has(ext)) throw new Error(`包含不允许的文件类型：${name}`);
     if (!ALLOWED_EXT.has(ext)) continue; // 非白名单静默跳过（如 .DS_Store）
