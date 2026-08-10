@@ -13,7 +13,7 @@ export const THEMES = [
   { id: 'onedark', name: 'One Dark', accent: '#61AFEF', bg: '#21252B' },
   { id: 'dracula', name: 'Dracula', accent: '#BD93F9', bg: '#21222C' },
   { id: 'macos', name: 'Mac OS', accent: '#0A84FF', bg: '#F5F5F7' },
-  { id: 'macosdark', name: 'Mac OS 暗色', accent: '#0A84FF', bg: '#1C1C1E' },
+  { id: 'macosdark', name: 'Mac OS 暗色', accent: '#A8C7FA', bg: '#121625' },
   { id: CUSTOM_THEME_ID, name: '自定义', accent: '#9C6B2E', bg: '#F3EAD8' },
 ];
 
