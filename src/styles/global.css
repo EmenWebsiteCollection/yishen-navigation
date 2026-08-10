@@ -56,3 +56,48 @@ textarea {
   background: var(--ym-border-strong);
   border-radius: 4px;
 }
+
+/* 路由级加载占位与错误提示 */
+.ym-route-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 60vh;
+  padding: 40px 20px;
+}
+
+.ym-route-fallback__spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--ym-border);
+  border-top-color: var(--ym-accent);
+  border-radius: 50%;
+}
+
+.ym-route-fallback__text {
+  color: var(--ym-text-secondary);
+  font-size: 14px;
+}
+
+.ym-route-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 60vh;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.ym-route-error__title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.ym-route-error__desc {
+  color: var(--ym-text-secondary);
+  font-size: 14px;
+}
