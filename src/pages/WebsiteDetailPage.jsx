@@ -1059,68 +1059,9 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
 
   if (loading) {
     return (
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px 16px' }}>
-        {/* 封面骨架 */}
-        <div
-          style={{
-            aspectRatio: '16/9',
-            borderRadius: 'var(--ym-radius-lg)',
-            backgroundColor: 'var(--ym-bg-subtle)',
-            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-          }}
-        />
-        {/* 标题骨架 */}
-        <div
-          style={{
-            height: '28px',
-            width: '60%',
-            marginTop: '20px',
-            borderRadius: '6px',
-            backgroundColor: 'var(--ym-bg-subtle)',
-            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-          }}
-        />
-        {/* 描述骨架 */}
-        <div
-          style={{
-            height: '16px',
-            marginTop: '16px',
-            borderRadius: '6px',
-            backgroundColor: 'var(--ym-bg-subtle)',
-            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-          }}
-        />
-        <div
-          style={{
-            height: '16px',
-            width: '80%',
-            marginTop: '8px',
-            borderRadius: '6px',
-            backgroundColor: 'var(--ym-bg-subtle)',
-            animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-          }}
-        />
-        {/* 元信息骨架 */}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-          <div
-            style={{
-              height: '36px',
-              width: '80px',
-              borderRadius: 'var(--ym-radius-md)',
-              backgroundColor: 'var(--ym-bg-subtle)',
-              animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-            }}
-          />
-          <div
-            style={{
-              height: '36px',
-              width: '80px',
-              borderRadius: 'var(--ym-radius-md)',
-              backgroundColor: 'var(--ym-bg-subtle)',
-              animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-            }}
-          />
-        </div>
+      <div className="ym-loading-center ym-fade-in">
+        <div className="ym-loading-spinner" />
+        <span className="ym-loading-text">依力正在搬运</span>
       </div>
     );
   }
@@ -1632,19 +1573,8 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
       </div>
 
       {similarLoading ? (
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '28px' }}>
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              style={{
-                flex: '1',
-                aspectRatio: '16/9',
-                borderRadius: '8px',
-                backgroundColor: 'var(--ym-bg-subtle)',
-                animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-              }}
-            />
-          ))}
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <span className="ym-loading-text">依力正在搬运</span>
         </div>
       ) : similarWorks.length > 0 ? (
         <div style={{ marginBottom: '28px' }}>
@@ -1687,41 +1617,8 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
         </h3>
 
         {loadingComments ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[0, 1].map((i) => (
-              <div key={i} style={{ display: 'flex', gap: '12px' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    flexShrink: '0',
-                    backgroundColor: 'var(--ym-bg-subtle)',
-                    animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-                  }}
-                />
-                <div style={{ flex: '1' }}>
-                  <div
-                    style={{
-                      height: '14px',
-                      width: '120px',
-                      borderRadius: '4px',
-                      marginBottom: '8px',
-                      backgroundColor: 'var(--ym-bg-subtle)',
-                      animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-                    }}
-                  />
-                  <div
-                    style={{
-                      height: '14px',
-                      borderRadius: '4px',
-                      backgroundColor: 'var(--ym-bg-subtle)',
-                      animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+          <div style={{ padding: '16px 0', textAlign: 'center' }}>
+            <span className="ym-loading-text">依力正在搬运</span>
           </div>
         ) : commentsError ? (
           <div style={{ color: 'var(--ym-danger)', fontSize: '14px' }}>评论加载失败</div>
@@ -1896,18 +1793,8 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
         </div>
 
         {revisionsLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[0, 1].map((i) => (
-              <div
-                key={i}
-                style={{
-                  height: '40px',
-                  borderRadius: '6px',
-                  backgroundColor: 'var(--ym-bg-subtle)',
-                  animation: 'ym-skeleton-pulse 1.2s ease-in-out infinite',
-                }}
-              />
-            ))}
+          <div style={{ padding: '16px 0', textAlign: 'center' }}>
+            <span className="ym-loading-text">依力正在搬运</span>
           </div>
         ) : revisions.length === 0 ? (
           <div style={{ color: 'var(--ym-text-secondary)', fontSize: '14px' }}>

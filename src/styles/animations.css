@@ -77,6 +77,52 @@
   animation: ym-spin 0.8s linear infinite;
 }
 
+/* ── "依力正在努力..." 文字加载动画 ── */
+@keyframes ym-dots {
+  0%, 20%   { content: ''; }
+  40%       { content: '.'; }
+  60%       { content: '..'; }
+  80%, 100% { content: '...'; }
+}
+
+.ym-loading-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ym-text-secondary);
+  font-size: 15px;
+}
+
+.ym-loading-text::after {
+  content: '';
+  animation: ym-dots 1.4s steps(1, end) infinite;
+  width: 1.2em;
+  text-align: left;
+}
+
+.ym-loading-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 300px;
+  padding: 40px 16px;
+}
+
+.ym-loading-center .ym-loading-text {
+  font-size: 16px;
+}
+
+.ym-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--ym-border);
+  border-top-color: var(--ym-accent);
+  border-radius: 50%;
+  animation: ym-spin 0.8s linear infinite;
+}
+
 /* 减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
   .ym-fade-in,
