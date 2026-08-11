@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { YiliChatPanel } from './YiliChatPanel.jsx';
 import { setMascotPos } from '../services/mascotPos.js';
+import { useAuth } from '../hooks/useAuth.js';
 
 const LINES = [
   '你好，我是依力 🤙',
@@ -18,6 +19,8 @@ const LINES = [
 const getRandomLine = () => LINES[Math.floor(Math.random() * LINES.length)];
 
 export function YiliMascot() {
+  const { user, isAnonymous } = useAuth();
+  const isLoggedIn = Boolean(user && !isAnonymous);
   const [open, setOpen] = useState(false); // 看板郎本体是否显示（默认收起，点击小气泡打开）
   const [bubble, setBubble] = useState(null); // 对话气泡内容
   const [chatOpen, setChatOpen] = useState(false); // AI 对话面板是否展开
@@ -115,9 +118,14 @@ export function YiliMascot() {
       return; // 拖动过，不触发点击
     }
 
-    // 单击：收起冒泡，交给 AI 助手开启对话
+    // 单击：收起冒泡，交给 AI 助手开启对话（未登录时仅提示登录，不开 AI）
     setBubble(null);
     clearTimeout(bubbleTimerRef.current);
+    if (!isLoggedIn) {
+      setBubble('AI 对话需要登录后使用，先去登录吧');
+      window.dispatchEvent(new CustomEvent('ym-open-login'));
+      return;
+    }
     setChatOpen(true);
   };
 

@@ -1207,27 +1207,33 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {website.url && (
           <button
-            onClick={() => window.open(website.url, '_blank')}
+            onClick={() => {
+              if (website.url || website.deploy_url) {
+                window.open(website.url || website.deploy_url, '_blank');
+              } else {
+                alert('网站还没上传哟');
+              }
+            }}
             style={{
               padding: '8px 20px',
-              backgroundColor: 'var(--ym-accent)',
-              color: 'var(--ym-accent-text-on)',
-              border: 'none',
+              backgroundColor: (website.url || website.deploy_url) ? 'var(--ym-accent)' : 'var(--ym-bg-subtle)',
+              color: (website.url || website.deploy_url) ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+              border: '1px solid var(--ym-border)',
               borderRadius: 'var(--ym-radius-sm)',
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
-              transition: 'background-color var(--ym-transition)',
+              transition: 'all var(--ym-transition)',
               whiteSpace: 'nowrap',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--ym-accent)')}
+            onMouseEnter={(e) => { if (website.url || website.deploy_url) e.currentTarget.style.backgroundColor = 'var(--ym-accent-hover)'; }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = (website.url || website.deploy_url) ? 'var(--ym-accent)' : 'var(--ym-bg-subtle)';
+            }}
           >
             🔗 访问网站
           </button>
-          )}
 
           <button
             onClick={() => {

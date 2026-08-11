@@ -338,6 +338,27 @@ const [videoUrl, setVideoUrl] = useState('');
     );
   }
 
+  if (loading) {
+    return (
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 16px' }}>
+        <div className="ym-section-block" style={{ padding: '28px' }}>
+          <div style={{ height: '22px', width: '30%', borderRadius: '6px', backgroundColor: 'var(--ym-bg-subtle)', animation: 'ym-skeleton-pulse 1.35s ease-in-out infinite', marginBottom: '24px' }} />
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '18px' }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} style={{ height: '30px', width: '76px', borderRadius: '20px', backgroundColor: 'var(--ym-bg-subtle)', animation: 'ym-skeleton-pulse 1.35s ease-in-out infinite' }} />
+            ))}
+          </div>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ marginBottom: '18px' }}>
+              <div style={{ height: '13px', width: '20%', borderRadius: '4px', backgroundColor: 'var(--ym-bg-subtle)', animation: 'ym-skeleton-pulse 1.35s ease-in-out infinite', marginBottom: '6px' }} />
+              <div style={{ height: '40px', borderRadius: 'var(--ym-radius-sm)', backgroundColor: 'var(--ym-bg-subtle)', animation: 'ym-skeleton-pulse 1.35s ease-in-out infinite' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const hasImage = imagePreview || imageUrl;
 
   return (
@@ -396,21 +417,18 @@ const [videoUrl, setVideoUrl] = useState('');
           </div>
         </div>
 
-        {/* URL（仅网站类） */}
-        {workType === 'website' && (
-          <div style={{ marginBottom: '16px' }}>
-            <label htmlFor="edit-url" style={labelStyle}>URL</label>
-            <input
-              id="edit-url"
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              required
-              placeholder="https://example.com"
-              style={inputStyle}
-            />
-          </div>
-        )}
+        {/* URL（所有类型均可修改） */}
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="edit-url" style={labelStyle}>{workType === 'website' ? 'URL' : 'URL（可选）'}</label>
+          <input
+            id="edit-url"
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://example.com"
+            style={inputStyle}
+          />
+        </div>
 
         {/* 演示视频链接（可选） */}
         <div style={{ marginBottom: '16px' }}>

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { getRuleReply } from '../services/agentFallback.js';
 import { subscribeMascotPos } from '../services/mascotPos.js';
 import { supabase } from '../services/supabase.js';
+import { useAuth } from '../hooks/useAuth.js';
 import { ChatActionCard } from './ChatActionCard.jsx';
 
 export const YILI_PERSONA_PROMPT = '';
@@ -30,7 +31,7 @@ function isMemoryEnabled() {
   return localStorage.getItem(MEMORY_KEY) !== 'off';
 }
 
-// 登录用户会话（用于个性化记忆；匿名/未登录返回 null）
+// 登录用户会话（用于 AI 鉴权与个性化记忆；匿名/未登录返回 null）
 async function getAuthContext() {
   try {
     const { data } = await supabase.auth.getSession();
@@ -50,9 +51,10 @@ async function fetchReply(messages, authCtx) {
   const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
   try {
     const body = { messages, persona: YILI_PERSONA_PROMPT };
-    if (authCtx && isMemoryEnabled()) {
+    if (authCtx) {
       body.userId = authCtx.userId;
       body.idToken = authCtx.idToken;
+      body.memoryEnabled = isMemoryEnabled();
     }
     const res = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
