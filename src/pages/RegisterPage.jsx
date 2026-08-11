@@ -23,6 +23,10 @@ export function RegisterPage({ onSuccess }) {
       setError('用户名不能为空');
       return;
     }
+    if (/[\u4e00-\u9fa5]/.test(username)) {
+      setError('用户名不能使用中文');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('两次输入的密码不一致');
       return;
@@ -114,6 +118,14 @@ export function RegisterPage({ onSuccess }) {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             />
+            <p style={{
+              fontSize: '12px',
+              color: 'var(--ym-text-secondary)',
+              marginTop: '6px',
+              lineHeight: '1.5',
+            }}>
+              用户名不能使用中文，请使用字母、数字或下划线。
+            </p>
           </div>
           <div style={{ marginBottom: '16px' }}>
             <label htmlFor="register-password" style={{
