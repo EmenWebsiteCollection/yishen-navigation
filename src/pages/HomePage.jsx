@@ -1,11 +1,12 @@
-﻿// 首页：高分轮播 + 可配置分区 Tab + B 站式网站卡片信息流。
+﻿// 首页：新作品轮播 + 高分榜侧边 + 可配置分区 Tab + B 站式网站卡片信息流。
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
-import { getWorks, likeWork, unlikeWork } from "../services/works.js";
+import { getWorks, likeWork, unlikeWork, WORK_SORT_MODES, workSortLabel } from "../services/works.js";
 import { getPartitions } from "../services/partitions.js";
 import { supabase } from "../services/supabase.js";
 import { HighRatedCarousel } from "../components/HighRatedCarousel.jsx";
+import { TopRatedSidebar } from "../components/TopRatedSidebar.jsx";
 import { PartitionManager } from "../components/PartitionManager.jsx";
 import { Pagination, PAGE_SIZE_MAX } from "../components/Pagination.jsx";
 
@@ -173,6 +174,7 @@ export function HomePage() {
   const activePartition = partitions.find((p) => p.id === partitionId) || null;
   const activeType = activePartition ? activePartition.work_type : null;
   const isLoggedIn = Boolean(user && !isAnonymous);
+  const sort = searchParams.get("sort") || "new";
 
   useEffect(() => {
     let cancelled = false;
@@ -188,7 +190,7 @@ export function HomePage() {
     };
   }, []);
 
-  const loadWebsites = async (page, type) => {
+  const loadWebsites = async (page, type, sortMode) => {
     try {
       setLoading(true);
       setError(null);
@@ -196,6 +198,7 @@ export function HomePage() {
         page,
         pageSize: normalizedSize,
         type,
+        sort: sortMode,
       });
       setTotalItems(total);
       setTotalPages(Math.ceil(total / normalizedSize) || 1);
@@ -235,8 +238,8 @@ export function HomePage() {
   useEffect(() => {
     if (!partitionsLoaded) return;
     const page = parseInt(searchParams.get("page") || "1", 10);
-    if (page > 0) loadWebsites(page, activeType);
-  }, [searchParams, user, partitionsLoaded, activeType]);
+    if (page > 0) loadWebsites(page, activeType, sort);
+  }, [searchParams, user, partitionsLoaded, activeType, sort]);
 
   useEffect(() => {
     if (loading || !pendingListScrollRef.current) return undefined;
@@ -295,27 +298,37 @@ export function HomePage() {
     }
   };
 
+  const buildListParams = (overrides = {}) => {
+    const params = {};
+    if (overrides.page !== undefined) params.page = String(overrides.page);
+    else if (currentPage !== 1 || searchParams.has("page")) params.page = String(currentPage);
+
+    if (overrides.size !== undefined) params.size = String(overrides.size);
+    else if (normalizedSize !== PAGE_SIZE_DEFAULT || searchParams.has("size")) params.size = String(normalizedSize);
+
+    if (overrides.partition !== undefined ? overrides.partition !== "all" : partitionId !== "all") {
+      params.partition = overrides.partition !== undefined ? overrides.partition : partitionId;
+    }
+
+    if (overrides.sort !== undefined ? overrides.sort !== "new" : sort !== "new") {
+      params.sort = overrides.sort !== undefined ? overrides.sort : sort;
+    }
+
+    return params;
+  };
+
   const handlePartitionClick = (id) => {
     if (id === partitionId) return;
     pendingListScrollRef.current = true;
     setLoading(true);
-    const params = { page: "1" };
-    if (normalizedSize !== PAGE_SIZE_DEFAULT)
-      params.size = String(normalizedSize);
-    if (id !== "all") params.partition = id;
-    setSearchParams(params);
+    setSearchParams(buildListParams({ page: "1", partition: id }));
   };
 
   const handlePageChange = (newPage) => {
     if (newPage === currentPage || newPage < 1 || newPage > totalPages) return;
     pendingListScrollRef.current = true;
     setLoading(true);
-    const params = { page: String(newPage) };
-    if (normalizedSize !== PAGE_SIZE_DEFAULT || searchParams.has("size")) {
-      params.size = String(normalizedSize);
-    }
-    if (partitionId !== "all") params.partition = partitionId;
-    setSearchParams(params);
+    setSearchParams(buildListParams({ page: String(newPage) }));
   };
 
   const handlePageSizeChange = (size) => {
@@ -323,14 +336,26 @@ export function HomePage() {
     pendingListScrollRef.current = true;
     setLoading(true);
     // 每页数量写入 URL，页码回到第 1 页（避免超出新页数上限）
-    const params = { page: "1", size: String(size) };
-    if (partitionId !== "all") params.partition = partitionId;
-    setSearchParams(params);
+    setSearchParams(buildListParams({ page: "1", size: String(size) }));
+  };
+
+  const handleSortChange = (nextSort) => {
+    if (nextSort === sort) return;
+    pendingListScrollRef.current = true;
+    setLoading(true);
+    setSearchParams(buildListParams({ page: "1", sort: nextSort }));
   };
 
   return (
     <div className="ym-home-page">
-      <HighRatedCarousel />
+      <div className="ym-home-hero">
+        <div className="ym-home-hero-main">
+          <HighRatedCarousel mode="new" />
+        </div>
+        <div className="ym-home-hero-side">
+          <TopRatedSidebar />
+        </div>
+      </div>
 
       <div className="ym-home-feature-grid">
         <Link
@@ -371,15 +396,30 @@ export function HomePage() {
         <h2 className="ym-section-title" style={{ margin: "24px 0 12px" }}>
           全部作品
         </h2>
-        {isLoggedIn && (
-          <button
-            type="button"
-            className="ym-btn ym-btn-ghost ym-btn-sm"
-            onClick={() => setShowPartitionManager(true)}
-          >
-            管理分区
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <div className="ym-sort-select" role="group" aria-label="作品排序">
+            {WORK_SORT_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={"ym-sort-option" + (sort === m.id ? " is-active" : "")}
+                aria-pressed={sort === m.id}
+                onClick={() => handleSortChange(m.id)}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          {isLoggedIn && (
+            <button
+              type="button"
+              className="ym-btn ym-btn-ghost ym-btn-sm"
+              onClick={() => setShowPartitionManager(true)}
+            >
+              管理分区
+            </button>
+          )}
+        </div>
       </div>
 
       <div
@@ -465,7 +505,7 @@ export function HomePage() {
         onChanged={() => {
           getPartitions().then(setPartitions);
           const page = parseInt(searchParams.get("page") || "1", 10);
-          loadWebsites(page, activeType);
+          loadWebsites(page, activeType, sort);
         }}
       />
     </div>

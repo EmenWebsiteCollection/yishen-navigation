@@ -338,13 +338,60 @@ export const createWork = async (payload, userId) => {
   return created;
 };
 
+// 支持的列表排序方式
+export const WORK_SORT_MODES = [
+  { id: 'new', label: '发布时间' },
+  { id: 'hot', label: '热度排序' },
+  { id: 'mixed', label: '综合推荐' },
+];
+
+export const workSortLabel = (id) => WORK_SORT_MODES.find((m) => m.id === id)?.label || '发布时间';
+
 // ========== 分页查询（首页网站导航，可扩展任意类型） ==========
-export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', userId = null } = {}) => {
+export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', userId = null, sort = 'new' } = {}) => {
   // 分页参数钳制，防止 416/超大请求
   page = Math.max(1, Math.floor(Number(page) || 1));
   pageSize = Math.min(50, Math.max(1, Math.floor(Number(pageSize) || 10)));
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+
+  const sortMode = sort === 'hot' || sort === 'mixed' ? sort : 'new';
+
+  // 热度/时间排序直接走单条查询；综合推荐需要一次性拉取稍大候选池再交错
+  if (sortMode === 'mixed') {
+    const poolSize = Math.min(120, pageSize * 4);
+    const [hotRes, newRes] = await Promise.all([
+      supabase
+        .from('works_with_likes')
+        .select(VIEW_SELECT)
+        .eq('visibility', 'public')
+        .then(async ({ data, error }) => {
+          if (error) throw error;
+          let list = (data || []).map((item) => mapWork(item));
+          if (type) list = list.filter((w) => w.work_type === type);
+          if (userId) list = list.filter((w) => w.user_id === userId);
+          return list.sort((a, b) => (b.like_count || 0) - (a.like_count || 0)).slice(0, poolSize);
+        }),
+      supabase
+        .from('works_with_likes')
+        .select(VIEW_SELECT)
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(poolSize)
+        .then(({ data, error }) => {
+          if (error) throw error;
+          let list = (data || []).map((item) => mapWork(item));
+          if (type) list = list.filter((w) => w.work_type === type);
+          if (userId) list = list.filter((w) => w.user_id === userId);
+          return list;
+        }),
+    ]);
+
+    const interleaved = interleaveNewAndHot(newRes, hotRes);
+    const total = interleaved.length;
+    const works = interleaved.slice(from, to + 1);
+    return { works, total };
+  }
 
   let query = supabase
     .from('works_with_likes')
@@ -352,7 +399,13 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
   if (type) query = query.eq('work_type', type);
   query = query.eq('visibility', 'public');
   if (userId) query = query.eq('user_id', userId);
-  query = query.order('like_count', { ascending: false }).range(from, to);
+
+  if (sortMode === 'hot') {
+    query = query.order('like_count', { ascending: false });
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+  query = query.range(from, to);
 
   const { data, error, count } = await query;
 
@@ -364,7 +417,7 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
     if (type) fallbackQuery = fallbackQuery.eq('work_type', type);
     fallbackQuery = fallbackQuery.eq('visibility', 'public');
     if (userId) fallbackQuery = fallbackQuery.eq('user_id', userId);
-    fallbackQuery = fallbackQuery.order('created_at', { ascending: false }).range(from, to);
+    fallbackQuery = fallbackQuery.order(sortMode === 'hot' ? 'like_count' : 'created_at', { ascending: false }).range(from, to);
 
     const { data: fallbackData, error: fallbackError, count: fallbackCount } = await fallbackQuery;
     if (fallbackError) throw fallbackError;
@@ -379,6 +432,85 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
   }
 
   return { works: data.map((item) => mapWork(item)), total: count || 0 };
+};
+
+// 最新作品（首页轮播曝光位：最近 14 天或最新 N 个，优先给新作者曝光）
+export const getNewWorks = async (limit = 8, { maxDays = 14 } = {}) => {
+  const since = new Date(Date.now() - maxDays * 24 * 60 * 60 * 1000).toISOString();
+
+  let query = supabase
+    .from('works_with_likes')
+    .select(VIEW_SELECT)
+    .eq('visibility', 'public')
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(limit * 2);
+
+  const { data, error } = await query;
+
+  let works = [];
+  if (error) {
+    console.warn('⚠️ 新作品视图查询失败，使用降级方案:', error.message);
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('works')
+      .select(await getTableSelect())
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false })
+      .limit(limit * 2);
+    if (fallbackError) throw fallbackError;
+    works = await Promise.all(
+      fallbackData.map(async (item) => {
+        const likeCount = await getWorkLikeCount(item.id);
+        return { ...mapWork(item), like_count: likeCount };
+      })
+    );
+  } else {
+    works = data.map((item) => mapWork(item));
+  }
+
+  // 若 14 天内作品不足，则补充最新的作品直到够数
+  if (works.length < limit) {
+    const existingIds = new Set(works.map((w) => w.id));
+    const { data: moreData, error: moreError } = await supabase
+      .from('works_with_likes')
+      .select(VIEW_SELECT)
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false })
+      .limit(limit * 3);
+    if (!moreError && moreData) {
+      const more = moreData.map((item) => mapWork(item)).filter((w) => !existingIds.has(w.id));
+      works = works.concat(more);
+    }
+  }
+
+  return works.slice(0, limit);
+};
+
+// 新老热冷交错：一个热门、一个新作轮流，避免头部垄断
+const interleaveNewAndHot = (newWorks, hotWorks) => {
+  const result = [];
+  const used = new Set();
+  const sources = [
+    hotWorks.slice().sort((a, b) => (b.like_count || 0) - (a.like_count || 0)),
+    newWorks.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
+  ];
+  let i = 0;
+  while (result.length < 120) {
+    const source = sources[i % sources.length];
+    let added = false;
+    while (source.length > 0) {
+      const next = source.shift();
+      if (!used.has(next.id)) {
+        result.push(next);
+        used.add(next.id);
+        added = true;
+        break;
+      }
+    }
+    if (!added && sources.every((s) => s.length === 0)) break;
+    i += 1;
+  }
+  return result;
 };
 
 // 高分作品（首页轮播：公开作品按点赞排序）。

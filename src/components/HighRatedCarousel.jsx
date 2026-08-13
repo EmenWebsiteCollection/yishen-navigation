@@ -1,7 +1,7 @@
-// 首页高分网站轮播：每 5 秒自动切换，首尾相接无缝循环。
+// 首页轮播：支持「新作品曝光」或「高分榜单」两种模式。
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getTopRatedWorks } from '../services/works.js';
+import { getTopRatedWorks, getNewWorks } from '../services/works.js';
 
 const ROTATE_INTERVAL = 5000;
 const MIN_SITES = 3;
@@ -15,7 +15,9 @@ function CarouselSkeleton() {
   );
 }
 
-function Slide({ site, index }) {
+function Slide({ site, index, mode }) {
+  const isNewMode = mode === 'new';
+  const createdAt = new Date(site.created_at).toLocaleDateString('zh-CN');
   return (
     <div className="ym-carousel-slide" style={{ flex: '0 0 100%', minWidth: '100%', display: 'grid', gridTemplateColumns: 'minmax(0, 5fr) minmax(0, 4fr)' }}>
       <div style={{ position: 'relative', minHeight: '280px', backgroundColor: 'var(--ym-bg-subtle)', overflow: 'hidden' }}>
@@ -35,13 +37,13 @@ function Slide({ site, index }) {
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0) 55%)' }} />
         <div style={{ position: 'absolute', left: '16px', bottom: '14px', color: 'var(--ym-bg-card)', fontSize: '12px', letterSpacing: '1px', textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>
-          高分榜单 · 第 {String(index + 1).padStart(2, '0')} 名
+          {isNewMode ? '新作推荐' : '高分榜单'} · 第 {String(index + 1).padStart(2, '0')} 名
         </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '28px', backgroundColor: 'var(--ym-bg-card)' }}>
-        <span className="ym-chip ym-chip-active" style={{ alignSelf: 'flex-start' }}>
-          ⭐ {site.like_count || 0} 赞
+        <span className={`ym-chip ${isNewMode ? '' : 'ym-chip-active'}`} style={{ alignSelf: 'flex-start' }}>
+          {isNewMode ? `🆕 ${createdAt} 发布` : `⭐ ${site.like_count || 0} 赞`}
         </span>
         <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '22px', fontWeight: '600', color: 'var(--ym-text-primary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>
           {site.title}
@@ -63,7 +65,7 @@ function Slide({ site, index }) {
   );
 }
 
-export function HighRatedCarousel() {
+export function HighRatedCarousel({ mode = 'top-rated' }) {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   // currentIndex 是扩展数组中的位置（0 = 末位克隆, 1~N = 真实, N+1 = 首位克隆）
@@ -75,6 +77,7 @@ export function HighRatedCarousel() {
   const currentIndexRef = useRef(currentIndex);
   currentIndexRef.current = currentIndex;
   const total = sites.length;
+  const isNewMode = mode === 'new';
 
   // 扩展数组：[末位克隆, site0, site1, ..., siteN-1, 首位克隆]
   const extendedSlides = useMemo(() => {
@@ -89,16 +92,24 @@ export function HighRatedCarousel() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getTopRatedWorks(8, { diversify: true });
+        const data = isNewMode
+          ? await getNewWorks(8, { maxDays: 14 })
+          : await getTopRatedWorks(8, { diversify: true });
         if (!cancelled) setSites(data);
       } catch (err) {
-        console.warn('加载高分网站失败:', err);
+        console.warn('加载轮播作品失败:', err);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [isNewMode]);
+
+  // 切换模式时重置索引
+  useEffect(() => {
+    setCurrentIndex(1);
+    setProgressKey((k) => k + 1);
+  }, [mode]);
 
   // 过渡结束后，如果在克隆位置则瞬间跳回真实位置
   const handleTransitionEnd = useCallback((e) => {
@@ -171,14 +182,14 @@ export function HighRatedCarousel() {
 
   return (
     <section
-      aria-label="高分网站轮播"
+      aria-label={isNewMode ? '新作品推荐轮播' : '高分网站轮播'}
       style={{ marginBottom: '28px' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       <h2 className="ym-section-title">
-        高分榜单
-        <span className="ym-section-extra">按点赞自动轮播 · 每 5 秒</span>
+        {isNewMode ? '新作推荐' : '高分榜单'}
+        <span className="ym-section-extra">{isNewMode ? '最近两周新作自动轮播 · 每 5 秒' : '按点赞自动轮播 · 每 5 秒'}</span>
       </h2>
 
       <div className="ym-section-block" style={{ padding: 0, overflow: 'hidden' }}>
@@ -192,7 +203,7 @@ export function HighRatedCarousel() {
           }}
         >
           {extendedSlides.map((site, i) => (
-            <Slide key={`${site.id}-${i}`} site={site} index={(i - 1 + total) % total} />
+            <Slide key={`${site.id}-${i}`} site={site} index={(i - 1 + total) % total} mode={mode} />
           ))}
         </div>
         <div style={{ height: '3px', backgroundColor: 'var(--ym-border)' }}>

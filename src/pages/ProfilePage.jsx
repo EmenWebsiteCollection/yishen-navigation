@@ -57,6 +57,55 @@ const labelStyle = {
   fontWeight: '500',
 };
 
+function ActionMenu({ children, label = '操作' }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e) => {
+      if (!ref.current || ref.current.contains(e.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{ ...smallBtnStyle, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+      >
+        {label} <span style={{ fontSize: '10px' }}>▼</span>
+      </button>
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            zIndex: 150,
+            minWidth: '120px',
+            backgroundColor: 'var(--ym-bg-card)',
+            border: '1px solid var(--ym-border)',
+            borderRadius: 'var(--ym-radius-md)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            padding: '6px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProfileContentPlaceholder() {
   return (
     <div className="ym-profile-loading" aria-label="内容加载中" aria-busy="true">
@@ -594,18 +643,20 @@ export function ProfilePage() {
                       {workTypeLabel(w.work_type)} · ❤️ {w.like_count} · {new Date(w.created_at).toLocaleDateString('zh-CN')}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div className="ym-profile-work-actions">
                     <ThemeSelect className="ym-theme-select--compact" value={w.group_id || 'none'} onChange={(groupId) => handleAssignGroup(w.id, groupId)} ariaLabel={`${w.title} 的分组`} options={[{ value: 'none', label: '未分组' }, ...groups.map((g) => ({ value: g.id, label: g.name }))]} />
-                    {isAdminUser && (
-                      <button onClick={() => handleToggleFeatured(w)} style={smallBtnStyle}>
-                        {w.featured ? '取消精选' : '设精选'}
+                    <ActionMenu label="管理">
+                      {isAdminUser && (
+                        <button className="ym-profile-action-menu-item" onClick={() => handleToggleFeatured(w)} style={actionMenuItemStyle}>
+                          {w.featured ? '取消精选' : '设精选'}
+                        </button>
+                      )}
+                      <button className="ym-profile-action-menu-item" onClick={() => handleToggleVisibility(w)} style={actionMenuItemStyle}>
+                        {w.visibility === 'private' ? '设为公开' : '设为私密'}
                       </button>
-                    )}
-                    <button onClick={() => handleToggleVisibility(w)} style={smallBtnStyle}>
-                      {w.visibility === 'private' ? '设为公开' : '设为私密'}
-                    </button>
-                    <Link to={`/website/${w.id}/edit`} style={{ ...smallBtnStyle, textDecoration: 'none', display: 'inline-block' }}>编辑</Link>
-                    <button onClick={() => handleDeleteWork(w)} style={{ ...smallBtnStyle, color: 'var(--ym-danger)', borderColor: 'var(--ym-danger)' }}>删除</button>
+                      <Link className="ym-profile-action-menu-item" to={`/website/${w.id}/edit`} style={{ ...actionMenuItemStyle, textDecoration: 'none', display: 'inline-flex' }}>编辑</Link>
+                      <button className="ym-profile-action-menu-item ym-profile-action-menu-item--danger" onClick={() => handleDeleteWork(w)} style={{ ...actionMenuItemStyle, color: 'var(--ym-danger)' }}>删除</button>
+                    </ActionMenu>
                   </div>
                 </div>
               ))
@@ -957,5 +1008,18 @@ const badgeStyle = (color) => ({
   padding: '2px 8px',
   borderRadius: '10px',
 });
+
+const actionMenuItemStyle = {
+  width: '100%',
+  textAlign: 'left',
+  padding: '7px 10px',
+  fontSize: '13px',
+  border: 'none',
+  borderRadius: 'var(--ym-radius-sm)',
+  backgroundColor: 'transparent',
+  color: 'var(--ym-text-secondary)',
+  cursor: 'pointer',
+  transition: 'background-color var(--ym-transition), color var(--ym-transition)',
+};
 
 
