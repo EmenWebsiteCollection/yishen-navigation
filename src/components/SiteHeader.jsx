@@ -157,7 +157,7 @@ export function SiteHeader({ onLogin }) {
               {profileOpen && (
                 <div className="ym-profile-menu">
                   <Link to="/profile">个人中心</Link>
-                  <Link to="/profile?tab=settings">更换头像</Link>
+                  <Link to="/profile?tab=settings">编辑主页</Link>
                   <button type="button" className="ym-profile-danger" onClick={handleLogout}>退出</button>
                 </div>
               )}
