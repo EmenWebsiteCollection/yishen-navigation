@@ -10,3 +10,24 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# ═══ 静态缓存与安全响应头 ═══
+# Vite 构建产物带内容哈希，可长期缓存（浏览器/CDN 复用，避免并发回源打爆）
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# index.html 不缓存：保证每次都能拿到最新 JS 入口
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# 基础安全响应头：防 MIME 嗅探 / 点击劫持 / 外站来源泄露
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"

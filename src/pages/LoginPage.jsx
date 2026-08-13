@@ -1,6 +1,6 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
-import { login } from '../services/auth.js';
+import { login, getLoginGuard, reportLoginResult } from '../services/auth.js';
 import '../styles/global.css';
 
 export function LoginPage({ onSuccess, onSwitchToRegister, onSwitchToForgot }) {
@@ -12,11 +12,21 @@ export function LoginPage({ onSuccess, onSwitchToRegister, onSwitchToForgot }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // 登录前限制访问操作：节流/锁定检查（防护层）
+    const gate = getLoginGuard(username);
+    if (!gate.allowed) {
+      setError(`尝试过于频繁，请 ${gate.waitSeconds} 秒后再试`);
+      return;
+    }
+
     setLoading(true);
     try {
       await login(username, password);
+      reportLoginResult(username, true);
       if (onSuccess) onSuccess();
     } catch (err) {
+      reportLoginResult(username, false);
       setError(err.message || '登录失败，请检查用户名或密码');
     } finally {
       setLoading(false);
