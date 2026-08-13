@@ -1,6 +1,6 @@
 ﻿// src/pages/ProfilePage.jsx
 // 个人中心：我的作品 / 我的收藏 / 设置（档案 + 分组）
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
