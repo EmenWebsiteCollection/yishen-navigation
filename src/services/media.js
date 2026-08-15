@@ -1,6 +1,7 @@
 // src/services/media.js
 // Issue #39 P2：作品媒体（视频/音频）直链上传到 work_media 桶
 import { supabase } from './supabase.js';
+import { isAdmin } from './works.js';
 
 export const MEDIA_RULES = [
   { mime: 'video/mp4', ext: '.mp4', kind: 'video', maxBytes: 100 * 1024 * 1024 },
@@ -23,6 +24,16 @@ export const validateMediaFile = (file) => {
 // 上传并返回公开 URL，随后写回 works.media_url
 export const uploadWorkMedia = async (file, workId, userId) => {
   if (!file || !workId || !userId) throw new Error('缺少上传参数');
+  // 上传前校验所有权：仅作品作者本人或管理员可上传（RLS 之外的前端显式校验）
+  const { data: work, error: workErr } = await supabase
+    .from('works')
+    .select('id, user_id')
+    .eq('id', workId)
+    .maybeSingle();
+  if (workErr) throw workErr;
+  if (!work || (work.user_id !== userId && !(await isAdmin(userId)))) {
+    throw new Error('只有作品作者可以上传媒体文件');
+  }
   const rule = validateMediaFile(file);
   const path = `${userId}/${workId}/${Date.now()}_${file.name.replace(/[^\w.\-]/g, '_')}`;
   const { error: upErr } = await supabase.storage

@@ -82,9 +82,27 @@ export const aiDegreeLabel = (t) => AI_DEGREES.find((x) => x.id === t)?.label ||
 export const audienceLabel = (t) => AUDIENCES.find((x) => x.id === t)?.label || t || '';
 
 // ========== 基础 ==========
+// URL 协议白名单：仅允许 http/https，拒绝 javascript: 等危险协议（#118）
+export const sanitizeHttpUrl = (url) => {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (!trimmed) return '';
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return '';
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) return '';
+  return parsed.toString();
+};
+
 export const normalizeUrl = (url) => {
   if (!url) return url;
-  return url.trim().replace(/\/+$/, '');
+  // 协议非法时返回空字符串：调用方据此拒绝（服务层兜底，防 API 直连绕过页面校验）
+  const safe = sanitizeHttpUrl(url);
+  if (!safe) return '';
+  return safe.replace(/\/+$/, '');
 };
 
 // 内部辅助：判断当前用户是否为管理员（profiles.is_admin）
@@ -255,7 +273,7 @@ export const normalizeWorkMeta = (payload = {}) => {
     if (payload.audience && !AUDIENCES.some((a) => a.id === payload.audience)) throw new Error('未知的适合受众');
     out.audience = payload.audience || null;
   }
-  if (payload.media_url !== undefined) out.media_url = (payload.media_url || '').trim() || null;
+  if (payload.media_url !== undefined) out.media_url = sanitizeHttpUrl(payload.media_url) || null;
   return out;
 };
 
@@ -297,6 +315,7 @@ export const createWork = async (payload, userId) => {
   if (trimmedType === 'website') {
     if (!url || !url.trim()) throw new Error('网站类作品必须填写 URL');
     trimmedUrl = normalizeUrl(url);
+    if (!trimmedUrl) throw new Error('URL 无效（仅支持 http/https 协议）'); // #118 服务层兜底
     const exists = await checkUrlExists(trimmedUrl);
     if (exists) throw new Error('该网址已存在，无法重复创建。');
   }
@@ -315,15 +334,19 @@ export const createWork = async (payload, userId) => {
     source_idea_id: source_idea_id || null,
     user_id: userId,
   };
-  if (await isVideoUrlSupported()) insertRow.video_url = video_url?.trim() || null;
-  if (await isDownloadUrlSupported()) insertRow.download_url = download_url?.trim() || null;
+  if (await isVideoUrlSupported()) insertRow.video_url = sanitizeHttpUrl(video_url) || null;
+  if (await isDownloadUrlSupported()) insertRow.download_url = sanitizeHttpUrl(download_url) || null;
   if (await isMetaSupported()) Object.assign(insertRow, normalizeWorkMeta(payload));
   const { data, error } = await supabase
     .from('works')
     .insert([insertRow])
     .select()
     .single();
-  if (error) throw error;
+  if (error) {
+    // #123：并发下 URL 唯一约束冲突（23505）→ 友好提示，不再抛原始 PG 错误
+    if (error.code === '23505') throw new Error('该网址已存在，无法重复创建。');
+    throw error;
+  }
   const created = mapWork(data);
 
   // 首次上传也生成版本快照（成长档案），失败不影响作品创建
@@ -703,8 +726,8 @@ export const updateWork = async (id, data) => {
   };
   if (image_url !== undefined) patch.image_url = image_url || null;
   if (cover_url !== undefined) patch.cover_url = cover_url || null;
-  if (video_url !== undefined && (await isVideoUrlSupported())) patch.video_url = video_url?.trim() || null;
-  if (download_url !== undefined && (await isDownloadUrlSupported())) patch.download_url = download_url?.trim() || null;
+  if (video_url !== undefined && (await isVideoUrlSupported())) patch.video_url = sanitizeHttpUrl(video_url) || null;
+  if (download_url !== undefined && (await isDownloadUrlSupported())) patch.download_url = sanitizeHttpUrl(download_url) || null;
   if (status !== undefined) patch.status = status || null;
   if (group_id !== undefined) patch.group_id = group_id || null;
   if (featured !== undefined) patch.featured = !!featured;
@@ -934,10 +957,21 @@ export const createGroup = async (userId, name) => {
   return data;
 };
 
-export const renameGroup = async (groupId, name) => {
+export const renameGroup = async (groupId, name, userId) => {
+  if (!userId) throw new Error('缺少用户信息，无权重命名该分组');
   const trimmed = (name || '').trim();
   if (!trimmed) throw new Error('分组名不能为空');
   if (trimmed.length > 30) throw new Error('分组名不能超过 30 字');
+  // 改名前校验所有权：仅分组创建者本人或管理员可改（RLS 之外的前端显式校验）
+  const { data: group, error: groupErr } = await supabase
+    .from('groups')
+    .select('id, user_id')
+    .eq('id', groupId)
+    .maybeSingle();
+  if (groupErr) throw groupErr;
+  if (!group || (group.user_id !== userId && !(await isAdmin(userId)))) {
+    throw new Error('无权重命名该分组');
+  }
   const { data, error } = await supabase
     .from('groups')
     .update({ name: trimmed })

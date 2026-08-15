@@ -15,7 +15,7 @@
 // 发信信誉要求：EMAIL_FROM 必须是发信服务已验证的地址，发信域名需完成 SPF/DKIM/DMARC
 // 校验；不要用免费邮箱或转发地址发送验证码，否则容易被 Outlook 等邮箱判为垃圾邮件。
 import { createClient } from '@supabase/supabase-js';
-import { createHash, createHmac, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomInt, randomUUID } from 'node:crypto';
 
 // ── 环境变量启动自检 ──
 function checkEnv() {
@@ -73,8 +73,9 @@ function aliyunEncode(str) {
     .replace(/%7E/g, '~');
 }
 
+// 密码学安全随机数：crypto.randomInt 不可预测（Math.random 可被预测，见 #115）
 function genCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
 }
 
 function isEmailAddr(s) {
@@ -184,15 +185,23 @@ async function sendCodeEmail(email, code) {
       );
     }
   } else {
-    // generic：POST 到你自己的转发接口（body: { to, subject, text, html, fromName, apiKey }）
+    // generic：POST 到自己的转发接口（body: { to, subject, text, html, fromName }）
+    // 安全：不传 apiKey（#116）——转发接口应自己管理密钥，绝不让第三方拿原始 EMAIL_API_KEY。
     const url = process.env.EMAIL_API_URL;
     if (!url) throw new Error('EMAIL_PROVIDER=generic 时需要配置 EMAIL_API_URL');
+    // 强制 HTTPS（本地开发可用 http://localhost 豁免）
+    let urlOk = false;
+    try {
+      const u = new URL(url);
+      urlOk = u.protocol === 'https:' || /^https?:$/.test(u.protocol) && ['localhost', '127.0.0.1', '::1'].includes(u.hostname);
+    } catch { /* 下方统一报错 */ }
+    if (!urlOk) throw new Error('EMAIL_API_URL 必须为 https 地址');
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: email, subject, text, html, fromName, apiKey }),
+      body: JSON.stringify({ to: email, subject, text, html, fromName }),
     });
-    if (!res.ok) throw new Error(`邮件发送失败: ${res.status} ${await res.text()}`);
+    if (!res.ok) throw new Error(`邮件发送失败: ${res.status} ${(await res.text()).slice(0, 200)}`);
   }
 }
 
@@ -212,7 +221,10 @@ async function handleRequest({ contactType, contact }) {
     .select('id, username')
     .eq(col, contact)
     .maybeSingle();
-  if (error) return json({ error: '查询账号失败：' + error.message }, 500);
+  if (error) {
+    console.error('查询账号失败:', error.message);
+    return json({ error: '查询账号失败，请稍后重试' }, 500);
+  }
 
   // 防用户枚举：账号不存在时也返回成功，不透露该联系方式是否已注册。
   // 真实用户会收到邮件，攻击者无法据此判断账号是否存在。
@@ -250,14 +262,18 @@ async function handleRequest({ contactType, contact }) {
       expires_at: expiresAt,
       attempts: 0,
     });
-  if (insErr) return json({ error: '生成验证码失败：' + insErr.message }, 500);
+  if (insErr) {
+    console.error('生成验证码失败:', insErr.message);
+    return json({ error: '生成验证码失败，请稍后重试' }, 500);
+  }
 
   try {
     await sendCodeEmail(contact, code);
   } catch (e) {
     // 发送失败要清掉刚写入的码，否则会占用 60 秒限频窗口导致用户无法重试
+    console.error('邮件发送失败:', e.message);
     await sb.from('password_reset_codes').delete().eq('user_id', profile.id);
-    return json({ error: e.message }, 502);
+    return json({ error: '验证码发送失败，请稍后重试或换个邮箱' }, 502);
   }
   return json({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
 }
@@ -276,7 +292,10 @@ async function handleVerify({ contactType, contact, code, newPassword }) {
     .eq('contact', contact)
     .order('created_at', { ascending: false })
     .limit(1);
-  if (error) return json({ error: '查询验证码失败：' + error.message }, 500);
+  if (error) {
+    console.error('查询验证码失败:', error.message);
+    return json({ error: '查询验证码失败，请稍后重试' }, 500);
+  }
   const row = rows?.[0];
   if (!row) return json({ error: '验证码不存在或已使用' }, 404);
   if (new Date(row.expires_at) < new Date()) return json({ error: '验证码已过期，请重新获取' }, 410);
@@ -298,7 +317,10 @@ async function handleVerify({ contactType, contact, code, newPassword }) {
   const { error: updErr } = await sb.auth.admin.updateUserById(row.user_id, {
     password: newPassword,
   });
-  if (updErr) return json({ error: '修改密码失败：' + updErr.message }, 500);
+  if (updErr) {
+    console.error('修改密码失败:', updErr.message);
+    return json({ error: '修改密码失败，请稍后重试' }, 500);
+  }
 
   await sb.from('password_reset_codes').delete().eq('user_id', row.user_id);
   return json({ ok: true });
