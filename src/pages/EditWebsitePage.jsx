@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS, isAdmin, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel } from '../services/works.js';
+import { getWorkById, updateWork, listGroups, WORK_TYPES, WORK_STATUS, isAdmin, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel, sanitizeHttpUrl } from '../services/works.js';
 import { getPartitions } from '../services/partitions.js';
 import { uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import { uploadWorkDeploy, deleteWorkDeploy, validateDeployFile, deployPreviewUrl } from '../services/workDeploy.js';
@@ -249,28 +249,18 @@ const [videoUrl, setVideoUrl] = useState('');
         setError('网站类作品必须填写 URL');
         return;
       }
-      try {
-        new URL(url.trim());
-      } catch (_) {
-        setError('请输入有效的 URL（包含协议，如 https://）。');
+      if (!sanitizeHttpUrl(url)) {
+        setError('请输入有效的 URL（需以 http:// 或 https:// 开头）。');
         return;
       }
     }
-    if (videoUrl.trim()) {
-      try {
-        new URL(videoUrl.trim());
-      } catch (_) {
-        setError('演示视频链接无效（需包含协议，如 https://）。');
-        return;
-      }
+    if (videoUrl.trim() && !sanitizeHttpUrl(videoUrl)) {
+      setError('演示视频链接无效（需以 http:// 或 https:// 开头）。');
+      return;
     }
-    if (downloadUrl.trim()) {
-      try {
-        new URL(downloadUrl.trim());
-      } catch (_) {
-        setError('软件下载链接无效（需包含协议，如 https://）。');
-        return;
-      }
+    if (downloadUrl.trim() && !sanitizeHttpUrl(downloadUrl)) {
+      setError('软件下载链接无效（需以 http:// 或 https:// 开头）。');
+      return;
     }
 
     setSaving(true);

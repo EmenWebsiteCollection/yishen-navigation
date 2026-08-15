@@ -59,6 +59,7 @@ export default async (req) => {
 
     return json({ error: 'Method Not Allowed' }, 405);
   } catch (err) {
-    return json({ error: `记忆存取失败: ${err.message}` }, 500);
+    console.error('el-memory 操作失败:', err);
+    return json({ error: '记忆存取失败，请稍后重试' }, 500);
   }
 };

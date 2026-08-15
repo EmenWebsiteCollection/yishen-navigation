@@ -43,6 +43,31 @@ const PERSONA_DEFAULT = `你是「依力」，依神网站汇总的看板郎助�
 const MAX_TOOL_ROUNDS = 2;
 const LLM_TIMEOUT_MS = 20000;
 
+// ---------- IP 频率限流（内存令牌桶：每 IP 每分钟最多 5 次） ----------
+// Netlify 函数无状态，内存 Map 限流在单实例内有效即可（防单实例被刷爆付费 LLM）
+const RATE_LIMIT = { max: 5, windowMs: 60 * 1000 };
+const rateBuckets = new Map(); // ip -> { count, resetAt }
+
+function getClientIp(req) {
+  const nf = req.headers.get('x-nf-client-connection-ip');
+  if (nf) return nf;
+  const fwd = req.headers.get('x-forwarded-for');
+  if (fwd) return String(fwd).split(',')[0].trim();
+  return 'unknown';
+}
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const bucket = rateBuckets.get(ip);
+  if (!bucket || now >= bucket.resetAt) {
+    rateBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT.windowMs });
+    return true;
+  }
+  if (bucket.count >= RATE_LIMIT.max) return false;
+  bucket.count += 1;
+  return true;
+}
+
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -624,6 +649,11 @@ async function fallbackReply(messages) {
 
 // ---------- 入口 ----------
 export default async (req) => {
+  // IP 频率限流：每 IP 每分钟最多 5 次（防匿名刷爆付费 LLM）
+  if (!checkRateLimit(getClientIp(req))) {
+    return json({ reply: '你问得太快啦，稍等一会儿再继续吧～' }, 429);
+  }
+
   const isLocal = /localhost|127\.0\.0\.1|11434/.test(ENV.LLM_URL);
   if (!ENV.LLM_API_KEY && !isLocal) {
     return json({ reply: '依力的大脑还没接好（缺少 LLM_API_KEY，详见使用说明）' }, 503);

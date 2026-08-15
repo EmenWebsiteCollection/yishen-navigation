@@ -116,27 +116,30 @@ export const markCommentAdopted = async (commentId, workId, userId, summary = ''
   // 找到最新版本（无则先建一个）
   const { data: latest, error: lErr } = await supabase
     .from('work_revisions')
-    .select('id, adopted_comment_ids')
+    .select('id')
     .eq('work_id', workId)
     .order('revision_no', { ascending: false })
     .limit(1)
     .maybeSingle();
   if (lErr && lErr.code !== 'PGRST116') throw lErr;
 
-  const ids = latest ? (latest.adopted_comment_ids || []) : [];
-  if (!ids.includes(commentId)) ids.push(commentId);
-
   if (latest) {
-    const { error } = await supabase
-      .from('work_revisions')
-      .update({
-        adopted_comment_ids: ids,
-        adopted_summary: summary?.trim() || latest.adopted_summary,
-      })
-      .eq('id', latest.id);
-    if (error) throw error;
+    // Issue #122：改为数据库 RPC 原子追加，消除「读-改-写」并发竞态（重复采纳/丢数据）
+    const { error: rpcErr } = await supabase.rpc('append_adopted_comment', {
+      p_revision_id: latest.id,
+      p_comment_id: commentId,
+    });
+    if (rpcErr) throw rpcErr;
+    // 采纳摘要单独更新（仅在提供了摘要时覆盖，未提供则保留原值）
+    if (summary?.trim()) {
+      const { error: sErr } = await supabase
+        .from('work_revisions')
+        .update({ adopted_summary: summary.trim() })
+        .eq('id', latest.id);
+      if (sErr) throw sErr;
+    }
   } else {
-    await createRevisionSnapshot(workId, { adoptedCommentIds: ids, adoptedSummary: summary?.trim() || null });
+    await createRevisionSnapshot(workId, { adoptedCommentIds: [commentId], adoptedSummary: summary?.trim() || null });
   }
   return { adopted: true };
 };

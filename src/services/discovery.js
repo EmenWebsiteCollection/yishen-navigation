@@ -2,6 +2,7 @@
 // Issue #39 P1：发现系统服务层（rail 推荐 / 每日随机 / 编辑精选 / 灵感地图关系）
 import { supabase } from './supabase.js';
 import { sortRailFallback, dedupeByAuthor, passesRandomGate } from './discovery-logic.js';
+import { isAdmin } from './works.js';
 
 // 展平 works_discovery 行 → 前端作品对象（与 works.js mapWork 保持字段一致）
 export const mapDiscoveryWork = (item) => ({
@@ -171,10 +172,21 @@ export const addWorkRelation = async ({ sourceWorkId, targetWorkId, relationType
   return data;
 };
 
-export const deleteWorkRelation = async (relationId) => {
-  const { error } = await supabase
+export const deleteWorkRelation = async (relationId, userId) => {
+  if (!userId) throw new Error('缺少用户信息，无权删除该关系');
+  // 删除前校验所有权：仅关系创建者本人或管理员可删（RLS 之外的前端显式校验）
+  const { data, error } = await supabase
+    .from('work_relations')
+    .select('id, created_by')
+    .eq('id', relationId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data || (data.created_by !== userId && !(await isAdmin(userId)))) {
+    throw new Error('无权删除该关系');
+  }
+  const { error: delErr } = await supabase
     .from('work_relations')
     .delete()
     .eq('id', relationId);
-  if (error) throw error;
+  if (delErr) throw delErr;
 };

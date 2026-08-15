@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { createWork, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel } from '../services/works.js';
+import { createWork, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel, sanitizeHttpUrl } from '../services/works.js';
 import { getPartitions } from '../services/partitions.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import { uploadWorkDeploy, validateDeployFile } from '../services/workDeploy.js';
@@ -32,7 +32,7 @@ const labelStyle = {
 };
 
 export function CreateWebsitePage() {
-  const { user } = useAuth();
+  const { user, isAnonymous } = useAuth();
   const navigate = useNavigate();
   const [workType, setWorkType] = useState('website');
   const [url, setUrl] = useState('');
@@ -128,6 +128,11 @@ const [videoUrl, setVideoUrl] = useState('');
       setMessage({ type: 'error', text: '请先登录再提交作品。' });
       return;
     }
+    // Issue #124：匿名账号不能发布作品
+    if (isAnonymous) {
+      setMessage({ type: 'error', text: '匿名账号不能发布作品，请先注册/登录' });
+      return;
+    }
     if (!title.trim()) {
       setMessage({ type: 'error', text: '标题不能为空。' });
       return;
@@ -137,28 +142,18 @@ const [videoUrl, setVideoUrl] = useState('');
         setMessage({ type: 'error', text: '网站类作品必须填写 URL。' });
         return;
       }
-      try {
-        new URL(url);
-      } catch (_) {
-        setMessage({ type: 'error', text: '请输入有效的 URL（包含协议，如 https://）。' });
+      if (!sanitizeHttpUrl(url)) {
+        setMessage({ type: 'error', text: '请输入有效的 URL（需以 http:// 或 https:// 开头）。' });
         return;
       }
     }
-    if (videoUrl.trim()) {
-      try {
-        new URL(videoUrl.trim());
-      } catch (_) {
-        setMessage({ type: 'error', text: '演示视频链接无效（需包含协议，如 https://）。' });
-        return;
-      }
+    if (videoUrl.trim() && !sanitizeHttpUrl(videoUrl)) {
+      setMessage({ type: 'error', text: '演示视频链接无效（需以 http:// 或 https:// 开头）。' });
+      return;
     }
-    if (downloadUrl.trim()) {
-      try {
-        new URL(downloadUrl.trim());
-      } catch (_) {
-        setMessage({ type: 'error', text: '软件下载链接无效（需包含协议，如 https://）。' });
-        return;
-      }
+    if (downloadUrl.trim() && !sanitizeHttpUrl(downloadUrl)) {
+      setMessage({ type: 'error', text: '软件下载链接无效（需以 http:// 或 https:// 开头）。' });
+      return;
     }
 
     setLoading(true);
@@ -183,7 +178,9 @@ const [videoUrl, setVideoUrl] = useState('');
             setMessage({ type: 'info', text: '⚠️ 自动截图失败，将以无图形式提交。' });
           }
         } catch (err) {
-          setMessage({ type: 'info', text: '⚠️ 自动截图失败: ' + err.message + '，将以无图形式提交。' });
+          // Issue #121：不向前端泄露内部错误细节，仅记录到控制台
+          setMessage({ type: 'info', text: '⚠️ 自动截图失败，将以无图形式提交。' });
+          console.warn(err);
         } finally {
           setUploading(false);
         }

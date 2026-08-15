@@ -442,7 +442,9 @@ export function ProfilePage() {
       await loadProfile();
       window.dispatchEvent(new CustomEvent('ym-profile-updated'));
     } catch (err) {
-      setSaveMsg(`❌ 保存失败：${err.message || '请稍后重试'}`);
+      // Issue #121：不向前端泄露内部错误细节，仅记录到控制台
+      setSaveMsg('❌ 保存失败，请稍后重试');
+      console.error(err);
     } finally {
       setSaving(false);
     }
@@ -482,7 +484,9 @@ export function ProfilePage() {
       setContactMsg('✅ 联系方式已保存');
       loadProfile();
     } catch (err) {
-      setContactMsg(`❌ 保存失败：${err.message || '请稍后重试'}`);
+      // Issue #121：不向前端泄露内部错误细节，仅记录到控制台
+      setContactMsg('❌ 保存失败，请稍后重试');
+      console.error(err);
     } finally {
       setContactSaving(false);
     }

@@ -74,6 +74,16 @@ export const updateProfile = async (userId, data) => {
   for (const key of EDITABLE_PROFILE_FIELDS) {
     if (data[key] !== undefined) patch[key] = data[key];
   }
+  // URL 协议白名单（#118）：website_link / socials[].url 仅允许 http/https，防 javascript: XSS
+  const { sanitizeHttpUrl } = await import('./works.js');
+  if (patch.website_link !== undefined) {
+    patch.website_link = sanitizeHttpUrl(patch.website_link);
+  }
+  if (patch.socials !== undefined && Array.isArray(patch.socials)) {
+    patch.socials = patch.socials
+      .map((s) => ({ ...s, url: sanitizeHttpUrl(s.url) }))
+      .filter((s) => s.url || s.label);
+  }
   const { data: updated, error } = await supabase
     .from('profiles')
     .update(patch)

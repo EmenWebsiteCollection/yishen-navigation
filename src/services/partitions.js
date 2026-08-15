@@ -1,6 +1,7 @@
 // 分区服务：首页分区 tab 的可配置列表。
 // 分区表未迁移时自动降级为默认分区，保证页面仍可用。
 import { supabase } from './supabase.js';
+import { isAdmin } from './works.js';
 
 export const DEFAULT_PARTITIONS = [
   { id: 'website', name: '网站', work_type: 'website', sort_order: 10 },
@@ -65,8 +66,19 @@ export const createPartition = async ({ name, workType }, userId) => {
   return data;
 };
 
-export const deletePartition = async (id) => {
-  const { error } = await supabase.from('partitions').delete().eq('id', id);
+export const deletePartition = async (id, userId) => {
+  if (!userId) throw new Error('缺少用户信息，无权删除该分区');
+  // 删除前校验所有权：仅分区创建者本人或管理员可删（RLS 之外的前端显式校验）
+  const { data, error } = await supabase
+    .from('partitions')
+    .select('id, created_by')
+    .eq('id', id)
+    .maybeSingle();
   if (error) throw error;
+  if (!data || (data.created_by !== userId && !(await isAdmin(userId)))) {
+    throw new Error('无权删除该分区');
+  }
+  const { error: delErr } = await supabase.from('partitions').delete().eq('id', id);
+  if (delErr) throw delErr;
   syncLabels(await getPartitions());
 };
