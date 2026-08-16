@@ -88,7 +88,7 @@ export const updateProfile = async (userId, data) => {
     .from('profiles')
     .update(patch)
     .eq('id', userId)
-    .select()
+    .select(PUBLIC_PROFILE_COLS)
     .single();
   if (error) throw error;
   return updated;
