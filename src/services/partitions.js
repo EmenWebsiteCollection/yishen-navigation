@@ -2,6 +2,7 @@
 // 分区表未迁移时自动降级为默认分区，保证页面仍可用。
 import { supabase } from './supabase.js';
 import { isAdmin } from './works.js';
+import { isDataProxyEnabled, dataProxyFetch } from './dataProxy.js';
 
 export const DEFAULT_PARTITIONS = [
   { id: 'website', name: '网站', work_type: 'website', sort_order: 10 },
@@ -26,6 +27,17 @@ const syncLabels = (partitions) => {
 export const getPartitionLabel = (workType) => partitionLabelMap[workType] || '';
 
 export const getPartitions = async () => {
+  // issue #127：公开读分区列表走函数缓存中转，失败回退直连
+  if (isDataProxyEnabled()) {
+    try {
+      const body = await dataProxyFetch('partitions');
+      const list = body.data && body.data.length ? body.data : DEFAULT_PARTITIONS;
+      syncLabels(list);
+      return list;
+    } catch (e) {
+      console.warn('⚠️ 数据中转(partitions)失败，回退直连:', e.message);
+    }
+  }
   try {
     const { data, error } = await supabase
       .from('partitions')

@@ -2,6 +2,7 @@
 // 作品（works）服务层：由原 websites.js 演进而来。
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
+import { isDataProxyEnabled, dataProxyFetch } from './dataProxy.js';
 import { normalizeTagList } from './discovery-logic.js';
 import { createRevisionSnapshot, isRevisionsSupported } from './revisions.js';
 import { getPartitionLabel } from './partitions.js';
@@ -371,6 +372,8 @@ export const WORK_SORT_MODES = [
 export const workSortLabel = (id) => WORK_SORT_MODES.find((m) => m.id === id)?.label || '发布时间';
 
 // ========== 分页查询（首页网站导航，可扩展任意类型） ==========
+// issue #127：公开读优先走 Netlify 函数缓存中转（works_list），
+// 仅代理「游客公开数据」（无 userId、非 mixed 排序）；失败自动回退直连 Supabase。
 export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', userId = null, sort = 'new' } = {}) => {
   // 分页参数钳制，防止 416/超大请求
   page = Math.max(1, Math.floor(Number(page) || 1));
@@ -379,6 +382,16 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
   const to = from + pageSize - 1;
 
   const sortMode = sort === 'hot' || sort === 'mixed' ? sort : 'new';
+
+  // 公开列表（无用户上下文、非 mixed）走函数缓存中转
+  if (!userId && sortMode !== 'mixed' && isDataProxyEnabled()) {
+    try {
+      const body = await dataProxyFetch('works_list', { page, pageSize, type, sort: sortMode });
+      return { works: (body.data || []).map((item) => mapWork(item)), total: body.count || 0 };
+    } catch (e) {
+      console.warn('⚠️ 数据中转(works_list)失败，回退直连:', e.message);
+    }
+  }
 
   // 热度/时间排序直接走单条查询；综合推荐需要一次性拉取稍大候选池再交错
   if (sortMode === 'mixed') {
@@ -458,7 +471,21 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
 };
 
 // 最新作品（首页轮播曝光位：最近 14 天或最新 N 个，优先给新作者曝光）
+// issue #127：走函数缓存中转（new_works），失败回退直连。
 export const getNewWorks = async (limit = 8, { maxDays = 14 } = {}) => {
+  // 数据中转优先
+  if (isDataProxyEnabled()) {
+    try {
+      const body = await dataProxyFetch('new_works', { limit, maxDays });
+      const works = (body.data || []).map((item) => mapWork(item));
+      // 14 天内数量充足时直接返回；不足则继续走下方补充逻辑
+      if (works.length >= limit) return works.slice(0, limit);
+      // 不足时回退直连（补充最新作品）
+    } catch (e) {
+      console.warn('⚠️ 数据中转(new_works)失败，回退直连:', e.message);
+    }
+  }
+
   const since = new Date(Date.now() - maxDays * 24 * 60 * 60 * 1000).toISOString();
 
   let query = supabase
@@ -538,7 +565,19 @@ const interleaveNewAndHot = (newWorks, hotWorks) => {
 
 // 高分作品（首页轮播：公开作品按点赞排序）。
 // diversify=true 时按作品类型轮换入选，保证高分榜单不被单一类型（如网站）独占。
+// issue #127：走函数缓存中转（top_works），失败回退直连。
 export const getTopRatedWorks = async (limit = 8, { diversify = false } = {}) => {
+  // 数据中转优先
+  if (isDataProxyEnabled()) {
+    try {
+      const body = await dataProxyFetch('top_works', { limit, pool: diversify ? limit * 4 : limit });
+      const works = (body.data || []).map((item) => mapWork(item));
+      return diversify ? diversifyByType(works, limit) : works.slice(0, limit);
+    } catch (e) {
+      console.warn('⚠️ 数据中转(top_works)失败，回退直连:', e.message);
+    }
+  }
+
   // 多样式榜单需要更大的候选池，保证各类型都能补位
   const pool = diversify ? limit * 4 : limit;
 
