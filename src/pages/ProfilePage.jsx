@@ -127,8 +127,15 @@ export function ProfilePage() {
       setIsAdminUser(false);
     }
   }, [user?.id]);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState(() => (searchParams.get('tab') === 'settings' ? 'settings' : 'works'));
+  // 修复：URL 的 ?tab= 变化时同步 tab（否则从「个人中心」点「编辑主页」不刷新，需手动刷新才生效）
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab === 'settings' || urlTab === 'works' || urlTab === 'favorites' || urlTab === 'ideas') {
+      setTab(urlTab);
+    }
+  }, [searchParams]);
   // Issue #39 P3：我的信誉
   const [reputation, setReputation] = useState({ adopted_count: 0, helpful: 0, insightful: 0, professional: 0, friendly: 0 });
 
@@ -577,7 +584,11 @@ export function ProfilePage() {
           {TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                setTab(t.id);
+                // 同步 URL，刷新后保持当前 tab
+                setSearchParams(t.id === 'works' ? {} : { tab: t.id }, { replace: true });
+              }}
               className={'ym-tab' + (tab === t.id ? ' active' : '')}
               role="tab"
               aria-selected={tab === t.id}
