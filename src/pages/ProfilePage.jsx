@@ -63,12 +63,24 @@ function ActionMenu({ children, label = '操作' }) {
 
   useEffect(() => {
     if (!open) return;
+    // 找到最近的卡片父元素并提升层级
+    const card = ref.current?.closest('.ym-stagger-item');
+    if (card) {
+      card.style.position = 'relative';
+      card.style.zIndex = '10';
+    }
     const onClick = (e) => {
       if (!ref.current || ref.current.contains(e.target)) return;
       setOpen(false);
     };
     document.addEventListener('click', onClick);
-    return () => document.removeEventListener('click', onClick);
+    return () => {
+      document.removeEventListener('click', onClick);
+      if (card) {
+        card.style.position = '';
+        card.style.zIndex = '';
+      }
+    };
   }, [open]);
 
   return (
@@ -86,7 +98,7 @@ function ActionMenu({ children, label = '操作' }) {
             position: 'absolute',
             top: 'calc(100% + 6px)',
             right: 0,
-            zIndex: 150,
+            zIndex: 9999,
             minWidth: '120px',
             backgroundColor: 'var(--ym-bg-card)',
             border: '1px solid var(--ym-border)',
