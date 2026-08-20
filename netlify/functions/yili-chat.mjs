@@ -490,7 +490,9 @@ async function saveUserMemory(userClient, userId, memoryText, preferences) {
 
 // ---------- 主流程：工具循环 ----------
 async function runAgent(messages, { persona = '', userId = null, idToken = null } = {}) {
-  const system = persona || ENV.PERSONA || PERSONA_DEFAULT;
+  // #134 修复：忽略客户端 persona（前端固定传空串，无自定义 persona 需求），
+  // 只允许服务端配置的 PERSONA 或默认提示词——防角色逃逸/免费 LLM 代理。
+  const system = ENV.PERSONA || PERSONA_DEFAULT;
   const userClient = makeUserClient(idToken);
   const lastUser = [...messages].reverse().find((m) => m.role === 'user' || m.role === 'yili');
   const query = String(lastUser?.content || '');
