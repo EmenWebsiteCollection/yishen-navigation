@@ -49,6 +49,17 @@
   to { transform: scaleX(1); }
 }
 
+@keyframes ym-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes ym-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 /* ── 逐元素错峰入场（iOS 风格）── */
 @keyframes ym-stagger-in {
   from {

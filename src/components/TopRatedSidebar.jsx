@@ -53,7 +53,7 @@ export function TopRatedSidebar() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getTopRatedWorks(8, { diversify: true });
+        const data = await getTopRatedWorks(8);
         if (!cancelled) setWorks(data);
       } catch (err) {
         console.warn('加载高分榜单失败:', err);

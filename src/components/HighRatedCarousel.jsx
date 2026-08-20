@@ -94,7 +94,7 @@ export function HighRatedCarousel({ mode = 'top-rated' }) {
       try {
         const data = isNewMode
           ? await getNewWorks(8, { maxDays: 14 })
-          : await getTopRatedWorks(8, { diversify: true });
+          : await getTopRatedWorks(8);
         if (!cancelled) setSites(data);
       } catch (err) {
         console.warn('加载轮播作品失败:', err);
@@ -251,6 +251,21 @@ export function HighRatedCarousel({ mode = 'top-rated' }) {
           <button type="button" className="ym-btn ym-btn-ghost ym-btn-sm" onClick={goNext}>
             →
           </button>
+        </div>
+      </div>
+
+      <div style={{ margin: '16px 0 0', overflow: 'hidden', padding: '12px 0', background: 'var(--ym-glass-surface-1, rgba(255,255,255,0.06))', borderRadius: 'var(--ym-radius-md, 12px)', border: '1px solid var(--ym-border, rgba(255,255,255,0.1))' }}>
+        <div style={{ display: 'flex', width: 'max-content', animation: 'ym-marquee 20s linear infinite' }}>
+          {[...Array(2)].map((_, setIdx) => (
+            <div key={setIdx} style={{ display: 'flex', gap: '48px', paddingRight: '48px' }}>
+              {['依门永存', 'YMYC', '依门永存', 'YMYC', '依门永存', 'YMYC'].map((text, i) => (
+                <span key={`${setIdx}-${i}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', fontSize: '1.1rem', fontWeight: 600, background: 'linear-gradient(90deg, #9FC5F8, #C7B6EE, #F0B9A7, #A8DCC5, #9FC5F8)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'ym-gradient-shift 4s ease infinite', letterSpacing: '0.1em' }}>
+                  <img src="/yili.jpg" alt="" width="18" height="18" style={{ borderRadius: '50%', flexShrink: 0 }} />
+                  {text}
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     </section>

@@ -393,39 +393,25 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
     }
   }
 
-  // 热度/时间排序直接走单条查询；综合推荐需要一次性拉取稍大候选池再交错
+  // 热度/时间排序直接走单条查询；综合推荐按点赞0.4+点击0.6加权排序
   if (sortMode === 'mixed') {
     const poolSize = Math.min(120, pageSize * 4);
-    const [hotRes, newRes] = await Promise.all([
-      supabase
-        .from('works_with_likes')
-        .select(VIEW_SELECT)
-        .eq('visibility', 'public')
-        .then(async ({ data, error }) => {
-          if (error) throw error;
-          let list = (data || []).map((item) => mapWork(item));
-          if (type) list = list.filter((w) => w.work_type === type);
-          if (userId) list = list.filter((w) => w.user_id === userId);
-          return list.sort((a, b) => (b.like_count || 0) - (a.like_count || 0)).slice(0, poolSize);
-        }),
-      supabase
-        .from('works_with_likes')
-        .select(VIEW_SELECT)
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(poolSize)
-        .then(({ data, error }) => {
-          if (error) throw error;
-          let list = (data || []).map((item) => mapWork(item));
-          if (type) list = list.filter((w) => w.work_type === type);
-          if (userId) list = list.filter((w) => w.user_id === userId);
-          return list;
-        }),
-    ]);
-
-    const interleaved = interleaveNewAndHot(newRes, hotRes);
-    const total = interleaved.length;
-    const works = interleaved.slice(from, to + 1);
+    const { data, error } = await supabase
+      .from('works_with_likes')
+      .select(VIEW_SELECT)
+      .eq('visibility', 'public')
+      .limit(poolSize);
+    if (error) throw error;
+    let list = (data || []).map((item) => mapWork(item));
+    if (type) list = list.filter((w) => w.work_type === type);
+    if (userId) list = list.filter((w) => w.user_id === userId);
+    list.sort((a, b) => {
+      const scoreA = (a.like_count || 0) * 0.4 + (a.view_count || 0) * 0.6;
+      const scoreB = (b.like_count || 0) * 0.4 + (b.view_count || 0) * 0.6;
+      return scoreB - scoreA;
+    });
+    const total = list.length;
+    const works = list.slice(from, to + 1);
     return { works, total };
   }
 

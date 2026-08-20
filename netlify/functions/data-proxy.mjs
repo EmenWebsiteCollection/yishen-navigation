@@ -62,9 +62,26 @@ async function opWorksList(sb, p) {
   const page = clamp(p.page, 1, 100000, 1);
   const pageSize = clamp(p.pageSize, 1, 50, 10);
   const type = String(p.type || '').trim();
-  const sort = p.sort === 'hot' ? 'hot' : 'new';
+  const sort = p.sort === 'hot' ? 'hot' : p.sort === 'mixed' ? 'mixed' : 'new';
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+
+  // 综合推荐按点赞0.4+点击0.6加权排序
+  if (sort === 'mixed') {
+    const poolSize = Math.min(200, pageSize * 4);
+    let q = sb.from('works_with_likes').select(VIEW_SELECT);
+    if (type) q = q.eq('work_type', type);
+    q = q.eq('visibility', 'public').limit(poolSize);
+    const { data, error } = await q;
+    if (error) throw error;
+    let list = data || [];
+    list.sort((a, b) => {
+      const scoreA = (a.like_count || 0) * 0.4 + (a.view_count || 0) * 0.6;
+      const scoreB = (b.like_count || 0) * 0.4 + (b.view_count || 0) * 0.6;
+      return scoreB - scoreA;
+    });
+    return { data: list.slice(from, to + 1), count: list.length };
+  }
 
   let q = sb.from('works_with_likes').select(VIEW_SELECT, { count: 'exact' });
   if (type) q = q.eq('work_type', type);
