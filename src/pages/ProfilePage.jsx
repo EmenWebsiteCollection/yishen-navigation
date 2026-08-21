@@ -27,6 +27,7 @@ import { getMyIdeas, getMyFavoritedIdeas } from '../services/ideas.js';
 import { getMyMemory, clearMyMemory } from '../services/yiliMemory.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import { ThemeSelect } from '../components/ThemeSelect.jsx';
+import { setMascotStyle } from '../components/YiliMascot.jsx';
 import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
@@ -189,6 +190,15 @@ export function ProfilePage() {
   const [yiliMemory, setYiliMemory] = useState(null);
   const [yiliMemoryLoading, setYiliMemoryLoading] = useState(false);
   const [yiliMemoryMsg, setYiliMemoryMsg] = useState('');
+
+  // 看板郎形象：'floating-ball' | 'live2d'
+  const [mascotStyle, setMascotStyleLocal] = useState(() => {
+    try {
+      const v = localStorage.getItem('ym-mascot-style');
+      if (v === 'live2d' || v === 'floating-ball') return v;
+    } catch (_) { /* 忽略 */ }
+    return 'floating-ball';
+  });
 
   const me = user && !isAnonymous ? user : null;
   const userId = me?.id;
@@ -889,7 +899,45 @@ export function ProfilePage() {
                   {saving ? '保存中...' : '保存档案'}
                 </button>
 
-                                {/* 依力记忆（AI 助手 3.0）：展示/清除个性化记忆 */}
+                {/* 看板郎形象切换 */}
+                <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', margin: '28px 0 16px' }}>看板郎形象</h3>
+                <div style={{ backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-md)', padding: '16px', marginBottom: '16px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', margin: '0 0 12px' }}>
+                    选择看板郎的显示方式。切换后即时生效。
+                  </p>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {[
+                      { value: 'floating-ball', label: '浮动球', desc: '经典圆形头像，眨眼呼吸动画' },
+                      { value: 'live2d', label: '动态形象', desc: '多姿态切换，交互更丰富' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          setMascotStyleLocal(opt.value);
+                          setMascotStyle(opt.value);
+                        }}
+                        style={{
+                          padding: '12px 20px',
+                          borderRadius: 'var(--ym-radius-md)',
+                          border: `2px solid ${mascotStyle === opt.value ? 'var(--ym-accent)' : 'var(--ym-border)'}`,
+                          backgroundColor: mascotStyle === opt.value ? 'var(--ym-accent-soft, rgba(var(--ym-accent-rgb, 99,102,241),0.08))' : 'var(--ym-bg-card)',
+                          color: 'var(--ym-text-primary)',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all var(--ym-transition)',
+                          flex: '1 1 160px',
+                          minWidth: '160px',
+                        }}
+                      >
+                        <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{opt.label}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 依力记忆（AI 助手 3.0）：展示/清除个性化记忆 */}
                 <h3 style={{ fontFamily: 'var(--ym-font-display)', fontSize: '18px', color: 'var(--ym-text-primary)', margin: '28px 0 16px' }}>依力记忆（AI 助手）</h3>
                 <div style={{ backgroundColor: 'var(--ym-bg-subtle)', borderRadius: 'var(--ym-radius-md)', padding: '16px', marginBottom: '16px' }}>
                   <p style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', margin: '0 0 12px' }}>

@@ -865,6 +865,33 @@ body.ym-has-bg::before {
   display: block;
 }
 
+/* Live2D（PNG 帧动画）形象：无边框无阴影，仅显示透明人物 */
+.ym-live2d-body {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--ym-radius-md);
+  overflow: hidden;
+  border: none;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.ym-live2d-body img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 点击惊讶反馈：轻微弹跳 */
+.ym-live2d-click {
+  animation: ym-live2d-bounce 0.3s ease;
+}
+
+@keyframes ym-live2d-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
 /* 呼吸：轻微上浮下沉 */
 @keyframes ym-mascot-breathe {
   0%, 100% { transform: translateY(0); }

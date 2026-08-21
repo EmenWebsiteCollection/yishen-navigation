@@ -336,6 +336,11 @@ select {
     height: 64px;
   }
 
+  .ym-live2d-body {
+    width: 88px;
+    height: 88px;
+  }
+
   .ym-mascot-bubble {
     max-width: 180px;
     font-size: 12px;
