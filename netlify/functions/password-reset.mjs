@@ -54,11 +54,29 @@ const json = (obj, status = 200) =>
     },
   });
 
+// ── 防用户枚举时延垫片（#139）────────────────────────────────
+// request 分支各出口的耗时差异会泄露注册状态：已注册走查库+发信约 4-5s，
+// 未注册/限频若秒回，攻击者可用响应时长判断邮箱是否存在。
+// 统一把出口垫到同一随机时间窗（3-5s，与真实发信耗时重叠）；
+// 真实路径耗时超过窗口上限时不额外等待，直接返回。
+const ENUM_PAD_MIN_MS = 3000;
+const ENUM_PAD_MAX_MS = 5000;
+
+function paddedJson(startedAt) {
+  const target = ENUM_PAD_MIN_MS + Math.random() * (ENUM_PAD_MAX_MS - ENUM_PAD_MIN_MS);
+  return async (obj, status = 200) => {
+    const wait = target - (Date.now() - startedAt);
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    return json(obj, status);
+  };
+}
+
 const CODE_TTL_MS = 10 * 60 * 1000; // 验证码有效期 10 分钟
 const MAX_ATTEMPTS = 5; // 单个验证码最多校验 5 次
 const RESEND_INTERVAL_MS = 60 * 1000; // 同一联系方式最短重发间隔 60 秒
 
-// 统一的“已发送”文案：无论账号是否存在都返回它，避免用户枚举
+// 统一的“已发送”文案：无论账号是否存在都返回它，避免用户枚举；
+// 配合上方 paddedJson，request 分支各出口的响应时长也一并统一（#139）。
 const GENERIC_SENT_MSG = '若该联系方式已绑定账号，验证码已发送，请注意查收（含垃圾邮件箱）。';
 
 function sha256(text) {
@@ -206,6 +224,11 @@ async function sendCodeEmail(email, code) {
 }
 
 async function handleRequest({ contactType, contact }) {
+  // #139：除「手机未接入 503」「缺参数 400」外，本函数所有出口统一
+  // 响应文案 + 状态码 + 耗时，无法据此判断联系方式是否已注册。
+  const startedAt = Date.now();
+  const reply = paddedJson(startedAt);
+
   if (!contact) return json({ error: '请输入邮箱或手机号' }, 400);
   const email = contactType === 'email' || isEmailAddr(contact);
   const col = email ? 'email' : 'phone';
@@ -223,12 +246,12 @@ async function handleRequest({ contactType, contact }) {
     .maybeSingle();
   if (error) {
     console.error('查询账号失败:', error.message);
-    return json({ error: '查询账号失败，请稍后重试' }, 500);
+    return reply({ error: '查询账号失败，请稍后重试' }, 500);
   }
 
-  // 防用户枚举：账号不存在时也返回成功，不透露该联系方式是否已注册。
-  // 真实用户会收到邮件，攻击者无法据此判断账号是否存在。
-  if (!profile) return json({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
+  // 防用户枚举：账号不存在时也返回与成功一致的响应，并垫到与真实发信
+  // 相同的耗时窗口——状态码、文案、时长三处都不泄露注册状态（#139）。
+  if (!profile) return reply({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
 
   // 发送限频：同一联系方式 60 秒内只允许发一次，防邮件轰炸与发信额度被刷。
   const { data: last } = await sb
@@ -241,8 +264,9 @@ async function handleRequest({ contactType, contact }) {
   if (last?.created_at) {
     const elapsed = Date.now() - new Date(last.created_at).getTime();
     if (elapsed < RESEND_INTERVAL_MS) {
-      const wait = Math.ceil((RESEND_INTERVAL_MS - elapsed) / 1000);
-      return json({ error: `发送过于频繁，请 ${wait} 秒后再试` }, 429);
+      // #139：429 + 专属提示语只有已注册邮箱能触发，等于泄露注册状态；
+      // 改为与成功一致的统一响应（不重发、不暴露剩余等待秒数）。
+      return reply({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
     }
   }
 
@@ -264,18 +288,19 @@ async function handleRequest({ contactType, contact }) {
     });
   if (insErr) {
     console.error('生成验证码失败:', insErr.message);
-    return json({ error: '生成验证码失败，请稍后重试' }, 500);
+    return reply({ error: '生成验证码失败，请稍后重试' }, 500);
   }
 
   try {
     await sendCodeEmail(contact, code);
   } catch (e) {
-    // 发送失败要清掉刚写入的码，否则会占用 60 秒限频窗口导致用户无法重试
+    // 发送失败要清掉刚写入的码，否则会占用 60 秒限频窗口导致用户无法重试。
+    // 对外仍返回统一成功响应（#139）：502 只有已注册邮箱能触发，会泄露注册状态。
     console.error('邮件发送失败:', e.message);
     await sb.from('password_reset_codes').delete().eq('user_id', profile.id);
-    return json({ error: '验证码发送失败，请稍后重试或换个邮箱' }, 502);
+    return reply({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
   }
-  return json({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
+  return reply({ ok: true, channel: 'email', message: GENERIC_SENT_MSG });
 }
 
 async function handleVerify({ contactType, contact, code, newPassword }) {
