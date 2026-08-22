@@ -1,5 +1,5 @@
 // src/components/FloatingBallMascot.jsx
-// 浮动球看板郎（yili.jpg）：角落固定、可拖拽、点击开启 AI 对话、眨眼呼吸动画、可收起。
+// 浮动球看板郎（yili.webp）：角落固定、可拖拽、点击开启 AI 对话、眨眼呼吸动画、可收起。
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { YiliChatPanel } from './YiliChatPanel.jsx';
@@ -193,7 +193,7 @@ export function FloatingBallMascot() {
               }
             }}
           >
-            <img src={`${import.meta.env.BASE_URL}yili.jpg`} alt="依力看板郎" draggable={false} />
+            <img src={`${import.meta.env.BASE_URL}yili.webp`} alt="依力看板郎" draggable={false} loading="lazy" decoding="async" />
           </div>
 
           <button

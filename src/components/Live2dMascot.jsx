@@ -8,25 +8,26 @@ import { useAuth } from '../hooks/useAuth.js';
 
 const BASE = import.meta.env.BASE_URL;
 
-// idle 轮播帧（i → vi），hover / click 为交互变体
-const IDLE_FRAMES = [
-  `${BASE}i.png`,
-  `${BASE}ii.png`,
-  `${BASE}iii.png`,
-  `${BASE}iv.png`,
-  `${BASE}v.png`,
-  `${BASE}vi.png`,
-];
-const HOVER_FRAME = `${BASE}挥手.png`;
-const CLICK_FRAME = `${BASE}惊讶后退.png`;
-const THINK_FRAME = `${BASE}抱臂思考.png`;
+// idle 轮播帧（i → vi）合并为一张水平雪碧图，hover / think / click 为独立交互帧
+const IDLE_SPRITE = `${BASE}mascot-idle-sprite.webp`;
+const HOVER_FRAME = `${BASE}mascot-hover.webp`;
+const CLICK_FRAME = `${BASE}mascot-click.webp`;
+const THINK_FRAME = `${BASE}mascot-think.webp`;
+const IDLE_COUNT = 6;
+// 雪碧图 6 帧水平排列：background-position-x 每帧移动 1/(N-1) → 100%
+const idlePos = (n) => `${(n * 100) / (IDLE_COUNT - 1)}% center`;
 
-// 预加载所有帧，避免切换时闪烁
+// 按需预加载：只在组件真正挂载（用户选择了 Live2D 形象）时请求一次，避免切换闪烁
 const preload = (src) => { const img = new Image(); img.src = src; };
-IDLE_FRAMES.forEach(preload);
-preload(HOVER_FRAME);
-preload(CLICK_FRAME);
-preload(THINK_FRAME);
+let preloaded = false;
+function preloadAll() {
+  if (preloaded) return;
+  preloaded = true;
+  preload(IDLE_SPRITE);
+  preload(HOVER_FRAME);
+  preload(CLICK_FRAME);
+  preload(THINK_FRAME);
+}
 
 const LINES = [
   '你好，我是依力 🤙',
@@ -64,6 +65,11 @@ export function Live2dMascot() {
   const mascotRef = useRef(null);
   const frameIdxRef = useRef(0);
   const isHoveringRef = useRef(false);
+
+  // 组件挂载（进入 Live2D 形态）才预加载帧资源
+  useEffect(() => {
+    preloadAll();
+  }, []);
 
   const reportMascotPosition = useCallback(() => {
     const el = mascotRef.current;
@@ -282,15 +288,26 @@ export function Live2dMascot() {
               }
             }}
           >
-            <img
-              src={
-                mode === 'click' ? CLICK_FRAME
-                  : mode === 'hover' ? HOVER_FRAME
-                  : mode === 'think' || mode === 'chat' ? THINK_FRAME
-                  : IDLE_FRAMES[frame]
+            <div
+              style={
+                mode === 'click' || mode === 'hover' || mode === 'think' || mode === 'chat'
+                  ? {
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage: `url(${mode === 'click' ? CLICK_FRAME : mode === 'hover' ? HOVER_FRAME : THINK_FRAME})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }
+                  : {
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage: `url(${IDLE_SPRITE})`,
+                      backgroundSize: `${IDLE_COUNT * 100}% auto`,
+                      backgroundPosition: idlePos(frame),
+                    }
               }
               alt="依力看板郎"
-              draggable={false}
+              aria-hidden="true"
             />
           </div>
 

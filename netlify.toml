@@ -18,6 +18,17 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# 看板郎优化后图片：文件名固定但由脚本生成，内容稳定，可长期缓存
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/yili-small.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # index.html 不缓存：保证每次都能拿到最新 JS 入口
 [[headers]]
   for = "/index.html"

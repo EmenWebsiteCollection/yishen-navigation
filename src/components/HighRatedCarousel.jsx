@@ -260,7 +260,7 @@ export function HighRatedCarousel({ mode = 'top-rated' }) {
             <div key={setIdx} style={{ display: 'flex', gap: '48px', paddingRight: '48px' }}>
               {['依门永存', 'YMYC', '依门永存', 'YMYC', '依门永存', 'YMYC'].map((text, i) => (
                 <span key={`${setIdx}-${i}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', fontSize: '1.1rem', fontWeight: 600, background: 'linear-gradient(90deg, #9FC5F8, #C7B6EE, #F0B9A7, #A8DCC5, #9FC5F8)', backgroundSize: '200% 100%', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'ym-gradient-shift 4s ease infinite', letterSpacing: '0.1em' }}>
-                  <img src="/yili.jpg" alt="" width="18" height="18" style={{ borderRadius: '50%', flexShrink: 0 }} />
+                  <img src="/yili.webp" alt="" width="18" height="18" style={{ borderRadius: '50%', flexShrink: 0 }} loading="lazy" decoding="async" />
                   {text}
                 </span>
               ))}
