@@ -209,11 +209,8 @@ export function Live2dMascot() {
       setTimeout(() => setModeTracked('idle'), 2000);
       return;
     }
-    // 思考 1.5 秒后打开对话面板
-    setTimeout(() => {
-      setModeTracked('chat');
-      setChatOpen(true);
-    }, 1500);
+    setModeTracked('chat');
+    setChatOpen(true);
   };
 
   const mascotStyle = {
