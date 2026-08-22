@@ -123,10 +123,10 @@ export function Live2dMascot() {
 
     const interval = setInterval(() => {
       if (modeRef.current !== 'idle' || phase !== 'running') return;
-      const next = (frameIdxRef.current + 1) % IDLE_FRAMES.length;
+      const next = (frameIdxRef.current + 1) % IDLE_COUNT;
       frameIdxRef.current = next;
       setFrame(next);
-      if (next === IDLE_FRAMES.length - 1) {
+      if (next === IDLE_COUNT - 1) {
         // 到达最后一帧：暂停并说话
         phase = 'pausing';
         clearTimeout(pauseTimer);
