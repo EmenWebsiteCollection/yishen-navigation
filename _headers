@@ -1,4 +1,0 @@
-/*
-  X-Frame-Options: DENY
-  Referrer-Policy: strict-origin-when-cross-origin
-  Content-Security-Policy: frame-ancestors 'none'; connect-src 'self' https://naaczfnskkpsujdfwurj.supabase.co wss://naaczfnskkpsujdfwurj.supabase.co https://*.supabase.co https://api.microlink.io

@@ -36,9 +36,13 @@
     Cache-Control = "no-cache, no-store, must-revalidate"
 
 # 基础安全响应头：防 MIME 嗅探 / 点击劫持 / 外站来源泄露
+# 注意：本文件与 _headers 同时存在时，同路径规则以本文件为准（issue #146）——
+# 原 _headers 里的 CSP 因此从未在线上生效，现已合并到这里并删除 _headers。
 [[headers]]
   for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy = "frame-ancestors 'none'; connect-src 'self' https://naaczfnskkpsujdfwurj.supabase.co wss://naaczfnskkpsujdfwurj.supabase.co https://*.supabase.co https://api.microlink.io"
