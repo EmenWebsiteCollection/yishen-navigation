@@ -8,3 +8,4 @@ dist_bak/
 dist-old-*/
 vite.config.js.timestamp-*.mjs
 public/contributors.json
+.omo/
