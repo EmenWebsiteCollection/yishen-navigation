@@ -12,6 +12,9 @@
 // 契约：POST { messages, persona?, userId?, idToken? } → { reply, actions }
 //   actions: [{ type:'work_card'|'idea_card'|'guide_card', workId?, ideaId?, title?, to?, label? }]
 //   老前端忽略 actions 仍可用（兼容）。
+//   #145：LLM 降级时响应额外附带 { degraded: true, reason } 非敏感错误码
+//   （llm_auth/llm_quota/llm_timeout/llm_network/llm_empty/tool_rounds_exhausted/internal），
+//   前端可忽略；管理员看一眼响应即可区分故障类型，不必翻 Function log。
 import { createClient } from '@supabase/supabase-js';
 import {
   tokenizeKeyword,
@@ -374,6 +377,19 @@ async function executeTool(name, rawArgs) {
   }
 }
 
+// ---------- 故障分类（#145：降级时附带非敏感错误码，降低排障成本） ----------
+// 只暴露粗粒度类别，不含 key/供应商细节；与 console 里的完整错误互补。
+function classifyFailure(err) {
+  const msg = String(err?.message || '');
+  if (err?.name === 'TimeoutError' || err?.name === 'AbortError' || /timed? ?out/i.test(msg)) {
+    return 'llm_timeout';
+  }
+  if (/LLM 40[13]/.test(msg)) return 'llm_auth'; // key 失效/被删/无权限
+  if (/LLM (402|429)/.test(msg)) return 'llm_quota'; // 欠费/额度用尽/限流
+  if (/fetch failed|network|ECONN|ENOTFOUND|EAI_AGAIN|certificate/i.test(msg)) return 'llm_network';
+  return 'internal';
+}
+
 // ---------- LLM 调用（OpenAI 兼容） ----------
 async function callLLM(messages) {
   const headers = { 'Content-Type': 'application/json' };
@@ -540,7 +556,7 @@ async function runAgent(messages, { persona = '', userId = null, idToken = null 
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const msg = await callLLM(history);
-    if (!msg) return { reply: '依力开小差了，稍后再试～', actions: [] };
+    if (!msg) return { reply: '依力开小差了，稍后再试～', actions: [], degraded: true, reason: 'llm_empty' };
 
     if (msg.tool_calls && msg.tool_calls.length > 0) {
       history.push(msg);
@@ -572,7 +588,7 @@ async function runAgent(messages, { persona = '', userId = null, idToken = null 
     return { reply, actions: buildActions(messages, executedTools) };
   }
 
-  return { reply: '依力绕晕了，换个问法试试？', actions: [] };
+  return { reply: '依力绕晕了，换个问法试试？', actions: [], degraded: true, reason: 'tool_rounds_exhausted' };
 }
 
 // ---------- 结构化 actions 生成 ----------
@@ -689,10 +705,13 @@ export default async (req) => {
     const { reply, actions } = await runAgent(messages, { persona, userId, idToken });
     return json({ reply, actions });
   } catch (err) {
+    // #145：分类降级原因——完整错误进 Function log，粗粒度错误码随响应返回
     console.error('yili-chat error:', err);
-    // LLM 或流程异常 → 规则版兜底
+    const reason = classifyFailure(err);
+    console.error(`yili-chat degraded: reason=${reason} model=${ENV.MODEL}`);
+    // LLM 或流程异常 → 规则版兜底（degraded/reason 为新增字段，老前端自动忽略）
     const fb = await fallbackReply(messages);
-    return json({ reply: fb.reply, actions: fb.actions }, 200);
+    return json({ reply: fb.reply, actions: fb.actions, degraded: true, reason }, 200);
   }
 };
 
