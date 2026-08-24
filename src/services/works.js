@@ -1,4 +1,4 @@
-﻿// src/services/works.js
+// src/services/works.js
 // 作品（works）服务层：由原 websites.js 演进而来。
 // websites 表已泛化为 works，网站只是 work_type='website' 的一种作品。
 import { supabase } from './supabase.js';
@@ -1025,12 +1025,19 @@ export const assignWorkGroup = async (workId, groupId) => {
 
 // ========== 浏览量统计 ==========
 // 调用 RPC（security definer，游客也可触发计数），失败静默不影响主流程
+// 返回：计数成功时的最新浏览量（迁移 014 后 RPC 返回 integer），未计数/失败返回 null
 export const incrementView = async (workId) => {
-  if (!workId) return;
+  if (!workId) return null;
   try {
-    await supabase.rpc('rpc_increment_view', { p_work_id: workId });
+    const { data, error } = await supabase.rpc('rpc_increment_view', { p_work_id: workId });
+    if (error) {
+      console.warn('浏览量计数失败:', error.message);
+      return null;
+    }
+    return typeof data === 'number' ? data : null;
   } catch (e) {
     console.warn('浏览量计数失败:', e.message);
+    return null;
   }
 };
 

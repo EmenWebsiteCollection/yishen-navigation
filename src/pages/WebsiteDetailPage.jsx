@@ -1,4 +1,4 @@
-﻿// src/pages/WebsiteDetailPage.jsx
+// src/pages/WebsiteDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -379,12 +379,18 @@ export function WebsiteDetailPage() {
   }, [user?.id]);
 
   // 浏览量计数：同会话只计一次（刷新/重复进入不重复计），失败静默
+  // 计数落库后用 RPC 返回的真实值刷新展示，消除与下方加载详情的并发竞态
+  // （否则详情页显示的浏览量取决于 RPC 与 SELECT 谁先返回，会和首页列表对不上）
   useEffect(() => {
     if (!id) return;
     try {
       const viewed = JSON.parse(sessionStorage.getItem('viewed_works') || '[]');
       if (!viewed.includes(id)) {
-        incrementView(id);
+        incrementView(id).then((count) => {
+          if (typeof count === 'number') {
+            setWebsite((w) => (w && w.id === id ? { ...w, view_count: count } : w));
+          }
+        });
         viewed.push(id);
         sessionStorage.setItem('viewed_works', JSON.stringify(viewed));
       }
