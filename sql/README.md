@@ -19,6 +19,9 @@
 | `009_work_deploys.sql` | 拖拽文件一键部署：work_deploys 公开桶 + deploy_url |
 | `010_idea_github_issue.sql` | 想法一键导出 GitHub Issue（管理员） |
 | `011_cleanup_redundant_objects.sql` | 冗余对象清理（双触发器/重复策略，幂等） |
+| `012_works_download_url.sql` | works 新增 download_url 列 |
+| `013_grant_profiles_update.sql` | 补 profiles UPDATE 授权 |
+| `014_rpc_increment_view_return_count.sql` | #149：rpc_increment_view 返回计数后真实浏览量（镜像自 supabase/migrations/20260824 同名迁移） |
 | `fix_bind_contact.sql` | 修复旧版 bind_contact（执行 002 报错时补跑） |
 | `work_media_bucket.sql` | ⚠️ 早期脚本，已被 003 正式迁移取代，仅作参考不要单独执行 |
 
