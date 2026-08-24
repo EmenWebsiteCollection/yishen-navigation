@@ -1,4 +1,4 @@
-﻿// src/pages/WebsiteDetailPage.jsx
+// src/pages/WebsiteDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -379,8 +379,8 @@ export function WebsiteDetailPage() {
   }, [user?.id]);
 
   // 浏览量计数：同会话只计一次（刷新/重复进入不重复计），失败静默
-  // #149：RPC 返回计数后的真实浏览量，覆盖展示——否则 +1 与下方 getWorkById 的
-  //       SELECT 竞速，详情页数值会随机跳变（N 或 N+1 不确定）
+  // 计数落库后用 RPC 返回的真实值刷新展示，消除与下方加载详情的并发竞态
+  // （否则详情页显示的浏览量取决于 RPC 与 SELECT 谁先返回，会和首页列表对不上）
   useEffect(() => {
     if (!id) return;
     try {
