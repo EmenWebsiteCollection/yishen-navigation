@@ -379,12 +379,18 @@ export function WebsiteDetailPage() {
   }, [user?.id]);
 
   // 浏览量计数：同会话只计一次（刷新/重复进入不重复计），失败静默
+  // #149：RPC 返回计数后的真实浏览量，覆盖展示——否则 +1 与下方 getWorkById 的
+  //       SELECT 竞速，详情页数值会随机跳变（N 或 N+1 不确定）
   useEffect(() => {
     if (!id) return;
     try {
       const viewed = JSON.parse(sessionStorage.getItem('viewed_works') || '[]');
       if (!viewed.includes(id)) {
-        incrementView(id);
+        incrementView(id).then((count) => {
+          if (typeof count === 'number') {
+            setWebsite((w) => (w && w.id === id ? { ...w, view_count: count } : w));
+          }
+        });
         viewed.push(id);
         sessionStorage.setItem('viewed_works', JSON.stringify(viewed));
       }
