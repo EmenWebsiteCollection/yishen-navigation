@@ -298,6 +298,53 @@ export const updateIdeaStatus = async (id, status, note, userId) => {
   if (logError) console.warn('写入状态进展失败:', logError.message);
 };
 
+// ========== 编辑想法内容（标题 / 描述 / 分类 / 标签） ==========
+// Issue #164：发完灵感后允许作者（或管理员）随时修改分类与标签
+export const updateIdea = async (id, patch, userId) => {
+  if (!userId) throw new Error('请先登录');
+  if (!patch || typeof patch !== 'object') throw new Error('无效的更新内容');
+
+  const { data: idea, error: ideaError } = await supabase
+    .from('ideas')
+    .select('user_id, title, description, category, tags, status')
+    .eq('id', id)
+    .maybeSingle();
+  if (ideaError) throw ideaError;
+  if (!idea) throw new Error('想法不存在');
+  if (!(await canManageIdea(idea, userId))) {
+    throw new Error('只有想法作者或管理员可以编辑');
+  }
+
+  const next = {};
+  if (typeof patch.title === 'string') {
+    const t = String(patch.title).trim();
+    if (!t) throw new Error('标题不能为空');
+    if (t.length > 80) throw new Error('标题不能超过 80 字');
+    next.title = t;
+  }
+  if (typeof patch.description === 'string') {
+    next.description = String(patch.description).slice(0, 2000);
+  }
+  if (typeof patch.category === 'string') {
+    if (!IDEA_CATEGORIES.some((c) => c.id === patch.category)) {
+      throw new Error('请选择有效的分类');
+    }
+    next.category = patch.category;
+  }
+  if (patch.tags !== undefined) {
+    next.tags = normalizeTags(patch.tags);
+  }
+
+  if (Object.keys(next).length === 0) throw new Error('没有需要更新的内容');
+
+  const { error: upError } = await supabase
+    .from('ideas')
+    .update(next)
+    .eq('id', id);
+  if (upError) throw upError;
+  return true;
+};
+
 export const addIdeaUpdate = async (id, content, userId) => {
   if (!userId) throw new Error('请先登录');
   const trimmed = String(content || '').trim();
