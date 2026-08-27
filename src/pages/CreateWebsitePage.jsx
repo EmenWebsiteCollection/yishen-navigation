@@ -31,6 +31,9 @@ const labelStyle = {
   fontWeight: '500',
 };
 
+// 链接类作品：必须有可访问的网址（H5 游戏、音乐、视频等本质上也是「一个链接」）
+const LINK_BASED_TYPES = ['website', 'game', 'music', 'video'];
+
 export function CreateWebsitePage() {
   const { user, isAnonymous } = useAuth();
   const navigate = useNavigate();
@@ -137,9 +140,10 @@ const [videoUrl, setVideoUrl] = useState('');
       setMessage({ type: 'error', text: '标题不能为空。' });
       return;
     }
-    if (workType === 'website') {
+    // Issue #160：链接类作品（网站/游戏/音乐/视频）必须填写有效网址
+    if (LINK_BASED_TYPES.includes(workType)) {
       if (!url.trim()) {
-        setMessage({ type: 'error', text: '网站类作品必须填写 URL。' });
+        setMessage({ type: 'error', text: '链接类作品（网站/游戏/音乐/视频）必须填写 URL。' });
         return;
       }
       if (!sanitizeHttpUrl(url)) {
@@ -164,7 +168,7 @@ const [videoUrl, setVideoUrl] = useState('');
         // 用户手动上传了图片
         setMessage({ type: 'info', text: '正在上传图片...' });
         finalImageUrl = await uploadWebsiteImage(imageFile, user.id);
-      } else if (workType === 'website') {
+      } else if (LINK_BASED_TYPES.includes(workType) && url.trim()) {
         // 自动截图（即使失败也继续提交，只是无图）
         setMessage({ type: 'info', text: '正在自动截图（最多约 20 秒）...' });
         setUploading(true);
@@ -328,21 +332,21 @@ const [videoUrl, setVideoUrl] = useState('');
           </div>
         </div>
 
-        {/* URL（仅网站类） */}
-        {workType === 'website' && (
-          <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '16px', '--ym-stagger-index': 3 }}>
-            <label htmlFor="create-url" style={labelStyle}>URL</label>
-            <input
-              id="create-url"
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
-              required
-              style={inputStyle}
-            />
-          </div>
-        )}
+        {/* URL（网址）：所有类型均可填写；链接类（网站/游戏/音乐/视频）必填 */}
+        <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '16px', '--ym-stagger-index': 3 }}>
+          <label htmlFor="create-url" style={labelStyle}>
+            URL（网址）{LINK_BASED_TYPES.includes(workType) ? '（必填）' : '（可选）'}
+          </label>
+          <input
+            id="create-url"
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://example.com"
+            required={LINK_BASED_TYPES.includes(workType)}
+            style={inputStyle}
+          />
+        </div>
 
         {/* 演示视频链接（可选） */}
         <div className="ym-create-step ym-stagger-item" style={{ marginBottom: '16px', '--ym-stagger-index': 3 }}>
