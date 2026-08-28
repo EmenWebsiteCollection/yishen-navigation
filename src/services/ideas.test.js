@@ -1,6 +1,7 @@
 // src/services/ideas.test.js
 // Issue #12 纯逻辑测试（零依赖，Node 直跑）：node src/services/ideas.test.js
 import assert from 'node:assert';
+import { test } from 'node:test';
 import {
   normalizeTags,
   validateIdeaInput,
@@ -12,12 +13,7 @@ import {
   shouldMarkImplemented,
 } from './idea-logic.js';
 
-let passed = 0;
-const ok = (name, fn) => {
-  fn();
-  passed++;
-  console.log('PASS', name);
-};
+const ok = (name, fn) => test(name, fn);
 
 // ---------- normalizeTags ----------
 ok('normalizeTags: 中英文逗号/顿号/换行分隔', () => {
@@ -155,4 +151,3 @@ ok('shouldMarkImplemented: 已 done 不重复点亮', () => {
   assert.strictEqual(shouldMarkImplemented('done', 'public'), false);
 });
 
-console.log(`\n全部通过：${passed} 组断言`);

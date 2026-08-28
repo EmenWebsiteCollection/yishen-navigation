@@ -1,6 +1,7 @@
 ﻿// src/services/yili-retrieval.test.js —— 检索纯逻辑测试（零依赖，Node 直跑）
 // 运行：node src/services/yili-retrieval.test.js
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import {
   tokenizeKeyword,
   rrfFuse,
@@ -9,11 +10,8 @@ import {
   detectPreferenceSignals,
 } from './yili-retrieval-logic.mjs';
 
-let passed = 0;
 function ok(name, fn) {
-  fn();
-  passed++;
-  console.log(`  ✓ ${name}`);
+  return test(name, fn);
 }
 
 console.log('yili-retrieval-logic 测试：');
@@ -92,5 +90,4 @@ ok('detectPreferenceSignals 无信号返回空', () => {
   assert.deepEqual(detectPreferenceSignals('今天天气怎么样'), []);
 });
 
-console.log(`\n全部通过：${passed} 项`);
 
