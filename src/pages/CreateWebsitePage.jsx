@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { createWork, updateWork, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel, sanitizeHttpUrl } from '../services/works.js';
+import { createWork, updateWorkCover, listGroups, WORK_TYPES, WORK_STATUS, CREATIVE_TYPES, AI_DEGREES, AUDIENCES, CONTENT_WARNINGS, workTypeLabel, sanitizeHttpUrl } from '../services/works.js';
 import { getPartitions } from '../services/partitions.js';
 import { fetchWebsiteScreenshot, uploadWebsiteImage, validateImageFile } from '../services/screenshot.js';
 import { uploadWorkDeploy, validateDeployFile } from '../services/workDeploy.js';
@@ -262,7 +262,7 @@ export function CreateWebsitePage() {
         fetchWebsiteScreenshot(url.trim(), user.id)
           .then((screenshotUrl) => {
             if (screenshotUrl && screenshotUrl.startsWith('http')) {
-              return updateWork(createdWork.id, { title: title.trim(), image_url: screenshotUrl });
+              return updateWorkCover(createdWork.id, screenshotUrl);
             }
             return null;
           })
