@@ -20,6 +20,7 @@ import {
   incrementView,
   getTopRatedWorks,
   workTypeLabel,
+  hasWorkType,
 } from '../services/works.js';
 import { isFollowing, toggleFollow } from '../services/follows.js';
 import { getDiscoveryRail, setFeatured } from '../services/discovery.js';
@@ -729,7 +730,7 @@ export function WebsiteDetailPage() {
   const handleMediaRange = (startSec, endSec) => {
     setMediaRange({ start_sec: startSec, end_sec: endSec });
     setPendingAnchor({
-      kind: website?.work_type === 'music' || website?.work_type === 'audio' ? 'audio' : 'video',
+      kind: hasWorkType(website?.work_type, 'music') ? 'audio' : 'video',
       start_sec: startSec,
       end_sec: endSec,
     });
@@ -741,7 +742,7 @@ export function WebsiteDetailPage() {
       alert('请输入有效的时间秒数');
       return;
     }
-    const kind = website?.work_type === 'music' || website?.work_type === 'audio' ? 'audio' : 'video';
+    const kind = hasWorkType(website?.work_type, 'music') ? 'audio' : 'video';
     setPendingAnchor({ kind, start_sec: sec });
     setMediaRange({ start_sec: sec, end_sec: null });
   };
@@ -1397,7 +1398,7 @@ onSetFeedbackStatus={handleSetFeedbackStatus}
         <div style={{ marginBottom: '24px' }}>
           <MediaPlayer
             src={website.media_url}
-            type={website.work_type === 'music' ? 'audio' : 'video'}
+            type={hasWorkType(website.work_type, 'music') ? 'audio' : 'video'}
             selectMode={anchorMode === 'video' || anchorMode === 'audio'}
             onRangeSelect={handleMediaRange}
             markers={comments

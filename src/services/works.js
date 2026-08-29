@@ -37,11 +37,17 @@ export const COMMISSION_STATUS = [
   { id: 'closed', label: '暂不接受' },
 ];
 
-export const workTypeLabel = (type) =>
-  getPartitionLabel(type) ||
-  WORK_TYPES.find((t) => t.id === type)?.label ||
-  type ||
-  '作品';
+// work_type 支持多选（逗号分隔存储，如 "website,game"）
+// 判断某作品是否属于某类型
+export const hasWorkType = (workTypeStr, type) =>
+  String(workTypeStr || '').split(',').includes(type);
+
+export const workTypeLabel = (type) => {
+  if (!type) return '作品';
+  const parts = String(type).split(',');
+  const labels = parts.map((t) => getPartitionLabel(t) || WORK_TYPES.find((x) => x.id === t)?.label || t);
+  return labels.join(' · ');
+};
 
 export const workStatusLabel = (status) =>
   WORK_STATUS.find((s) => s.id === status)?.label || status || '';
@@ -418,7 +424,7 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
   let query = supabase
     .from('works_with_likes')
     .select(VIEW_SELECT, { count: 'exact' });
-  if (type) query = query.eq('work_type', type);
+  if (type) query = query.like('work_type', `*${type}*`);
   query = query.eq('visibility', 'public');
   if (userId) query = query.eq('user_id', userId);
 
@@ -436,7 +442,7 @@ export const getWorks = async ({ page = 1, pageSize = 10, type = 'website', user
     let fallbackQuery = supabase
       .from('works')
       .select(await getTableSelect(), { count: 'exact' });
-    if (type) fallbackQuery = fallbackQuery.eq('work_type', type);
+    if (type) fallbackQuery = fallbackQuery.like('work_type', `*${type}*`);
     fallbackQuery = fallbackQuery.eq('visibility', 'public');
     if (userId) fallbackQuery = fallbackQuery.eq('user_id', userId);
     fallbackQuery = fallbackQuery.order(sortMode === 'hot' ? 'like_count' : 'created_at', { ascending: false }).range(from, to);
@@ -778,20 +784,6 @@ export const updateWork = async (id, data) => {
   return mapWork(updated);
 };
 
-// ========== 仅回填封面（投稿后异步截图用） ==========
-// 不能走全量 updateWork：它按全量 payload 语义会把 visibility 重置回 public、
-// 清空 description/changelog，还会多生成一条版本快照。
-export const updateWorkCover = async (id, imageUrl) => {
-  const { data, error } = await supabase
-    .from('works')
-    .update({ image_url: imageUrl || null })
-    .eq('id', id)
-    .select('id, image_url')
-    .single();
-  if (error) throw error;
-  return { id: data.id, image_url: data.image_url };
-};
-
 // ========== 删除作品 ==========
 // 审计遗留 LOW：删作品时顺带清理 work_deploys 桶里的部署文件（孤儿文件级联清理）。
 // workDeploys 桶路径结构为 work_id/...，递归列出所有文件后一并删除；
@@ -1053,5 +1045,55 @@ export const incrementView = async (workId) => {
     console.warn('浏览量计数失败:', e.message);
     return null;
   }
+};
+
+// ========== 活跃度日历 ==========
+// 返回某用户全部行为时间戳（供日历按天聚合）：
+//   创作行为（2 点）：works 投稿/编辑、comments 评论/回复、ideas 发布想法、
+//                     idea_comments 想法评论/回复、idea_updates 想法进展
+//   轻量互动（1 点）：website_likes 点赞、favorites 收藏作品、follows 关注、
+//                     idea_votes 想法投票、idea_favorites 收藏想法、comment_feedback 评价
+// 只取时间列，数据量小，前端聚合即可。
+const ACTIVITY_QUERIES = [
+  { key: 'works', table: 'works', select: 'created_at, updated_at' },
+  { key: 'comments', table: 'comments', select: 'created_at' },
+  { key: 'likes', table: 'website_likes', select: 'created_at' },
+  { key: 'favorites', table: 'favorites', select: 'created_at' },
+  { key: 'follows', table: 'follows', select: 'created_at', userCol: 'follower_id' },
+  { key: 'ideas', table: 'ideas', select: 'created_at' },
+  { key: 'ideaComments', table: 'idea_comments', select: 'created_at' },
+  { key: 'ideaUpdates', table: 'idea_updates', select: 'created_at' },
+  { key: 'ideaVotes', table: 'idea_votes', select: 'created_at' },
+  { key: 'ideaFavorites', table: 'idea_favorites', select: 'created_at' },
+  { key: 'feedback', table: 'comment_feedback', select: 'created_at' },
+];
+
+export const getUserActivityDates = async (userId) => {
+  if (!userId) return {};
+  try {
+    const results = await Promise.all(
+      ACTIVITY_QUERIES.map((q) =>
+        supabase
+          .from(q.table)
+          .select(q.select)
+          .eq(q.userCol || 'user_id', userId)
+          .limit(1000)
+      )
+    );
+    const out = {};
+    ACTIVITY_QUERIES.forEach((q, i) => {
+      out[q.key] = results[i].data || [];
+    });
+    return out;
+  } catch (e) {
+    console.warn('获取活跃度时间失败:', e.message);
+    return {};
+  }
+};
+
+// 兼容旧名：仅作品时间（保留给历史调用）
+export const getWorkActivityDates = async (userId) => {
+  const r = await getUserActivityDates(userId);
+  return r.works || [];
 };
 
