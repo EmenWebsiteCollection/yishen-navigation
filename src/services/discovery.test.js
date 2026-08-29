@@ -1,6 +1,7 @@
 // src/services/discovery.test.js
 // Issue #39 P1 纯逻辑单测（Node 直跑）：node src/services/discovery.test.js
 import assert from 'node:assert';
+import { test } from 'node:test';
 import {
   normalizeTagList,
   wilsonLowerBound,
@@ -12,17 +13,7 @@ import {
   DISCOVERY_RAILS,
 } from './discovery-logic.js';
 
-let passed = 0;
-const ok = (name, fn) => {
-  try {
-    fn();
-    passed += 1;
-    console.log('  ✓', name);
-  } catch (e) {
-    console.error('  ✗', name, '->', e.message);
-    process.exitCode = 1;
-  }
-};
+const ok = (name, fn) => test(name, fn);
 
 // ---------- normalizeTagList ----------
 ok('标签清洗：去空、去重（忽略大小写）、限长', () => {
@@ -124,5 +115,4 @@ ok('rails 常量包含 Issue 要求的核心入口', () => {
   }
 });
 
-console.log(`\n${passed} 组断言通过`);
 if (process.exitCode) process.exit(process.exitCode);

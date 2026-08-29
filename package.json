@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build && node scripts/copy-chunk-manifest.mjs",
     "preview": "vite preview",
-    "netlify:dev": "netlify dev"
+    "netlify:dev": "netlify dev",
+    "test": "node --test src/services/*.test.js"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.12",

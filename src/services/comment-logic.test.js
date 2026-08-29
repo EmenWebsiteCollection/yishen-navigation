@@ -1,6 +1,7 @@
 ﻿// src/services/comment-logic.test.js
 // Issue #39 P2 纯逻辑单测：node src/services/comment-logic.test.js
 import assert from 'node:assert';
+import { test } from 'node:test';
 import {
   FEEDBACK_TYPES,
   validateFeedbackType,
@@ -12,17 +13,7 @@ import {
   formatTime,
 } from './comment-logic.js';
 
-let passed = 0;
-const ok = (name, fn) => {
-  try {
-    fn();
-    passed += 1;
-    console.log('  ✓', name);
-  } catch (e) {
-    console.error('  ✗', name, '->', e.message);
-    process.exitCode = 1;
-  }
-};
+const ok = (name, fn) => test(name, fn);
 
 // ---------- 反馈类型 ----------
 ok('反馈类型：8 种齐全', () => {
@@ -105,6 +96,5 @@ ok('反馈状态标签', () => {
   assert.strictEqual(feedbackStatusLabel('bogus'), '待处理');
 });
 
-console.log(`\n${passed} 组断言通过`);
 if (process.exitCode) process.exit(process.exitCode);
 
