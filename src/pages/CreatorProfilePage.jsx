@@ -1,10 +1,11 @@
-﻿// src/pages/CreatorProfilePage.jsx
+// src/pages/CreatorProfilePage.jsx
 // 创作者主页（公开）：品牌展示 + 统计 + 作品集 + 创作时间线
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { getProfile, getCreatorStats } from '../services/users.js';
 import { getWorksByUser, workTypeLabel } from '../services/works.js';
+import { getFollowerCount, getFollowingCount } from '../services/follows.js';
 
 import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
@@ -74,7 +75,7 @@ export function CreatorProfilePage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [stats, setStats] = useState({ work_count: 0, like_count: 0, favorite_count: 0, comment_count: 0 });
+  const [stats, setStats] = useState({ work_count: 0, like_count: 0, favorite_count: 0, comment_count: 0, followerCount: 0, followingCount: 0 });
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -92,12 +93,14 @@ export function CreatorProfilePage() {
         return;
       }
       setProfile(p);
-      const [s, { works: list }] = await Promise.all([
+      const [s, { works: list }, followerCount, followingCount] = await Promise.all([
         getCreatorStats(id),
         getWorksByUser(id, { currentUserId: user?.id, pageSize: 100 }),
+        getFollowerCount(id),
+        getFollowingCount(id),
       ]);
       getPartitions().catch(() => {});
-      setStats(s);
+      setStats({ ...s, followerCount, followingCount });
       setWorks(list);
     } catch (err) {
       console.error('加载创作者主页失败:', err);
@@ -201,8 +204,15 @@ export function CreatorProfilePage() {
             { label: '获赞', value: stats.like_count },
             { label: '被收藏', value: stats.favorite_count },
             { label: '评论', value: stats.comment_count },
+            { label: '粉丝', value: stats.followerCount, link: `/user/${id}/followers` },
+            { label: '关注', value: stats.followingCount, link: `/user/${id}/following` },
           ].map((s) => (
-            <div key={s.label} className="ym-stat">
+            <div
+              key={s.label}
+              className="ym-stat"
+              style={{ cursor: s.link ? 'pointer' : 'default' }}
+              onClick={() => { if (s.link) window.location.href = s.link; }}
+            >
               <b>{s.value}</b>
               <span>{s.label}</span>
             </div>

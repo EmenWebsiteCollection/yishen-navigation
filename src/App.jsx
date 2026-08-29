@@ -62,6 +62,10 @@ const WorkMapPage = lazyWithRetry(
   () => import("./pages/WorkMapPage.jsx"),
   { exportName: "WorkMapPage", sourcePath: "src/pages/WorkMapPage.jsx" },
 );
+const FollowListPage = lazyWithRetry(
+  () => import("./pages/FollowListPage.jsx"),
+  { exportName: "default", sourcePath: "src/pages/FollowListPage.jsx" },
+);
 
 import { ThemeSwitcher } from "./components/ThemeSwitcher.jsx";
 import { ScrollToTop } from "./components/ScrollToTop.jsx";
@@ -132,6 +136,8 @@ function AnimatedRoutes() {
               }
             />
             <Route path="/user/:id" element={<CreatorProfilePage />} />
+            <Route path="/user/:id/followers" element={<FollowListPage />} />
+            <Route path="/user/:id/following" element={<FollowListPage />} />
             <Route path="/ideas" element={<IdeaListPage />} />
             <Route
               path="/ideas/new"
