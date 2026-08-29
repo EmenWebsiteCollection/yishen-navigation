@@ -42,6 +42,12 @@ export const COMMISSION_STATUS = [
 export const hasWorkType = (workTypeStr, type) =>
   String(workTypeStr || '').split(',').includes(type);
 
+// 链接类类型：必须填写有效 URL（其余类型 URL 选填）
+export const LINK_TYPES = ['website', 'game', 'music', 'video'];
+// 类型串（含多选）是否包含链接类
+export const hasLinkType = (workTypeStr) =>
+  String(workTypeStr || '').split(',').some((t) => LINK_TYPES.includes(t));
+
 export const workTypeLabel = (type) => {
   if (!type) return '作品';
   const parts = String(type).split(',');
