@@ -778,6 +778,20 @@ export const updateWork = async (id, data) => {
   return mapWork(updated);
 };
 
+// ========== 仅回填封面（投稿后异步截图用） ==========
+// 不能走全量 updateWork：它按全量 payload 语义会把 visibility 重置回 public、
+// 清空 description/changelog，还会多生成一条版本快照。
+export const updateWorkCover = async (id, imageUrl) => {
+  const { data, error } = await supabase
+    .from('works')
+    .update({ image_url: imageUrl || null })
+    .eq('id', id)
+    .select('id, image_url')
+    .single();
+  if (error) throw error;
+  return { id: data.id, image_url: data.image_url };
+};
+
 // ========== 删除作品 ==========
 // 审计遗留 LOW：删作品时顺带清理 work_deploys 桶里的部署文件（孤儿文件级联清理）。
 // workDeploys 桶路径结构为 work_id/...，递归列出所有文件后一并删除；
