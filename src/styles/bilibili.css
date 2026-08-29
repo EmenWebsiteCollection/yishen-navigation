@@ -641,10 +641,114 @@ body.ym-has-bg::before {
 /* ---------- 个人中心布局与稳定占位 ---------- */
 .ym-profile-overview { display: grid; gap: var(--ym-space-5, 20px); margin-top: var(--ym-space-5, 20px); }
 .ym-profile-overview .ym-stats { margin-top: 0; }
+/* 作者日历 + 我的信誉 并排容器 */
+.ym-profile-cards { display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch; }
+.ym-profile-cards .ym-profile-reputation { flex: 1; min-width: 280px; }
 .ym-profile-reputation { display: flex; gap: 12px; flex-wrap: wrap; padding: 16px 18px; border: 1px solid var(--ym-border); border-radius: var(--ym-radius-md); background: var(--ym-bg-card); }
 .ym-profile-overview .ym-tabs { margin: 0; }
 .ym-profile-content { min-height: 280px; }
 .ym-profile-list-slot { min-height: 224px; }
+
+/* ---------- 作者日历（GitHub 风格热力图，主题自适应） ---------- */
+.ym-activity-calendar {
+  padding: 16px 18px;
+  border: 1px solid var(--ym-border);
+  border-radius: var(--ym-radius-md);
+  background: var(--ym-bg-card);
+  min-width: 340px;
+  max-width: 100%;
+}
+.ym-activity-calendar__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ym-text-primary);
+  margin-bottom: 12px;
+}
+.ym-activity-calendar__nav { display: inline-flex; gap: 4px; }
+.ym-activity-calendar__nav button {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--ym-border);
+  border-radius: var(--ym-radius-sm);
+  background: var(--ym-bg-subtle);
+  color: var(--ym-text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--ym-transition);
+}
+.ym-activity-calendar__nav button:hover:not(:disabled) {
+  border-color: var(--ym-accent);
+  color: var(--ym-accent);
+}
+.ym-activity-calendar__nav button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.ym-activity-calendar__body { display: flex; gap: 4px; }
+.ym-activity-calendar__weekdays {
+  display: grid;
+  grid-auto-rows: 9px;
+  gap: 2px;
+  padding-top: 16px; /* 对齐月份行 */
+  width: 14px;
+  flex-shrink: 0;
+}
+.ym-activity-calendar__wd {
+  font-size: 10px;
+  line-height: 9px;
+  color: var(--ym-text-muted);
+}
+.ym-activity-calendar__main { flex: 1; min-width: 0; overflow-x: auto; }
+.ym-activity-calendar__months {
+  display: grid;
+  grid-template-columns: repeat(26, 9px);
+  gap: 2px;
+  height: 14px;
+  margin-bottom: 2px;
+}
+.ym-activity-calendar__month-cell { position: relative; }
+.ym-activity-calendar__month-cell span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 10px;
+  color: var(--ym-text-muted);
+  white-space: nowrap;
+  width: 42px;
+  line-height: 14px;
+}
+.ym-activity-calendar__grid {
+  display: grid;
+  /* 关键：DOM 是「列优先」（每周一列 7 天），必须按列填充，否则全部错位混排 */
+  grid-auto-flow: column;
+  grid-template-columns: repeat(26, 9px);
+  grid-template-rows: repeat(7, 9px);
+  gap: 2px;
+}
+.ym-activity-calendar__cell { border-radius: 2px; }
+.ym-activity-calendar__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ym-text-muted);
+  flex-wrap: wrap;
+}
+.ym-activity-calendar__legend { display: inline-flex; align-items: center; gap: 3px; }
+.ym-activity-calendar__legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
 
 /* 个人中心作品列表操作区：避免未分组等窄空间下按钮重叠遮挡 */
 .ym-profile-work-actions {

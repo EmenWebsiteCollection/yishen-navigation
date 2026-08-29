@@ -57,7 +57,7 @@ export const overlapScore = (work, seed = {}) => {
   const a = (work?.tags || []).filter((t) => (seed.tags || []).includes(t)).length;
   const b = (work?.styles || []).filter((t) => (seed.styles || []).includes(t)).length;
   const c = (work?.tools || []).filter((t) => (seed.tools || []).includes(t)).length;
-  const d = seed.work_type && work?.work_type === seed.work_type ? 1 : 0;
+  const d = seed.work_type && String(work?.work_type || '').split(',').includes(seed.work_type) ? 1 : 0;
   return a * 2 + b * 2 + c * 2 + d;
 };
 

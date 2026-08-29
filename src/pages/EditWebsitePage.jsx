@@ -48,7 +48,7 @@ const [videoUrl, setVideoUrl] = useState('');
   const [deployMsg, setDeployMsg] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [workType, setWorkType] = useState('website');
+  const [workTypes, setWorkTypes] = useState(['website']); // 多选（逗号分隔存储）
   const [status, setStatus] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [groupId, setGroupId] = useState('');
@@ -109,7 +109,7 @@ const [videoUrl, setVideoUrl] = useState('');
         setDeployUrl(data.deploy_url || '');
         setTitle(data.title);
         setDescription(data.description || '');
-        setWorkType(data.work_type || 'website');
+        setWorkTypes(String(data.work_type || 'website').split(',').filter(Boolean));
         setStatus(data.status || '');
         setVisibility(data.visibility || 'public');
         setGroupId(data.group_id || '');
@@ -244,7 +244,11 @@ const [videoUrl, setVideoUrl] = useState('');
       setError('标题不能为空');
       return;
     }
-    if (workType === 'website') {
+    if (workTypes.length === 0) {
+      setError('请至少选择一个作品类型');
+      return;
+    }
+    if (workTypes.includes('website')) {
       if (!url.trim()) {
         setError('网站类作品必须填写 URL');
         return;
@@ -283,7 +287,7 @@ const [videoUrl, setVideoUrl] = useState('');
         image_url: finalImageUrl,
         video_url: videoUrl.trim() || null,
         download_url: downloadUrl.trim() || null,
-        work_type: workType,
+        work_type: workTypes.join(','),
         status: status || null,
         visibility,
         group_id: groupId || null,
@@ -369,26 +373,33 @@ const [videoUrl, setVideoUrl] = useState('');
         <div style={{ marginBottom: '18px' }}>
           <label style={labelStyle}>作品类型</label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {partitions.map((t) => (
-              <button
-                key={t.work_type || t.id}
-                type="button"
-                onClick={() => setWorkType(t.work_type)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  border: '1px solid var(--ym-border)',
-                  backgroundColor: workType === t.work_type ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
-                  color: workType === t.work_type ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  transition: 'all var(--ym-transition)',
-                }}
-              >
-                {t.name}
-              </button>
-            ))}
-            {!partitions.some((t) => t.work_type === workType) && (
+            {partitions.map((t) => {
+              const active = workTypes.includes(t.work_type);
+              return (
+                <button
+                  key={t.work_type || t.id}
+                  type="button"
+                  onClick={() =>
+                    setWorkTypes((prev) =>
+                      active ? prev.filter((x) => x !== t.work_type) : [...prev, t.work_type]
+                    )
+                  }
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: '1px solid var(--ym-border)',
+                    backgroundColor: active ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                    color: active ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    transition: 'all var(--ym-transition)',
+                  }}
+                >
+                  {t.name}
+                </button>
+              );
+            })}
+            {workTypes.some((wt) => wt && !partitions.some((t) => t.work_type === wt)) && (
               <button
                 type="button"
                 style={{
@@ -401,7 +412,7 @@ const [videoUrl, setVideoUrl] = useState('');
                   fontSize: '13px',
                 }}
               >
-                {workTypeLabel(workType)}
+                {workTypeLabel(workTypes.join(','))}
               </button>
             )}
           </div>
@@ -409,7 +420,7 @@ const [videoUrl, setVideoUrl] = useState('');
 
         {/* URL（所有类型均可修改） */}
         <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="edit-url" style={labelStyle}>{workType === 'website' ? 'URL' : 'URL（可选）'}</label>
+          <label htmlFor="edit-url" style={labelStyle}>{workTypes.includes('website') ? 'URL' : 'URL（可选）'}</label>
           <input
             id="edit-url"
             type="url"

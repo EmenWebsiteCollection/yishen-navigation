@@ -28,6 +28,7 @@ import { getMyMemory, clearMyMemory } from '../services/yiliMemory.js';
 import { IdeaStatusBadge } from '../components/IdeaStatusBadge.jsx';
 import { ThemeSelect } from '../components/ThemeSelect.jsx';
 import { setMascotStyle } from '../components/YiliMascot.jsx';
+import ActivityCalendar from '../components/ActivityCalendar.jsx';
 import { getPartitions } from '../services/partitions.js';
 import '../styles/global.css';
 
@@ -581,23 +582,26 @@ export function ProfilePage() {
           ))}
         </div>
 
-        {/* Issue #39 P3：我的信誉 */}
-        <div className="ym-profile-reputation">
-          <div style={{ flex: 1, minWidth: '180px' }}>
-            <div style={{ fontSize: '15px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '6px' }}>
-              {reputationBadge(reputation).emoji} 我的评论者信誉 · {reputationBadge(reputation).label}
+        {/* 作者日历 + 我的信誉（并排，窄屏堆叠） */}
+        <div className="ym-profile-cards">
+          <ActivityCalendar userId={userId} />
+          <div className="ym-profile-reputation">
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '14px', letterSpacing: '0.5px' }}>
+                {reputationBadge(reputation).emoji} 我的评论者信誉 · {reputationBadge(reputation).label}
+              </div>
+              <div style={{ fontSize: '14px', color: 'var(--ym-text-secondary)', lineHeight: 1.9, letterSpacing: '0.5px' }}>
+                {reputation.adopted_count > 0
+                  ? `有 ${reputation.adopted_count} 条建议被作者采纳`
+                  : '还没有被采纳的建议，继续给出有价值的反馈吧'}
+                <br />
+                收到评价：有帮助 {reputation.helpful} · 有洞察 {reputation.insightful} · 专业 {reputation.professional} · 友善 {reputation.friendly}
+              </div>
             </div>
-            <div style={{ fontSize: '13px', color: 'var(--ym-text-secondary)', lineHeight: 1.7 }}>
-              {reputation.adopted_count > 0
-                ? `有 ${reputation.adopted_count} 条建议被作者采纳`
-                : '还没有被采纳的建议，继续给出有价值的反馈吧'}
-              <br />
-              收到评价：有帮助 {reputation.helpful} · 有洞察 {reputation.insightful} · 专业 {reputation.professional} · 友善 {reputation.friendly}
+            <div style={{ textAlign: 'right', alignSelf: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--ym-accent)' }}>{reputationScore(reputation)}</div>
+              <div style={{ fontSize: '13px', color: 'var(--ym-text-muted)', letterSpacing: '0.5px' }}>信誉分</div>
             </div>
-          </div>
-          <div style={{ textAlign: 'right', alignSelf: 'center' }}>
-            <div style={{ fontSize: '22px', fontWeight: '600', color: 'var(--ym-accent)' }}>{reputationScore(reputation)}</div>
-            <div style={{ fontSize: '12px', color: 'var(--ym-text-muted)' }}>信誉分</div>
           </div>
         </div>
 
