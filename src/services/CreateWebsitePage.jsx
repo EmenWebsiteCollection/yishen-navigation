@@ -168,7 +168,7 @@ const [videoUrl, setVideoUrl] = useState('');
         // 用户手动上传了图片
         setMessage({ type: 'info', text: '正在上传图片...' });
         finalImageUrl = await uploadWebsiteImage(imageFile, user.id);
-      } else if (hasLinkType(workTypes.join(',')) && url.trim()) {
+      } else if (hasLinkType(workTypes.join(','))) {
         // 自动截图（即使失败也继续提交，只是无图）
         setMessage({ type: 'info', text: '正在自动截图（最多约 20 秒）...' });
         setUploading(true);
