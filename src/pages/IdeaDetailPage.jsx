@@ -18,8 +18,9 @@ import {
   addIdeaUpdate,
   mergeIdeas,
   exportIdeaToGithub,
+  updateIdea,
 } from '../services/ideas.js';
-import { IDEA_STATUSES } from '../services/idea-logic.js';
+import { IDEA_STATUSES, IDEA_CATEGORIES } from '../services/idea-logic.js';
 import { getProfile } from '../services/users.js';
 import '../styles/global.css';
 
@@ -197,6 +198,15 @@ export function IdeaDetailPage() {
   const [mergeSubmitting, setMergeSubmitting] = useState(false);
   const [exportSubmitting, setExportSubmitting] = useState(false);
 
+  // 编辑内容（标题 / 描述 / 分类 / 标签）—— Issue #164
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editCategory, setEditCategory] = useState('other');
+  const [editTags, setEditTags] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState('');
+
   const handleExportIssue = async () => {
     if (!isAdmin || exportSubmitting) return;
     const confirmed = window.confirm(
@@ -213,6 +223,37 @@ export function IdeaDetailPage() {
       setNotice(err.message || '导出失败');
     } finally {
       setExportSubmitting(false);
+    }
+  };
+
+  // ---------- 编辑内容（Issue #164） ----------
+  const openEdit = () => {
+    setEditTitle(idea.title || '');
+    setEditDesc(idea.description || '');
+    setEditCategory(idea.category || 'other');
+    setEditTags(Array.isArray(idea.tags) ? idea.tags.join(', ') : (idea.tags || ''));
+    setEditError('');
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!canManage || editSubmitting) return;
+    setEditSubmitting(true);
+    setEditError('');
+    try {
+      await updateIdea(
+        id,
+        { title: editTitle, description: editDesc, category: editCategory, tags: editTags },
+        user.id,
+      );
+      setEditOpen(false);
+      setNotice('✅ 已保存修改');
+      await loadAll();
+    } catch (err) {
+      setEditError(err.message || '保存失败');
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -657,6 +698,84 @@ export function IdeaDetailPage() {
                   </button>
                 </div>
               </form>
+
+              {/* 编辑内容（标题 / 描述 / 分类 / 标签）—— Issue #164 */}
+              <div style={{ marginTop: '14px', borderTop: '1px solid var(--ym-border)', paddingTop: '14px' }}>
+                {!editOpen ? (
+                  <button
+                    type="button"
+                    onClick={openEdit}
+                    style={{ padding: '8px 18px', backgroundColor: 'var(--ym-bg-card)', color: 'var(--ym-text-primary)', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    ✏️ 编辑内容（标题 / 分类 / 标签）
+                  </button>
+                ) : (
+                  <form onSubmit={handleSaveEdit}>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--ym-text-primary)', marginBottom: '10px' }}>编辑内容</div>
+
+                    <div style={{ marginBottom: '10px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>标题（≤80 字）</label>
+                      <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} maxLength="80" style={inputStyle} />
+                    </div>
+
+                    <div style={{ marginBottom: '10px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>详细描述（≤2000 字）</label>
+                      <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows="4" maxLength="2000" style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }} />
+                    </div>
+
+                    <div style={{ marginBottom: '10px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>分类</label>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {IDEA_CATEGORIES.map((c) => (
+                          <button
+                            type="button"
+                            key={c.id}
+                            onClick={() => setEditCategory(c.id)}
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              border: '1px solid var(--ym-border)',
+                              backgroundColor: editCategory === c.id ? 'var(--ym-accent)' : 'var(--ym-bg-card)',
+                              color: editCategory === c.id ? 'var(--ym-accent-text-on)' : 'var(--ym-text-secondary)',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                            }}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', color: 'var(--ym-text-secondary)', marginBottom: '4px' }}>标签（逗号分隔，最多 10 个）</label>
+                      <input value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="例如：AI, 搜索, 移动端" style={inputStyle} />
+                    </div>
+
+                    {editError && (
+                      <div style={{ fontSize: '13px', color: '#e5484d', marginBottom: '8px' }}>{editError}</div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="submit"
+                        disabled={editSubmitting}
+                        style={{ padding: '8px 18px', backgroundColor: 'var(--ym-accent)', color: 'var(--ym-accent-text-on)', border: 'none', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px', cursor: editSubmitting ? 'not-allowed' : 'pointer' }}
+                      >
+                        {editSubmitting ? '保存中…' : '保存'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditOpen(false)}
+                        disabled={editSubmitting}
+                        style={{ padding: '8px 18px', backgroundColor: 'var(--ym-bg-card)', color: 'var(--ym-text-secondary)', border: '1px solid var(--ym-border)', borderRadius: 'var(--ym-radius-sm)', fontSize: '13px', cursor: 'pointer' }}
+                      >
+                        取消
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
             </div>
           )}
         </div>
