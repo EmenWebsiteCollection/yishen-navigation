@@ -325,12 +325,14 @@ export const createWork = async (payload, userId) => {
   const trimmedType = work_type || 'website';
   let trimmedUrl = null;
 
-  if (trimmedType === 'website') {
-    if (!url || !url.trim()) throw new Error('网站类作品必须填写 URL');
+  // 链接类作品（网站/游戏/音乐/视频）必须填写 URL；其余类型 URL 选填，填了就保留（#179）
+  if (url && String(url).trim()) {
     trimmedUrl = normalizeUrl(url);
     if (!trimmedUrl) throw new Error('URL 无效（仅支持 http/https 协议）'); // #118 服务层兜底
     const exists = await checkUrlExists(trimmedUrl);
     if (exists) throw new Error('该网址已存在，无法重复创建。');
+  } else if (hasLinkType(trimmedType)) {
+    throw new Error('链接类作品（网站/游戏/音乐/视频）必须填写 URL');
   }
 
   const insertRow = {
@@ -740,17 +742,24 @@ export const updateWork = async (id, data) => {
   const current = await getWorkById(id);
   if (!current) throw new Error('作品不存在');
 
-  let trimmedUrl = current.url;
-  if (trimmedType === 'website') {
+  let trimmedUrl = current.url || null;
+  if (url !== undefined) {
+    const rawUrl = String(url || '').trim();
     const newUrl = normalizeUrl(url);
-    if (!newUrl) throw new Error('网站类作品必须填写 URL');
-    trimmedUrl = newUrl;
-    if (trimmedUrl !== current.url) {
-      const exists = await checkUrlExists(trimmedUrl);
-      if (exists) throw new Error('该网址已存在，无法重复创建。');
+    if (rawUrl && !newUrl) throw new Error('URL 无效（仅支持 http/https 协议）');
+    if (newUrl) {
+      trimmedUrl = newUrl;
+    } else if (hasLinkType(trimmedType)) {
+      throw new Error('链接类作品（网站/游戏/音乐/视频）必须填写 URL');
+    } else {
+      trimmedUrl = null; // 非链接类作品：显式清空才清空（#179）
     }
-  } else {
-    trimmedUrl = null; // 非网站类作品不保留 URL
+  } else if (hasLinkType(trimmedType) && !trimmedUrl) {
+    throw new Error('链接类作品（网站/游戏/音乐/视频）必须填写 URL');
+  }
+  if (trimmedUrl && trimmedUrl !== current.url) {
+    const exists = await checkUrlExists(trimmedUrl);
+    if (exists) throw new Error('该网址已存在，无法重复创建。');
   }
 
   const patch = {
