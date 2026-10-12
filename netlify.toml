@@ -3,6 +3,14 @@
   publish = "dist"
   functions = "netlify/functions"
 
+# 构建与函数运行时的 Node 版本。
+# 此前仓库未声明版本，Netlify 会把每个站点各自 pin 在建站时的默认版本上（各站可能不同）。
+# 新增的 MCP 端点依赖 @modelcontextprotocol/server（要求 Node >= 20），
+# 这里显式声明为 22 并与 CI（ci.yml 用 Node 22）对齐，避免旧站点构建/运行时失败。
+[build.environment]
+  NODE_VERSION = "22"
+  AWS_LAMBDA_JS_RUNTIME = "nodejs22.x"
+
 # SPA 路由：任何找不到的路径都回 index.html，由前端 JS 接管路由
 # （修复深链接直接访问/刷新 404，如 /website/xxx、/user/xxx）
 # 说明：/.netlify/functions/* 由 Netlify 优先处理，不受此规则影响
