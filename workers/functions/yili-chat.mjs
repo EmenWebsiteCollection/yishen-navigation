@@ -1,4 +1,4 @@
-﻿// netlify/functions/yili-chat.mjs
+﻿// workers/functions/yili-chat.mjs
 // 依力 AI 代理函数 v3 —— 语料风格注入 + 全站工具 + 个性化记忆（不微调）
 //
 // 相对 v2 的变更：
@@ -26,14 +26,30 @@ import { buildStyleDnaBlock } from '../../src/services/yili-style-dna.js';
 
 export { tokenizeKeyword }; // 向后兼容导出（如外部测试引用）
 
+// 惰性读取环境变量：Workers 的绑定在模块求值时可能还不可见，
+// 用 getter 保证每次访问都取到请求期的值（Netlify 上是等价的）。
 const ENV = {
-  LLM_URL: process.env.LLM_URL || 'https://api.deepseek.com/chat/completions',
-  LLM_API_KEY: process.env.LLM_API_KEY || process.env.DEEPSEEK_API_KEY || '',
-  MODEL: process.env.LLM_MODEL || 'deepseek-chat',
-  SUPABASE_URL: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  SUPABASE_ANON: process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '',
-  DASHSCOPE_API_KEY: process.env.DASHSCOPE_API_KEY || '', // 可选：风格向量检索
-  PERSONA: process.env.YILI_PERSONA || '',
+  get LLM_URL() {
+    return process.env.LLM_URL || 'https://api.deepseek.com/chat/completions';
+  },
+  get LLM_API_KEY() {
+    return process.env.LLM_API_KEY || process.env.DEEPSEEK_API_KEY || '';
+  },
+  get MODEL() {
+    return process.env.LLM_MODEL || 'deepseek-chat';
+  },
+  get SUPABASE_URL() {
+    return process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+  },
+  get SUPABASE_ANON() {
+    return process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  },
+  get DASHSCOPE_API_KEY() {
+    return process.env.DASHSCOPE_API_KEY || '';
+  },
+  get PERSONA() {
+    return process.env.YILI_PERSONA || '';
+  },
 };
 
 const PERSONA_DEFAULT = `你是「依力」，依神网站汇总的看板郎助手。
@@ -435,7 +451,7 @@ async function loadMemory() {
   const now = Date.now();
   if (memoryCache && now - memoryCacheAt < MEMORY_CACHE_TTL_MS) return memoryCache;
   try {
-    const { getStore } = await import('@netlify/blobs');
+    const { getStore } = await import('../lib/blobs.mjs');
     const store = getStore('el-memory');
     const content = await store.get('memory.md', { type: 'text' });
     memoryCache = (content || '').trim();

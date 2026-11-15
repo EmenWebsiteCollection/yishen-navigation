@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/status-active-brightgreen" alt="状态" />
   <img src="https://img.shields.io/github/license/your-org/your-repo" alt="许可证" />
   <img src="https://img.shields.io/github/v/release/your-org/your-repo" alt="版本" />
-  <img src="https://img.shields.io/netlify/your-site-id" alt="Netlify 部署" />
+  <img src="https://img.shields.io/badge/deploy-GitHub%20Pages-blue" alt="GitHub Pages 部署" />
 </p>
 
 ---
@@ -118,6 +118,7 @@
 - [🧩 团队分组与职责](#-团队分组与职责)
 - [🔄 协作开发流程](#-协作开发流程)
 - [🛠 技术栈](#-技术栈)
+- [🔌 MCP 服务（AI 接入）](#-mcp-服务ai-接入)
 - [📌 注意事项](#-注意事项)
 - [💬 沟通与支持](#-沟通与支持)
 
@@ -149,7 +150,7 @@ graph TD
     F --> G[👀 代码审核]
     G --> H[🧪 测试验证]
     H --> I[✅ 合并到 main]
-    I --> J[🚀 Netlify 自动部署]
+    I --> J[🚀 GitHub Pages 自动部署]
 ```
 
 > 💡 **分支命名规范**：`feat/xxx`（新功能）或 `fix/xxx`（Bug 修复）  
@@ -162,15 +163,42 @@ graph TD
 - **前端框架**：React 18 + Vite 5（SPA）
 - **样式方案**：全局 CSS（`src/styles/`：tokens.css / global.css / animations.css，CSS 变量主题体系）
 - **后端服务**：Supabase（数据库、认证、存储），数据库迁移脚本见 `sql/` 目录（编号顺序执行）
-- **部署平台**：Netlify（持续集成与自动部署）
+- **部署平台**：GitHub Pages（静态站点）+ Cloudflare Workers（服务端函数）
 - **版本控制**：Git + GitHub
+
+> 部署步骤、Worker 密钥与 CORS 配置见 **[docs/deploy-github-pages.md](docs/deploy-github-pages.md)**。
+
+---
+
+## 🔌 MCP 服务（AI 接入）
+
+站点自带一个 **MCP 端点**，Claude Desktop / Cursor / Claude Code / OpenCode 等 AI 客户端填上地址即可直接查询作品，不用爬页面：
+
+```
+https://yishen-api.<子域>.workers.dev/mcp
+```
+
+- 只读公开数据：分区列表、分页浏览、最新作品、点赞榜、关键词搜索 共 5 个工具
+- 无鉴权、无隐私数据（匿名权限 + RLS，与访客看到的完全一致）
+- 协议：`@modelcontextprotocol/server` v2（2026-07-28 规范，兼容旧客户端）
+
+自检脚本：
+
+```bash
+npm run worker:smoke                                              # Worker 本地全链路（路由 + 数据 + MCP）
+node scripts/mcp-smoke.mjs --local                                # 只测 MCP 层
+node scripts/mcp-smoke.mjs https://yishen-api.<子域>.workers.dev   # 线上实跑（握手 + 5 个工具逐个调用）
+```
+
+接入配置、工具参数、架构与排障：**[docs/mcp.md](docs/mcp.md)**
+> 部署步骤、Worker 密钥与 CORS 配置见 **[docs/deploy-github-pages.md](docs/deploy-github-pages.md)**。
 
 ---
 
 ## 📌 注意事项
 
 - ✅ 所有 Issue 和 PR 必须使用英文或中文清晰描述，并关联对应的项目看板。
-- ✅ 提交代码前请确保 `npm run build` 通过（项目暂未配置 ESLint/Prettier 与自动化测试）。
+- ✅ 提交代码前请确保 `npm run build:pages` 与 `npm test` 通过（项目暂未配置 ESLint/Prettier）。
 - ✅ 数据库变更必须经过数据库组审核，并编写对应的迁移脚本。
 - ✅ 任何架构层面的改动需提前在项目管理组发起讨论。
 

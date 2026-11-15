@@ -1,8 +1,9 @@
 ﻿// src/services/screenshot.js
 import { supabase } from './supabase.js';
+import { functionUrl } from './functionsBase.js';
 
-// 截图代理接口（Netlify Function，服务端转发 Microlink，隐藏客户端直连）
-const SCREENSHOT_PROXY_URL = '/.netlify/functions/screenshot';
+// 截图代理接口（服务端转发 Microlink，隐藏客户端直连）
+const SCREENSHOT_PROXY_URL = functionUrl('screenshot');
 // 降级直连地址（代理不可用时才使用）
 const SCREENSHOT_API_URL =
   import.meta.env.VITE_SCREENSHOT_API_URL || 'https://api.microlink.io/';

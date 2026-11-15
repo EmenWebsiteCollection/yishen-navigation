@@ -5,6 +5,7 @@ import { supabase } from './supabase.js';
 import { normalizeQuery, escapeLike } from './search.js';
 import { getProfile } from './users.js';
 import { isAdmin as isAdminRpc } from './works.js';
+import { functionUrl } from './functionsBase.js';
 
 // ========== 常量与纯逻辑（定义见 idea-logic.js，Node 可直测） ==========
 import {
@@ -544,7 +545,7 @@ export const exportIdeaToGithub = async (ideaId) => {
   } = await supabase.auth.getSession();
   if (!session) throw new Error('请先登录');
 
-  const res = await fetch('/.netlify/functions/export-idea', {
+  const res = await fetch(functionUrl('export-idea'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,4 +1,4 @@
-// netlify/functions/data-proxy.mjs
+// workers/functions/data-proxy.mjs
 // 公开读接口缓存中转（issue #127）。
 // 背景：浏览器直连 Supabase 受 DNS 污染影响，简单查询也要 2-3.5s。
 // 方案：浏览器 → Netlify（快）→ 函数 → Supabase（服务器间直连不受污染影响），
@@ -15,10 +15,11 @@
 // 响应：{ ok, cached, data, count? }；错误返回 { ok:false, error } 与 4xx/5xx。
 import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'node:crypto';
-import { getStore } from '@netlify/blobs';
+import { getStore } from '../lib/blobs.mjs';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+// 环境变量在请求内读取：Workers 的绑定在模块求值时可能还不可见
+const supabaseUrl = () => process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = () => process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 缓存 5 分钟（issue 建议 5-10 分钟）
 const CACHE_STORE = 'data-proxy';
@@ -139,19 +140,35 @@ const OPS = {
   partitions: opPartitions,
 };
 
+/**
+ * 直接执行一个 op（不经过 HTTP）。
+ * MCP 数据层与本 worker 同进程，靠它省掉一次公网往返；
+ * HTTP 入口也复用这里，保证两条路径的查询逻辑完全一致。
+ * @returns {Promise<{data: Array, count?: number}>}
+ */
+export async function runOp(op, params = {}) {
+  const handler = OPS[op];
+  if (!handler) throw new Error(`未知 op：${op}`);
+
+  const url = supabaseUrl();
+  const key = supabaseAnonKey();
+  if (!url || !key) throw new Error('缺少 Supabase 环境变量');
+
+  const sb = createClient(url, key);
+  return handler(sb, params);
+}
+
 export default async (req) => {
   if (req.method !== 'GET') return json({ error: 'Method Not Allowed' }, 405);
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!supabaseUrl() || !supabaseAnonKey()) {
     return json({ error: '缺少 Supabase 环境变量' }, 500);
   }
 
   const u = new URL(req.url);
   const op = u.searchParams.get('op') || '';
   const params = Object.fromEntries(u.searchParams);
-  const handler = OPS[op];
-  if (!handler) return json({ error: '未知 op' }, 400);
+  if (!OPS[op]) return json({ error: '未知 op' }, 400);
 
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let store = null;
   try {
     store = getStore(CACHE_STORE);
@@ -167,7 +184,7 @@ export default async (req) => {
   }
 
   try {
-    const result = await handler(sb, params);
+    const result = await runOp(op, params);
     if (store) {
       try {
         await store.set(key, JSON.stringify({ at: Date.now(), data: result }));

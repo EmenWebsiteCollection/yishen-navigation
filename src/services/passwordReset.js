@@ -1,9 +1,10 @@
 // src/services/passwordReset.js
-// 找回密码：调用 Netlify Function（/.netlify/functions/password-reset）
-// 邮件/短信密钥都在服务端（Netlify 环境变量），不暴露给前端。
+// 找回密码：调用服务端函数（本地 netlify dev 或 Cloudflare Worker）
+// 邮件/短信密钥都在服务端（环境变量），不暴露给前端。
 // 本地可用 import.meta.env.VITE_PASSWORD_RESET_URL 覆盖端点（如用 netlify dev 时的地址）。
-const ENDPOINT =
-  import.meta.env.VITE_PASSWORD_RESET_URL || '/.netlify/functions/password-reset';
+import { functionUrl } from './functionsBase.js';
+
+const ENDPOINT = import.meta.env.VITE_PASSWORD_RESET_URL || functionUrl('password-reset');
 
 async function post(body) {
   const res = await fetch(ENDPOINT, {

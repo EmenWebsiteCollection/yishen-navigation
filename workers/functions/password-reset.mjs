@@ -1,4 +1,4 @@
-// netlify/functions/password-reset.mjs
+// workers/functions/password-reset.mjs
 // 找回密码（邮箱/手机验证码）服务端。
 // 与 contributors.mjs 同风格：Node + export default，密钥全部走 Netlify 环境变量，前端不持有。
 // 部署：随站点自动部署，无需 Supabase CLI / supabase functions deploy。

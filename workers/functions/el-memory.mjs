@@ -1,10 +1,10 @@
-// netlify/functions/el-memory.mjs
+// workers/functions/el-memory.mjs
 // 依力 AI 记忆存取：作品记忆库（el-ai-memory.md 内容）存 Netlify Blobs
 //
 // GET  /.netlify/functions/el-memory        → 返回当前记忆文本（供 yili-chat 读取）
 // POST /.netlify/functions/el-memory        → 更新记忆（需 Bearer EL_MEMORY_TOKEN）
 // DELETE /.netlify/functions/el-memory      → 清空记忆（需 Bearer）
-import { getStore } from '@netlify/blobs';
+import { getStore } from '../lib/blobs.mjs';
 
 const STORE = 'el-memory';
 const KEY = 'memory.md';

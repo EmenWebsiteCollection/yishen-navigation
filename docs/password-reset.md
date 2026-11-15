@@ -1,13 +1,17 @@
 # 找回密码功能 · 部署与配置指南
 
 > 邮箱验证码找回密码已可用；手机短信通道预留但未接入，前后端均显示「部署中」。
+>
+> ⚠️ **路径已变更**：服务端代码从 `netlify/functions/password-reset.mjs` 迁到 `workers/functions/password-reset.mjs`，
+> 由 Cloudflare Worker 承载。下文凡是「Netlify 环境变量」的地方，现在都用 `wrangler secret put <名字>` 配置，
+> 详见 [deploy-github-pages.md](deploy-github-pages.md)。
 
 ## 一、功能构成
 
 | 层 | 文件 | 说明 |
 |----|------|------|
 | 数据库 | `sql/002_password_reset.sql` | `profiles.email/phone` 字段、`password_reset_codes` 验证码表、`bind_contact()` 绑定函数 |
-| 服务端 | `netlify/functions/password-reset.mjs` | 发码 / 验码 / 改密，密钥只存在于 Netlify 环境变量 |
+| 服务端 | `workers/functions/password-reset.mjs` | 发码 / 验码 / 改密，密钥只存在于 Worker 环境变量 |
 | 前端服务 | `src/services/passwordReset.js` | 调用上面的 Function |
 | 找回页面 | `src/pages/ForgotPasswordPage.jsx` | 邮箱 / 手机双 Tab，手机 Tab 显示「部署中」 |
 | 弹窗入口 | `src/components/AuthModals.jsx` | 登录弹窗「忘记密码？」→ 找回密码 |

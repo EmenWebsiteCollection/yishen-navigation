@@ -1,4 +1,4 @@
-// netlify/functions/export-idea.mjs
+// workers/functions/export-idea.mjs
 // 想法集中营「一键导出 GitHub Issue」：管理员把想法导出到仓库 Issue 队列。
 // 与 password-reset.mjs 同风格：Node + export default，密钥全部走 Netlify 环境变量，前端不持有。
 //
@@ -13,11 +13,11 @@
 // 返回：{ ok, issueNumber, issueUrl }
 import { createClient } from '@supabase/supabase-js';
 
-const GITHUB_REPO =
-  process.env.GITHUB_REPO || 'EmenWebsiteCollection/yishen-navigation';
-const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/issues`;
-const SITE_ORIGIN =
-  process.env.SITE_ORIGIN || 'https://zesty-sunflower-9ba9c1.netlify.app';
+// GitHub 仓库与站点地址在请求内读取（Workers 绑定的可见时机）
+const githubRepo = () => process.env.GITHUB_REPO || 'EmenWebsiteCollection/yishen-navigation';
+const githubApi = () => `https://api.github.com/repos/${githubRepo()}/issues`;
+const siteOrigin = () =>
+  process.env.SITE_ORIGIN || 'https://emenwebsitecollection.github.io/yishen-navigation';
 
 function checkEnv() {
   const missing = [];
@@ -105,7 +105,7 @@ export default async (req) => {
   const issueBody = [
     '## 想法来源',
     `来自「想法集中营」（分类：${idea.category}，提出人：${author}）`,
-    `🔗 ${SITE_ORIGIN}/ideas/${idea.id}`,
+    `🔗 ${siteOrigin()}/ideas/${idea.id}`,
     '',
     '## 想法描述',
     idea.description || '（无描述）',
@@ -119,7 +119,7 @@ export default async (req) => {
 
   let ghRes;
   try {
-    ghRes = await fetch(GITHUB_API, {
+    ghRes = await fetch(githubApi(), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,

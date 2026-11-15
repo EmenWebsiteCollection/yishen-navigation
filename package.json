@@ -5,14 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/copy-chunk-manifest.mjs",
+    "build": "vite build && node scripts/copy-chunk-manifest.mjs && node scripts/postbuild-pages.mjs",
+    "build:pages": "VITE_BASE=/yishen-navigation/ vite build && node scripts/copy-chunk-manifest.mjs && node scripts/postbuild-pages.mjs",
     "preview": "vite preview",
-    "netlify:dev": "netlify dev",
-    "test": "node --test src/services/*.test.js"
+    "test": "node --test src/services/*.test.js",
+    "mcp:smoke": "node scripts/mcp-smoke.mjs",
+    "worker:dev": "npx wrangler dev",
+    "worker:deploy": "npx wrangler deploy",
+    "worker:smoke": "node scripts/worker-smoke.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.3.1",
-    "@netlify/blobs": "^10.7.12",
     "@supabase/supabase-js": "^2.45.0",
     "jszip": "^3.10.1",
     "react": "^18.3.1",

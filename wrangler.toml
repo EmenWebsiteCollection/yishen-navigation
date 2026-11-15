@@ -1,0 +1,32 @@
+# wrangler.toml
+# Cloudflare Worker 配置：托管站点需要的服务端函数（原 Netlify Functions）。
+#
+# 部署：
+#   npx wrangler login          # 首次登录
+#   npm run worker:deploy       # 发布
+#   npm run worker:secrets      # 查看要配哪些密钥（逐个 wrangler secret put）
+#
+# 本地调试：
+#   npm run worker:dev          # http://localhost:8787
+
+name = "yishen-api"
+main = "workers/index.mjs"
+compatibility_date = "2026-11-01"
+# node:crypto 等 Node 内置模块（密码重置的 HMAC、data-proxy 的 sha256 缓存键）
+compatibility_flags = ["nodejs_compat"]
+
+# 非敏感配置（明文提交，别放密钥）
+[vars]
+SITE_ORIGIN = "https://emenwebsitecollection.github.io/yishen-navigation"
+GITHUB_REPO = "EmenWebsiteCollection/yishen-navigation"
+
+# 可选：KV 命名空间（提供跨实例持久缓存）
+#   npx wrangler kv namespace create CACHE
+# 不绑也能跑：缓存退化为单实例内存，只影响命中率；
+# 但 el-memory（依力的长期记忆）需要持久化，建议绑定。
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "<上一步输出的 id>"
+
+[observability]
+enabled = true

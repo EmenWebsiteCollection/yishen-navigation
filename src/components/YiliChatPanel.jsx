@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRuleReply } from '../services/agentFallback.js';
+import { functionUrl } from '../services/functionsBase.js';
 import { subscribeMascotPos } from '../services/mascotPos.js';
 import { supabase } from '../services/supabase.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -15,7 +16,7 @@ import { ChatActionCard } from './ChatActionCard.jsx';
 
 export const YILI_PERSONA_PROMPT = '';
 
-const CHAT_ENDPOINT = '/.netlify/functions/yili-chat';
+const CHAT_ENDPOINT = functionUrl('yili-chat');
 const AI_TIMEOUT_MS = 10000;
 const MEMORY_KEY = 'yili-memory-enabled';
 

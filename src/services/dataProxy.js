@@ -7,7 +7,9 @@
 // 任何失败都会抛出，调用方（works.js / partitions.js）据此回退到直连 Supabase，
 // 不影响现有功能。
 
-const PROXY_PATH = '/.netlify/functions/data-proxy';
+import { functionUrl } from './functionsBase.js';
+
+const PROXY_PATH = functionUrl('data-proxy');
 
 // 是否启用代理：生产环境默认开启，可用 VITE_USE_DATA_PROXY=0 关闭；
 // 本地 vite dev 无函数运行时，自动跳过（避免多一次必然失败的请求）。

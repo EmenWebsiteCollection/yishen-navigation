@@ -1,15 +1,16 @@
 // 伊神导航站——公开数据访问层。
 //
-// 数据来源：站点自己的公开只读接口 data-proxy（Netlify Function，匿名权限 + 5 分钟缓存）。
-// 全程只用匿名权限，RLS 照常生效——能看到的数据和浏览器访客完全一致，
+// 数据来源：与本站同一个 Cloudflare Worker 里的 data-proxy 查询逻辑（进程内直接调用，
+// 不走网络）。全程只用匿名权限，RLS 照常生效——能看到的数据和浏览器访客完全一致，
 // 不碰任何用户私有数据（收藏/评论/私有作品）。
 
-const DEFAULT_BASE_URL = 'https://zesty-sunflower-9ba9c1.netlify.app';
+import { runOp } from '../../functions/data-proxy.mjs';
 
-// Netlify 会自动注入 URL（站点主地址）；部署在同站时走内部调用，省一次公网往返。
-const BASE_URL = (process.env.YISHEN_BASE_URL || process.env.URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
-const PROXY_PATH = '/.netlify/functions/data-proxy';
-const REQUEST_TIMEOUT_MS = 20000;
+const DEFAULT_BASE_URL = 'https://emenwebsitecollection.github.io/yishen-navigation';
+
+// 站点地址（只用于拼作品详情页链接）：YISHEN_BASE_URL > SITE_ORIGIN > 默认地址
+const baseUrl = () =>
+  (process.env.YISHEN_BASE_URL || process.env.SITE_ORIGIN || DEFAULT_BASE_URL).replace(/\/+$/, '');
 
 // 搜索用的取数池：接口没有搜索 op，改为把全站作品拉下来本地过滤。
 // 两个实测约束（2026-10-12 线上验证）：
@@ -19,30 +20,15 @@ const SEARCH_PAGE_SIZE = 50;
 const SEARCH_MAX_PAGES = 10; // 保护上限：最多扫 500 条，站点长大也不会打爆接口
 
 /** 作品详情页地址（前端路由 /website/:id） */
-export const workPageUrl = (id) => `${BASE_URL}/website/${id}`;
+export const workPageUrl = (id) => `${baseUrl()}/website/${id}`;
 
-/** 调用 data-proxy 的某个 op，返回 { data, count } */
+/** 执行 data-proxy 的某个 op（进程内，返回 { data, count }） */
 async function callProxy(op, params = {}) {
-  const url = new URL(PROXY_PATH, BASE_URL);
-  url.searchParams.set('op', op);
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === null || value === '') continue;
-    url.searchParams.set(key, String(value));
-  }
-
-  let res;
   try {
-    res = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+    return await runOp(op, params);
   } catch (err) {
-    throw new Error(`连接伊神站数据接口失败（${op}）：${err.message}`);
+    throw new Error(`查询站点数据失败（${op}）：${err?.message || err}`);
   }
-  if (!res.ok) throw new Error(`伊神站数据接口返回 HTTP ${res.status}（${op}）`);
-
-  const body = await res.json();
-  if (!body || body.ok === false) {
-    throw new Error(`伊神站数据接口报错：${(body && body.error) || '未知错误'}`);
-  }
-  return { data: body.data || [], count: body.count };
 }
 
 /** 把接口原始记录精简成给模型看的字段——原始记录 30+ 字段，全塞进去会灌爆上下文 */
