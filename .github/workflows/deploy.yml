@@ -1,0 +1,48 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://naaczfnskkpsujdfwurj.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_yP5KQyXarTJ5Ap0xoxmp8Q_TCA2V1OM
+          VITE_SCREENSHOT_API_URL: https://api.microlink.io/
+      - name: pack
+        run: tar -czf site.tgz -C dist .
+      - name: upload
+        env:
+          SSH_KEY:  -----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACCmJ12CEHt6y37W12bq01ILQlpREslNiY1Y0tDotso16gAAAJgyW9azMlvW
+swAAAAtzc2gtZWQyNTUxOQAAACCmJ12CEHt6y37W12bq01ILQlpREslNiY1Y0tDotso16g
+AAAED7aijd95ZcvxdYsVW1FclQOTnQADaWOn4WCTiimx9MIqYnXYIQe3rLftbXZurTUgtC
+WlESyU2JjVjS0Oi2yjXqAAAAFGdoLWFjdGlvbnMteWlzaGVubmF2AQ==
+-----END OPENSSH PRIVATE KEY-----
+        run: |
+          install -m 600 /dev/null /tmp/k
+          printf '%s\n' "$SSH_KEY" > /tmp/k
+          scp -i /tmp/k -o StrictHostKeyChecking=no site.tgz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/site.tgz
+          ssh -i /tmp/k -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            sudo mkdir -p /var/www/yishennav.new &&
+            sudo tar -xzf /tmp/site.tgz -C /var/www/yishennav.new &&
+            sudo rm -rf /var/www/yishennav.old &&
+            sudo mv /var/www/yishennav /var/www/yishennav.old &&
+            sudo mv /var/www/yishennav.new /var/www/yishennav &&
+            sudo chown -R www-data:www-data /var/www/yishennav &&
+            sudo rm -rf /var/www/yishennav.old'
