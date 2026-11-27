@@ -40,7 +40,11 @@ jobs:
 
       - name: deploy
         run: |
-          rsync -az --delete --chown=www-data:www-data dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/yishennav/
+          rsync -az --delete dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/yishennav/
+
+      - name: fix perms
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'chmod -R a+rX /var/www/yishennav'
 
       - name: smoke test
         run: curl -fsS -o /dev/null -w '%{http_code}\n' https://yishennav.raicco.cn
