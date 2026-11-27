@@ -1,10 +1,11 @@
-name: deploy
+name: deploy-yishennav
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: deploy
+  group: deploy-yishennav
   cancel-in-progress: true
 
 jobs:
@@ -14,35 +15,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: 20
       - run: npm ci
-      - name: build
-        run: npm run build
+      - run: npm run build
         env:
-          VITE_SUPABASE_URL: https://naaczfnskkpsujdfwurj.supabase.co
-          VITE_SUPABASE_ANON_KEY: sb_publishable_yP5KQyXarTJ5Ap0xoxmp8Q_TCA2V1OM
-          VITE_SCREENSHOT_API_URL: https://api.microlink.io/
-      - name: pack
-        run: tar -czf site.tgz -C dist .
-      - name: upload
-        env:
-          SSH_KEY:  -----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACCmJ12CEHt6y37W12bq01ILQlpREslNiY1Y0tDotso16gAAAJgyW9azMlvW
-swAAAAtzc2gtZWQyNTUxOQAAACCmJ12CEHt6y37W12bq01ILQlpREslNiY1Y0tDotso16g
-AAAED7aijd95ZcvxdYsVW1FclQOTnQADaWOn4WCTiimx9MIqYnXYIQe3rLftbXZurTUgtC
-WlESyU2JjVjS0Oi2yjXqAAAAFGdoLWFjdGlvbnMteWlzaGVubmF2AQ==
------END OPENSSH PRIVATE KEY-----
+          VITE_SUPABASE_URL: *** secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: *** secrets.VITE_SUPABASE_ANON_KEY }}
+      - name: setup ssh
         run: |
-          install -m 600 /dev/null /tmp/k
-          printf '%s\n' "$SSH_KEY" > /tmp/k
-          scp -i /tmp/k -o StrictHostKeyChecking=no site.tgz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/site.tgz
-          ssh -i /tmp/k -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
-            sudo mkdir -p /var/www/yishennav.new &&
-            sudo tar -xzf /tmp/site.tgz -C /var/www/yishennav.new &&
-            sudo rm -rf /var/www/yishennav.old &&
-            sudo mv /var/www/yishennav /var/www/yishennav.old &&
-            sudo mv /var/www/yishennav.new /var/www/yishennav &&
-            sudo chown -R www-data:www-data /var/www/yishennav &&
-            sudo rm -rf /var/www/yishennav.old'
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: backup
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'mkdir -p ~/backup && tar czf ~/backup/yishennav-$(date +%F-%H%M).tgz -C /var/www yishennav'
+      - name: deploy
+        run: |
+          rsync -az --delete --chown=www-data:www-data dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/yishennav/
+      - name: smoke test
+        run: curl -fsS -o /dev/null -w '%{http_code}\n' https://yishennav.raicco.cn
