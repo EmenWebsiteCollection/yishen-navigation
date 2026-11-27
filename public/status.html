@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Build Status</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #0d1117; color: #e6edf3;
+    font: 15px/2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .card { padding: 32px 40px; border: 1px solid #21262d; border-radius: 12px; min-width: 360px; }
+  .row { display: flex; justify-content: space-between; gap: 40px; }
+  .k { color: #8b949e; }
+  .ok { color: #3fb950; }
+  .bad { color: #f85149; }
+  .muted { color: #6e7681; }
+  .tag { padding: 1px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.8; }
+  .tag.gh { background: rgba(31,111,235,.2); color: #58a6ff; border: 1px solid #1f6feb; }
+  .tag.lc { background: rgba(210,153,34,.2); color: #e3b341; border: 1px solid #d29922; }
+  .tag.un { background: rgba(110,118,129,.2); color: #8b949e; border: 1px solid #30363d; }
+</style>
+</head>
+<body>
+<div class="card" id="card"><span class="muted">loading…</span></div>
+<script>
+(function () {
+  var card = document.getElementById('card');
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function row(k, v, cls) {
+    return '<div class="row"><span class="k">' + k + '</span>' +
+      (cls ? '<b class="' + cls + '">' + v + '</b>' : v) + '</div>';
+  }
+
+  function originTag(origin) {
+    var o = String(origin || '').toLowerCase();
+    var cls = o === 'github' ? 'tag gh' : (o === 'local' ? 'tag lc' : 'tag un');
+    return '<span class="' + cls + '">' + esc(origin || 'unknown') + '</span>';
+  }
+
+  function getJson(url) {
+    return fetch(url + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .catch(function () { return null; });
+  }
+
+  Promise.all([getJson('/version.json'), getJson('/status.json')])
+    .then(function (res) {
+      var v = res[0] || {};
+      var s = res[1] || {};
+      var ok = String(s.status || '').toLowerCase() === 'passed';
+      var commit = v.commit || s.commit;
+      var html = '';
+
+      html += row('Action_Status', s.status ? esc(s.status) : '<span class="muted">n/a</span>', s.status ? (ok ? 'ok' : 'bad') : '');
+      html += row('Origin', originTag(v.origin));
+      if (commit) html += row('Commit', '<span class="muted">' + esc(String(commit).slice(0, 7)) + '</span>');
+      if (v.ref) html += row('Branch', '<span class="muted">' + esc(v.ref) + '</span>');
+      var built = v.built || s.updated;
+      if (built) html += row('Built', esc(built));
+
+      card.innerHTML = html;
+    })
+    .catch(function (e) {
+      card.innerHTML = '<span class="muted">unavailable: ' + esc(e.message) + '</span>';
+    });
+})();
+</script>
+</body>
+</html>
