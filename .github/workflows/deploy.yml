@@ -27,6 +27,12 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      - name: write version
+        run: |
+          printf '{"origin":"github","commit":"%s","ref":"%s","built":"%s"}\n' \
+            "$GITHUB_SHA" "$GITHUB_REF_NAME" "$(date -u +%FT%TZ)" > dist/version.json
+          cat dist/version.json
+
       - name: setup ssh
         run: |
           mkdir -p ~/.ssh
@@ -40,11 +46,11 @@ jobs:
 
       - name: deploy
         run: |
-          rsync -az --delete dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/yishennav/
-
-      - name: fix perms
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'chmod -R a+rX /var/www/yishennav'
+          rsync -rltz --delete --chmod=D775,F664 \
+            --exclude=status.html --exclude=status.json \
+            dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/yishennav/
 
       - name: smoke test
-        run: curl -fsS -o /dev/null -w '%{http_code}\n' https://yishennav.raicco.cn
+        run: |
+          curl -fsS -o /dev/null -w 'site=%{http_code}\n' https://yishennav.raicco.cn/
+          curl -fsS -o /dev/null -w 'version=%{http_code}\n' https://yishennav.raicco.cn/version.json
