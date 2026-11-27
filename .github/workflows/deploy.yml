@@ -47,7 +47,7 @@ jobs:
       - name: deploy
         run: |
           rsync -rltz --delete --chmod=D775,F664 \
-            --exclude=status.html --exclude=status.json \
+            --exclude=status.json \
             dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/yishennav/
 
       - name: smoke test
